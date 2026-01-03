@@ -157,60 +157,92 @@
   }
   
   /* ========================================
-     AI TUTOR MOBILE - CRITICAL VIEWPORT FIX
+     AI TUTOR MOBILE - FIXED HEADER/FOOTER LAYOUT
+     Like ChatGPT: fixed header, fixed input, scrollable messages
      ======================================== */
   
   /* 
-   * FIX: Main tutor container uses h-screen (100vh) which doesn't work on mobile.
-   * On mobile browsers, 100vh includes browser chrome (URL bar).
-   * When keyboard opens, visible viewport shrinks but 100vh stays the same.
-   * This pushes the input area below visible viewport.
-   * 
-   * Solution: Use fixed positioning with inset:0 which respects actual visible area.
+   * DOM STRUCTURE:
+   * <div h-screen>                    <- main container
+   *   <ClassroomLayout>
+   *     <header h-14>                 <- FIXED TOP
+   *     <div flex-1>                  <- content area
+   *       <sathi-chat-wrapper>        <- chat container
+   *         <sathi-chat-scroll>       <- SCROLLABLE
+   *         <sathi-chat-input-container> <- FIXED BOTTOM
+   *
+   * FIX: Pull header and input out of flow with fixed positioning.
+   * Messages area scrolls between them.
    */
   
-  /* Main AITutor container - override h-screen on mobile */
+  /* Prevent body/html scroll */
+  html:has(.sathi-chat-wrapper),
+  body:has(.sathi-chat-wrapper) {
+    overflow: hidden !important;
+    position: fixed !important;
+    width: 100% !important;
+    height: 100% !important;
+    touch-action: none !important;
+  }
+  
+  /* Allow touch on chat scroll area */
+  .sathi-chat-scroll {
+    touch-action: pan-y !important;
+  }
+  
+  /* Main container - fixed viewport */
   .flex.h-screen.bg-gray-50.overflow-hidden.relative {
     position: fixed !important;
     inset: 0 !important;
-    height: auto !important;
-    max-height: none !important;
   }
   
-  /* ClassroomLayout container - ensure proper height */
-  .flex-1.h-full.w-full.flex.flex-col.bg-slate-950.overflow-hidden.min-h-0 {
-    height: 100% !important;
-    max-height: 100% !important;
+  /* Header - FIXED at top */
+  header.flex-shrink-0.h-14 {
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    z-index: 100 !important;
+    height: 56px !important;
+    background: #0f172a !important; /* slate-900 */
   }
   
-  /* Chat wrapper - must fill available space */
-  .sathi-chat-wrapper {
-    display: flex !important;
-    flex-direction: column !important;
-    height: 100% !important;
-    min-height: 0 !important;
-  }
-  
-  /* Scrollable area - flex-1 with min-h-0 for proper shrinking */
-  .sathi-chat-scroll {
-    flex: 1 1 0% !important;
-    min-height: 0 !important;
-    overflow-y: auto !important;
-    -webkit-overflow-scrolling: touch !important;
-  }
-  
-  /* Input container - MUST stay visible, never pushed off screen */
+  /* Input container - FIXED at bottom (pulled out of normal flow) */
   .sathi-chat-input-container {
-    flex-shrink: 0 !important;
-    position: relative !important;
-    z-index: 10 !important;
+    position: fixed !important;
+    bottom: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    z-index: 100 !important;
+    background: linear-gradient(180deg, transparent 0%, rgba(18, 18, 28, 0.98) 20%) !important;
+    padding: 12px 10px 16px !important;
+    padding-bottom: calc(16px + env(safe-area-inset-bottom, 0px)) !important;
+  }
+  
+  /* Wrapper fills space below header - no bottom constraint */
+  /* Input is fixed separately, so wrapper can extend behind it */
+  .sathi-chat-wrapper {
+    position: fixed !important;
+    top: 56px !important;
+    left: 0 !important;
+    right: 0 !important;
+    bottom: 0 !important;
+    overflow: hidden !important;
+  }
+  
+  /* Messages scroll area - leaves padding for fixed input */
+  .sathi-chat-scroll {
+    height: 100% !important;
+    overflow-y: auto !important;
+    overflow-x: hidden !important;
+    -webkit-overflow-scrolling: touch !important;
+    overscroll-behavior: contain !important;
+    /* Bottom padding = input height so content isn't hidden behind it */
+    padding-bottom: 100px !important;
   }
   
   /* Chat Container (legacy) */
   .chat-container {
-    height: auto !important;
-    flex: 1 1 0% !important;
-    min-height: 0 !important;
     padding: 8px !important;
   }
   

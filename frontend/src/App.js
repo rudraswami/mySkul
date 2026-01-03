@@ -286,7 +286,8 @@ function AppContent() {
                       <ProfileSettings />
                     </Suspense>
                   } />
-                  <Route path="*" element={<Navigate to="/dashboard" />} />
+                  {/* Cognito OS: Tutor is the default entry - AI companion first */}
+                  <Route path="*" element={<Navigate to="/tutor" />} />
                 </Routes>
                 </div>
               </main>

@@ -1,12 +1,18 @@
 /**
- * 📚 Study Planner - PROFESSIONAL REDESIGN
- * =========================================
+ * 🧠 Cognito OS — Living Cognitive Plan
+ * =====================================
  * 
- * Clean, modern design with:
- * - Subtle gradients (not garish)
- * - Consistent typography
- * - Better visual hierarchy
- * - Professional card styling
+ * Philosophy: Adaptive, not fixed. Supportive, not demanding.
+ * 
+ * This is NOT a rigid schedule. It's a gentle guide that adapts
+ * to the student's pace and energy.
+ * 
+ * Principles:
+ * - No pressure language ("must", "deadline", "stay focused")
+ * - AI may say "Nothing urgent today" or "You're safe to go slow"
+ * - Today's suggestions are optional, not mandatory
+ * - Near-term adapts based on learning gaps
+ * - Long-term is tracked silently, surfaced only when helpful
  */
 
 import React, { useState, useEffect, useCallback } from 'react';
@@ -416,7 +422,7 @@ const StudyPlanner = ({ onStartStudy }) => {
             <div className="flex flex-col items-center justify-center py-12">
               <div className="w-14 h-14 border-4 border-violet-500/30 border-t-violet-500 rounded-full animate-spin mb-4" />
               <p className="text-slate-300 font-medium">
-                {generating ? '✨ Creating your personalized study plan...' : 'Loading study plan...'}
+                {generating ? 'Preparing some gentle suggestions...' : 'Loading your plan...'}
               </p>
             </div>
           </div>
@@ -435,19 +441,19 @@ const StudyPlanner = ({ onStartStudy }) => {
               <div className="w-20 h-20 bg-gradient-to-br from-violet-500/20 to-indigo-500/20 rounded-2xl flex items-center justify-center mx-auto mb-6 border border-violet-500/30">
                 <Calendar className="w-10 h-10 text-violet-400" />
               </div>
-              <h3 className="text-2xl font-bold text-white mb-3">No Study Plan Yet</h3>
+              <h3 className="text-xl font-medium text-white mb-3">Nothing urgent today</h3>
               <p className="text-slate-400 mb-8 max-w-md mx-auto">
-                Let's create your personalized daily plan! I'll optimize your study time based on your goals and weak areas.
+                You're safe to go at your own pace. When you're ready, I can suggest some gentle study ideas based on where you are in your learning journey.
               </p>
               <motion.button
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
                 onClick={() => generateNewPlan(4)}
                 disabled={generating}
-                className="px-8 py-4 bg-gradient-to-r from-violet-600 to-indigo-600 text-white rounded-xl font-semibold shadow-lg shadow-violet-500/25 hover:shadow-xl hover:shadow-violet-500/30 transition-all flex items-center gap-3 mx-auto"
+                className="px-6 py-3 bg-violet-600 hover:bg-violet-500 text-white rounded-xl font-medium transition-colors flex items-center gap-2 mx-auto"
               >
-                <Sparkles className="w-5 h-5" />
-                Generate Today's Plan
+                <Sparkles className="w-4 h-4" />
+                Show me some ideas
               </motion.button>
               {error && (
                 <p className="mt-4 text-red-400 text-sm">{error}</p>
@@ -480,7 +486,7 @@ const StudyPlanner = ({ onStartStudy }) => {
                 month: 'long' 
               }) : 'Today'}
             </div>
-            <h2 className="text-2xl font-bold text-white">Today's Study Plan</h2>
+            <h2 className="text-xl font-medium text-white">Gentle Suggestions for Today</h2>
           </div>
           
           <div className="flex items-center gap-3">
@@ -532,31 +538,25 @@ const StudyPlanner = ({ onStartStudy }) => {
           </div>
         </div>
         
-        {/* Stats - Clean cards */}
+        {/* Stats - Minimal, calmer language */}
         <div className="grid grid-cols-3 gap-3">
-          <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4 text-center">
-            <div className="text-2xl font-bold text-white">{studyHours}h</div>
-            <div className="text-xs text-white/70 font-medium uppercase tracking-wide">Study Time</div>
+          <div className="bg-white/10 backdrop-blur-sm rounded-xl p-3 text-center">
+            <div className="text-lg font-medium text-white">{studyHours}h</div>
+            <div className="text-xs text-white/60">suggested time</div>
           </div>
-          <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4 text-center">
-            <div className="text-2xl font-bold text-white">{sessionCount}</div>
-            <div className="text-xs text-white/70 font-medium uppercase tracking-wide">Sessions</div>
+          <div className="bg-white/10 backdrop-blur-sm rounded-xl p-3 text-center">
+            <div className="text-lg font-medium text-white">{sessionCount}</div>
+            <div className="text-xs text-white/60">ideas</div>
           </div>
-          <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4 text-center">
-            <div className="text-2xl font-bold text-white flex items-center justify-center gap-1">
-              <Zap className="w-5 h-5" />{xpTarget}
+          <div className="bg-white/10 backdrop-blur-sm rounded-xl p-3 text-center">
+            <div className="text-lg font-medium text-white flex items-center justify-center gap-1">
+              <Zap className="w-4 h-4" />{xpTarget}
             </div>
-            <div className="text-xs text-white/70 font-medium uppercase tracking-wide">XP Target</div>
+            <div className="text-xs text-white/60">potential XP</div>
           </div>
         </div>
         
-        {/* Exam countdown */}
-        {plan?.exam_countdown && (
-          <div className="mt-4 bg-red-500/20 backdrop-blur-sm rounded-lg p-3 flex items-center gap-3">
-            <Flame className="w-5 h-5 text-amber-300 animate-pulse" />
-            <span className="text-white font-medium">{plan.exam_countdown} days until exam - Stay focused!</span>
-          </div>
-        )}
+        {/* Note: Exam countdown removed - pressure language not aligned with Cognito OS philosophy */}
       </div>
       
       {/* Main Content */}
@@ -568,38 +568,36 @@ const StudyPlanner = ({ onStartStudy }) => {
             <div className="flex flex-col items-center p-4 bg-slate-900/50 rounded-xl border border-slate-700/50">
               <ProgressRing progress={progress} size={140} />
               <p className="text-sm font-medium text-slate-400 mt-2">Daily Progress</p>
-              {/* Dynamic encouragement based on progress */}
-              <p className="text-xs text-center mt-2 px-2">
+              {/* Gentle, non-pressure encouragement */}
+              <p className="text-xs text-center mt-2 px-2 text-slate-500">
                 {progress === 0 && (
-                  <span className="text-violet-400">Ready to start? Complete your first session! 💪</span>
+                  <span>Take your time. I'm here when you're ready.</span>
                 )}
                 {progress > 0 && progress < 25 && (
-                  <span className="text-blue-400">Great start! Keep the momentum going 🚀</span>
+                  <span>You've started. That's what matters.</span>
                 )}
                 {progress >= 25 && progress < 50 && (
-                  <span className="text-cyan-400">You're making progress! Halfway there 📈</span>
+                  <span>Making good progress. Keep going if you'd like.</span>
                 )}
                 {progress >= 50 && progress < 75 && (
-                  <span className="text-emerald-400">Awesome! More than halfway done! 🌟</span>
+                  <span>You're doing well. No rush to finish.</span>
                 )}
                 {progress >= 75 && progress < 100 && (
-                  <span className="text-amber-400">Almost there! Finish strong! 🔥</span>
+                  <span>Nearly there, if you want to continue.</span>
                 )}
                 {progress >= 100 && (
-                  <span className="text-emerald-400">🎉 All done! You crushed it today!</span>
+                  <span>You've completed today's suggestions. Well done.</span>
                 )}
               </p>
             </div>
             
-            {/* Today's Goals - With completion tracking */}
+            {/* Today's Ideas - Optional, not goals */}
             {plan?.daily_goals && plan.daily_goals.length > 0 && (
               <div className="bg-slate-900/50 rounded-xl p-4 border border-slate-700/50">
-                <h3 className="font-semibold text-white mb-3 flex items-center gap-2">
+                <h3 className="font-medium text-white mb-3 flex items-center gap-2">
                   <Target className="w-4 h-4 text-violet-400" />
-                  Today's Goals
-                  <span className="ml-auto text-xs text-slate-500">
-                    {plan.blocks?.filter(b => b.completed).length || 0}/{plan.blocks?.filter(b => b.block_type !== 'break').length || 0}
-                  </span>
+                  <span>Today's Ideas</span>
+                  <span className="text-xs text-slate-600 font-normal ml-1">(optional)</span>
                 </h3>
                 <ul className="space-y-2.5">
                   {plan.daily_goals.map((goal, i) => {

@@ -17,20 +17,25 @@ import { BrandLoadingScreen } from '../ui/BrandLogo';
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 
 /**
- * 🚀 DRON AI — Intelligence Dashboard v1.0
+ * 🧠 Cognito OS — Progress Screen
  * ==================================================
  * 
- * Design System Compliant:
- * - Brand: DRON AI (Sathi is AI persona)
- * - Theme: Dark with calm content areas
- * - All data API-wired
+ * Philosophy: "The AI is quietly supporting the student when they are not chatting."
+ * 
+ * This is NOT a gamified dashboard. It's a calm, supportive presence
+ * that shows the student their learning journey without pressure.
+ * 
+ * Design Principles:
+ * - Minimal, calming UI
+ * - No commanding language ("must", "complete", "deadline")
+ * - Supportive, encouraging tone
+ * - Information when needed, not overwhelming
  * 
  * DATA SOURCES:
- * - /api/user/progress → XP, Level, Streak, Badges
- * - /api/analytics/subject-progress → Subject Mastery
- * - /api/cognitive/recommendations → AI Recommendations  
- * - /api/study-planner/today → Today's Plan
- * - /api/subscription/usage → AI Chat Limits
+ * - /api/user/progress → XP, Level, Streak
+ * - /api/analytics/subject-progress → Subject understanding
+ * - /api/study-planner/today → Gentle suggestions
+ * - /api/subscription/usage → Chat availability
  */
 
 // ============================================================================
@@ -191,26 +196,77 @@ const PremiumDashboard = () => {
     return { status: 'Ready', message: "You're in a great flow state!", icon: Battery, color: 'emerald', tip: 'Perfect time for deep learning' };
   }, [aiChatsUsed, streak]);
 
-  // Sathi contextual message
-  const sathiMessage = useMemo(() => {
-    if (streak === 0) return "Let's start your learning streak today! 🚀";
-    if (streak >= 7) return `${streak} days strong! I'm proud of you! 💪`;
-    if (aiChatsLeft < 3) return "Running low on chats - make them count!";
-    if (focus.source === 'ai') return "I found something important for you!";
-    return "I'm here whenever you need help! 🧠";
-  }, [streak, aiChatsLeft, focus.source]);
+  // AI Check-In - Calm, supportive insight (not commanding)
+  const aiCheckIn = useMemo(() => {
+    const hour = new Date().getHours();
+    const isLateNight = hour >= 23 || hour < 5;
+    const isMorning = hour >= 5 && hour < 12;
+    
+    // Late night - gentle care
+    if (isLateNight) {
+      return {
+        message: "It's late. Your brain consolidates learning during sleep.",
+        suggestion: "Consider resting. I'll be here tomorrow.",
+        mood: 'calm'
+      };
+    }
+    
+    // Based on activity
+    if (streak >= 7) {
+      return {
+        message: `You've shown up ${streak} days in a row. That consistency matters more than any single session.`,
+        suggestion: null,
+        mood: 'proud'
+      };
+    }
+    
+    if (aiChatsUsed > 10) {
+      return {
+        message: "You've been learning actively today. That's wonderful.",
+        suggestion: "Take a break if you need one. Learning continues even when you rest.",
+        mood: 'caring'
+      };
+    }
+    
+    // Morning encouragement
+    if (isMorning) {
+      return {
+        message: "Fresh day, fresh mind. No pressure—just curiosity.",
+        suggestion: null,
+        mood: 'gentle'
+      };
+    }
+    
+    // Default - always supportive
+    return {
+      message: "I'm here whenever you need me. No rush.",
+      suggestion: null,
+      mood: 'present'
+    };
+  }, [streak, aiChatsUsed]);
 
-  // Exam countdown (configurable - for now showing JEE date)
-  const examCountdown = useMemo(() => {
-    const jeeDate = new Date('2025-04-15'); // JEE Mains approximate
-    const today = new Date();
-    const diff = Math.ceil((jeeDate - today) / (1000 * 60 * 60 * 24));
-    return diff > 0 ? diff : null;
-  }, []);
+  // Learning Momentum - Presence-based, not score-based
+  const learningMomentum = useMemo(() => {
+    // Calculate based on recent activity, not scores
+    const hasRecentActivity = aiChatsUsed > 0;
+    const hasStreak = streak > 0;
+    const hasProgress = subjects.some(s => s.score > 0);
+    
+    if (!hasRecentActivity && !hasStreak && !hasProgress) {
+      return { status: 'starting', label: 'Just Beginning', description: "Every expert was once a beginner." };
+    }
+    if (hasStreak && streak >= 3) {
+      return { status: 'building', label: 'Building Momentum', description: "You're showing up consistently. That's what matters." };
+    }
+    if (hasRecentActivity) {
+      return { status: 'active', label: 'Actively Learning', description: "You're engaged today. Keep going at your pace." };
+    }
+    return { status: 'present', label: 'Present', description: "You're here. That's the first step." };
+  }, [aiChatsUsed, streak, subjects]);
 
-  // Loading State - Unified Brand Loading
+  // Loading State - Calm loading
   if (loading) {
-    return <BrandLoadingScreen message="Loading your intelligence dashboard..." />;
+    return <BrandLoadingScreen message="Preparing your progress..." />;
   }
 
   // Check if new user (zero state)
@@ -218,465 +274,260 @@ const PremiumDashboard = () => {
 
   return (
     <div className="min-h-screen bg-slate-950 text-white">
-      {/* Subtle Background */}
+      {/* Subtle Background - Calmer, less intense */}
       <div className="fixed inset-0 z-0 pointer-events-none">
-        <div className="absolute top-0 left-1/4 w-96 h-96 bg-violet-600/10 blur-[120px] rounded-full" />
-        <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-indigo-600/10 blur-[120px] rounded-full" />
+        <div className="absolute top-0 left-1/4 w-96 h-96 bg-slate-800/30 blur-[120px] rounded-full" />
+        <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-slate-800/20 blur-[120px] rounded-full" />
       </div>
 
       {/* Main Content */}
-      <div className="relative z-10 p-6 lg:p-10 max-w-7xl mx-auto space-y-8">
+      <div className="relative z-10 p-6 lg:p-10 max-w-5xl mx-auto space-y-8">
         
-        {/* ============ HEADER ============ */}
-        <header className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
-          <div className="space-y-2">
-            <div className="flex items-center gap-2">
-              <span className="text-2xl">{greeting.emoji}</span>
-              <h1 className="text-2xl lg:text-3xl font-bold text-white">
-                {greeting.text}, <span className="text-violet-400">{firstName}</span>
+        {/* ============ HEADER - Calm, Supportive ============ */}
+        <header className="space-y-4">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <div>
+              <h1 className="text-xl lg:text-2xl font-medium text-white">
+                {greeting.text}, {firstName}
               </h1>
+              <p className="text-slate-500 text-sm mt-1">
+                Your learning journey
+              </p>
             </div>
-            <p className="text-slate-400">
-              {isNewUser 
-                ? "Welcome to DRON AI! Let's start your learning journey."
-                : "Let's continue building your knowledge today."
-              }
-            </p>
-          </div>
 
-          {/* Stats Pills */}
-          <div className="flex items-center gap-3 flex-wrap">
-            <StatPill 
-              icon={Zap} 
-              value={xp} 
-              label={isNewUser ? "Start earning!" : "XP"} 
-              color="amber" 
-              highlight={xp > 0}
-            />
-            <StatPill 
-              icon={Flame} 
-              value={streak} 
-              label={streak === 1 ? "day" : "days"} 
-              color="orange"
-              highlight={streak > 0}
-            />
-            <StatPill 
-              icon={MessageCircle} 
-              value={aiChatsLeft} 
-              label="AI chats" 
-              color="violet"
-              warning={aiChatsLeft < 3}
-            />
+            {/* Minimal Stats - Small, non-dominant */}
+            <div className="flex items-center gap-2 text-sm">
+              {streak > 0 && (
+                <span className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-slate-800/50 text-slate-400">
+                  <Flame className="w-3.5 h-3.5 text-orange-400" />
+                  {streak} {streak === 1 ? 'day' : 'days'}
+                </span>
+              )}
+              {xp > 0 && (
+                <span className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-slate-800/50 text-slate-400">
+                  <Zap className="w-3.5 h-3.5 text-amber-400" />
+                  {xp} XP
+                </span>
+              )}
+            </div>
           </div>
         </header>
 
-        {/* ============ EXAM COUNTDOWN (if applicable) ============ */}
-        {examCountdown && examCountdown < 120 && (
-          <motion.div
-            initial={{ opacity: 0, y: -10 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="flex items-center justify-between p-4 rounded-2xl bg-gradient-to-r from-amber-500/10 to-orange-500/10 border border-amber-500/20"
-          >
-            <div className="flex items-center gap-3">
-              <Calendar className="w-5 h-5 text-amber-400" />
-              <span className="text-sm text-amber-200">
-                <strong>JEE Mains</strong> in <span className="font-bold text-amber-400">{examCountdown} days</span>
-              </span>
-            </div>
-            <button 
-              onClick={() => navigate('/study-planner')}
-              className="text-xs text-amber-400 hover:text-amber-300 font-medium"
-            >
-              View Study Plan →
-            </button>
-          </motion.div>
-        )}
-
-        {/* ============ AI ATTRIBUTION BANNER ============ */}
+        {/* ============ AI CHECK-IN - The Companion Presence ============ */}
         <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.3 }}
-          className="flex items-center gap-3 px-4 py-3 rounded-xl bg-slate-900/50 border border-slate-800/60"
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="p-5 rounded-2xl bg-slate-900/40 border border-slate-800/40"
         >
-          <div className="p-2 rounded-lg bg-violet-500/10">
-            <Brain className="w-4 h-4 text-violet-400" />
+          <div className="flex items-start gap-4">
+            <div className="p-2.5 rounded-xl bg-violet-500/10 flex-shrink-0">
+              <Brain className="w-5 h-5 text-violet-400" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-slate-300 text-sm leading-relaxed">
+                {aiCheckIn.message}
+              </p>
+              {aiCheckIn.suggestion && (
+                <p className="text-slate-500 text-xs mt-2">
+                  {aiCheckIn.suggestion}
+                </p>
+              )}
+            </div>
           </div>
-          <p className="text-sm text-slate-400">
-            <span className="text-violet-400 font-medium">DRON AI</span>
-            {' '}analyzed your learning patterns
-            {focus.source === 'study_plan' && ' and synced with your study plan'}
-            {focus.source === 'ai' && ' and found an important focus area'}
-            {focus.source === 'analysis' && ' to suggest your next focus'}
-          </p>
         </motion.div>
 
-        {/* ============ MAIN GRID ============ */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 lg:gap-8">
-          
-          {/* LEFT COLUMN: Focus + Quick Actions */}
-          <div className="lg:col-span-2 space-y-6">
-            
-            {/* PRIMARY FOCUS CARD */}
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="relative p-6 lg:p-8 rounded-3xl bg-gradient-to-br from-slate-900 to-slate-900/50 border border-slate-800/60 overflow-hidden"
+        {/* ============ RESUME LEARNING - Single Primary CTA ============ */}
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.1 }}
+          className="p-6 rounded-2xl bg-gradient-to-br from-slate-900 to-slate-900/60 border border-slate-800/50"
+        >
+          <div className="flex flex-col sm:flex-row sm:items-center gap-4">
+            <div className="flex-1">
+              <p className="text-slate-500 text-xs uppercase tracking-wide mb-1">Continue where you left off</p>
+              <h2 className="text-lg font-medium text-white">
+                {focus.topic}
+              </h2>
+              <p className="text-slate-500 text-sm mt-1">{focus.subject}</p>
+            </div>
+            <motion.button
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+              onClick={() => navigate('/tutor')}
+              className="inline-flex items-center justify-center gap-2 px-5 py-3 bg-violet-600 hover:bg-violet-500 text-white rounded-xl font-medium transition-colors"
             >
-              {/* Accent Border */}
-              <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-violet-500 via-fuchsia-500 to-violet-500" />
-              
-              {/* Content */}
-              <div className="relative z-10 flex flex-col lg:flex-row lg:items-center gap-6 lg:gap-10">
-                
-                {/* Text Content */}
-                <div className="flex-1 space-y-5">
-                  {/* Badge Row */}
-                  <div className="flex items-center gap-3 flex-wrap">
-                    <span className="px-3 py-1.5 rounded-full bg-violet-500/15 text-violet-400 text-xs font-semibold border border-violet-500/30">
-                      🎯 Recommended Focus
-                    </span>
-                    <span className="flex items-center gap-1.5 text-slate-500 text-sm">
-                      <Clock className="w-4 h-4" />
-                      {focus.duration} min
-                    </span>
-                    <span className="px-2.5 py-1 rounded-full bg-emerald-500/15 text-emerald-400 text-xs font-medium">
-                      +{focus.xpReward} XP
-                    </span>
-                  </div>
+              <MessageCircle className="w-4 h-4" />
+              Talk to Sathi
+            </motion.button>
+          </div>
+        </motion.div>
 
-                  {/* Title */}
-                  <div>
-                    <p className="text-violet-400 text-sm font-medium mb-1">{focus.subject}</p>
-                    <h2 className="text-2xl lg:text-3xl font-bold text-white leading-tight">
-                      {focus.topic}
-                    </h2>
-                  </div>
-
-                  {/* AI Reason - THE INTELLIGENCE */}
-                  <div className="flex items-start gap-3 p-4 rounded-xl bg-slate-800/30 border border-slate-700/30">
-                    <Info className="w-4 h-4 text-violet-400 mt-0.5 flex-shrink-0" />
-                    <p className="text-slate-300 text-sm leading-relaxed">
-                      {focus.reason}
-                    </p>
-                  </div>
-
-                  {/* CTA Button */}
-                  <motion.button
-                    whileHover={{ scale: 1.02 }}
-                    whileTap={{ scale: 0.98 }}
-                    onClick={() => navigate(`/tutor?topic=${encodeURIComponent(focus.topic)}&subject=${encodeURIComponent(focus.subject)}`)}
-                    className="inline-flex items-center gap-3 px-6 py-3.5 bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 text-white rounded-xl font-semibold shadow-lg shadow-violet-500/25 transition-all"
-                  >
-                    <Play className="w-5 h-5" fill="currentColor" />
-                    Start Learning
-                    <ChevronRight className="w-4 h-4" />
-                  </motion.button>
-                </div>
-
-                {/* Sathi Co-Pilot */}
-                <div className="hidden lg:flex flex-col items-center gap-4">
-                  <motion.div
-                    animate={{ y: [0, -8, 0] }}
-                    transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
-                    className="relative cursor-pointer group"
-                    onClick={() => navigate('/tutor')}
-                  >
-                    <div className="absolute inset-0 bg-violet-500 blur-2xl opacity-30 group-hover:opacity-50 transition-opacity rounded-full" />
-                    <div className="relative w-28 h-28 rounded-3xl bg-gradient-to-br from-violet-600/20 to-indigo-600/20 border border-violet-500/30 flex items-center justify-center backdrop-blur-sm group-hover:border-violet-500/50 transition-colors">
-                      <Brain className="w-14 h-14 text-violet-400 group-hover:text-violet-300 transition-colors" strokeWidth={1} />
-                    </div>
-                  </motion.div>
-                  <p className="text-sm text-slate-400 text-center max-w-[140px]">
-                    {sathiMessage}
-                  </p>
-                </div>
-              </div>
-            </motion.div>
-
-            {/* QUICK ACTIONS */}
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-              {[
-                { icon: MessageCircle, label: 'Ask Sathi', desc: 'AI Tutor', color: 'violet', path: '/tutor' },
-                { icon: Camera, label: 'Scan', desc: 'Photo Solve', color: 'blue', path: '/tutor?mode=scan' },
-                { icon: BookOpen, label: 'Materials', desc: 'Study Notes', color: 'emerald', path: '/materials' },
-                { icon: Target, label: 'Practice', desc: 'Mock Tests', color: 'rose', path: '/practice' },
-              ].map((action, i) => (
-                <motion.button
+        {/* ============ LEARNING MOMENTUM - Presence-based ============ */}
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.15 }}
+          className="p-5 rounded-2xl bg-slate-900/30 border border-slate-800/30"
+        >
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-slate-400 text-xs uppercase tracking-wide">Learning Momentum</p>
+              <p className="text-white font-medium mt-1">{learningMomentum.label}</p>
+              <p className="text-slate-500 text-sm mt-0.5">{learningMomentum.description}</p>
+            </div>
+            <div className="flex items-center gap-1">
+              {[1, 2, 3, 4, 5].map((i) => (
+                <div 
                   key={i}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.1 + i * 0.05 }}
-                  whileHover={{ y: -4 }}
-                  onClick={() => navigate(action.path)}
-                  className="flex flex-col items-center gap-3 p-5 rounded-2xl bg-slate-900/50 border border-slate-800/60 hover:border-slate-700/60 hover:bg-slate-900/80 transition-all group"
-                >
-                  <div className={`p-3 rounded-xl bg-${action.color}-500/10 group-hover:bg-${action.color}-500/20 transition-colors`}>
-                    <action.icon className={`w-5 h-5 text-${action.color}-400`} strokeWidth={1.5} />
-                  </div>
-                  <div className="text-center">
-                    <p className="font-semibold text-white text-sm">{action.label}</p>
-                    <p className="text-xs text-slate-500">{action.desc}</p>
-                  </div>
-                </motion.button>
+                  className={`w-2 h-8 rounded-full transition-colors ${
+                    (learningMomentum.status === 'building' && i <= 4) ||
+                    (learningMomentum.status === 'active' && i <= 3) ||
+                    (learningMomentum.status === 'present' && i <= 2) ||
+                    (learningMomentum.status === 'starting' && i <= 1)
+                      ? 'bg-violet-500/60'
+                      : 'bg-slate-800'
+                  }`}
+                />
               ))}
             </div>
-
-            {/* TODAY'S SCHEDULE */}
-            {studyPlan?.blocks && studyPlan.blocks.length > 0 && (
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.2 }}
-                className="p-6 rounded-2xl bg-slate-900/50 border border-slate-800/60"
-              >
-                <div className="flex items-center justify-between mb-5">
-                  <div className="flex items-center gap-3">
-                    <Calendar className="w-5 h-5 text-violet-400" />
-                    <h3 className="font-semibold text-white">Today's Schedule</h3>
-                  </div>
-                  <button 
-                    onClick={() => navigate('/study-planner')}
-                    className="text-xs text-violet-400 hover:text-violet-300"
-                  >
-                    View Full Plan
-                  </button>
-                </div>
-                
-                <div className="space-y-3">
-                  {studyPlan.blocks.slice(0, 4).map((block, i) => (
-                    <div 
-                      key={i}
-                      className={`flex items-center gap-4 p-3 rounded-xl transition-all ${
-                        block.completed 
-                          ? 'bg-emerald-500/5 border border-emerald-500/20' 
-                          : i === 0 
-                            ? 'bg-violet-500/10 border border-violet-500/30' 
-                            : 'bg-slate-800/30 border border-transparent'
-                      }`}
-                    >
-                      <div className={`w-2 h-2 rounded-full ${
-                        block.completed ? 'bg-emerald-400' : i === 0 ? 'bg-violet-400 animate-pulse' : 'bg-slate-600'
-                      }`} />
-                      <div className="flex-1 min-w-0">
-                        <p className={`text-sm font-medium truncate ${block.completed ? 'text-emerald-400 line-through' : 'text-white'}`}>
-                          {block.topic || block.block_type?.replace('_', ' ')}
-                        </p>
-                        <p className="text-xs text-slate-500">{block.subject} • {block.duration_minutes}min</p>
-                      </div>
-                      {block.completed && <CheckCircle2 className="w-4 h-4 text-emerald-400" />}
-                      {i === 0 && !block.completed && (
-                        <span className="px-2 py-1 text-[10px] font-semibold text-violet-400 bg-violet-500/20 rounded-full">
-                          NOW
-                        </span>
-                      )}
-                    </div>
-                  ))}
-                </div>
-              </motion.div>
-            )}
-
-            {/* NEW USER ONBOARDING (Zero State) */}
-            {isNewUser && (
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.3 }}
-                className="p-6 rounded-2xl bg-gradient-to-br from-violet-600/10 to-indigo-600/10 border border-violet-500/20"
-              >
-                <div className="flex items-start gap-4">
-                  <div className="p-3 rounded-xl bg-violet-500/20">
-                    <Rocket className="w-6 h-6 text-violet-400" />
-                  </div>
-                  <div className="flex-1">
-                    <h3 className="font-semibold text-white mb-1">Welcome to DRON AI! 🎉</h3>
-                    <p className="text-sm text-slate-400 mb-4">
-                      Complete your first study session to start earning XP and building your streak.
-                    </p>
-                    <div className="flex flex-wrap gap-2">
-                      {[
-                        { icon: '📚', text: 'Complete 1 session', done: false },
-                        { icon: '🔥', text: 'Start a streak', done: false },
-                        { icon: '🏆', text: 'Earn first badge', done: false },
-                      ].map((task, i) => (
-                        <div key={i} className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-slate-800/50 text-xs text-slate-400">
-                          <span>{task.icon}</span>
-                          <span>{task.text}</span>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-              </motion.div>
-            )}
           </div>
+        </motion.div>
 
-          {/* RIGHT COLUMN: Stats & Wellness */}
-          <div className="space-y-6">
+        {/* ============ MAIN CONTENT GRID ============ */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          
+          {/* SUBJECT UNDERSTANDING */}
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.2 }}
+            className="p-5 rounded-2xl bg-slate-900/30 border border-slate-800/30"
+          >
+            <h3 className="text-sm font-medium text-slate-400 mb-4">Subject Understanding</h3>
+            <div className="space-y-4">
+              {subjects.map((subject, i) => (
+                <div key={i} className="space-y-2">
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="text-slate-300">{subject.name}</span>
+                    <span className="text-slate-500">
+                      {subject.score > 0 ? `${subject.score}%` : 'Just starting'}
+                    </span>
+                  </div>
+                  <div className="h-1.5 bg-slate-800 rounded-full overflow-hidden">
+                    <motion.div
+                      initial={{ width: 0 }}
+                      animate={{ width: `${Math.max(subject.score, 5)}%` }}
+                      transition={{ duration: 1, delay: i * 0.1 }}
+                      className="h-full rounded-full bg-gradient-to-r from-violet-600 to-violet-400"
+                    />
+                  </div>
+                </div>
+              ))}
+            </div>
             
-            {/* WELLNESS CARD */}
+            {subjects.every(s => s.score === 0) && (
+              <p className="text-slate-600 text-xs text-center mt-4">
+                Understanding builds with each conversation
+              </p>
+            )}
+          </motion.div>
+
+          {/* GENTLE SUGGESTIONS - Optional, not commanding */}
+          {studyPlan?.blocks && studyPlan.blocks.length > 0 && (
             <motion.div
-              initial={{ opacity: 0, x: 20 }}
-              animate={{ opacity: 1, x: 0 }}
-              className="p-6 rounded-2xl bg-slate-900/50 border border-slate-800/60"
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.25 }}
+              className="p-5 rounded-2xl bg-slate-900/30 border border-slate-800/30"
             >
               <div className="flex items-center justify-between mb-4">
-                <h3 className="font-semibold text-white flex items-center gap-2">
-                  <Heart className="w-4 h-4 text-rose-400" />
-                  How You're Doing
-                </h3>
-                <span className={`px-2.5 py-1 rounded-full text-xs font-semibold bg-${wellness.color}-500/15 text-${wellness.color}-400`}>
-                  {wellness.status}
-                </span>
+                <h3 className="text-sm font-medium text-slate-400">Gentle Suggestions</h3>
+                <span className="text-xs text-slate-600">Optional</span>
               </div>
               
-              <div className="flex items-start gap-4">
-                <div className={`p-4 rounded-xl bg-${wellness.color}-500/10`}>
-                  <wellness.icon className={`w-8 h-8 text-${wellness.color}-400`} strokeWidth={1.5} />
-                </div>
-                <div className="flex-1">
-                  <p className="text-slate-300 text-sm mb-1">{wellness.message}</p>
-                  <p className="text-xs text-slate-500">💡 {wellness.tip}</p>
-                </div>
-              </div>
-            </motion.div>
-
-            {/* SUBJECT PROGRESS - FROM API */}
-            <motion.div
-              initial={{ opacity: 0, x: 20 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: 0.1 }}
-              className="p-6 rounded-2xl bg-slate-900/50 border border-slate-800/60"
-            >
-              <div className="flex items-center justify-between mb-5">
-                <h3 className="font-semibold text-white flex items-center gap-2">
-                  <BarChart2 className="w-4 h-4 text-violet-400" />
-                  Subject Progress
-                </h3>
-                <button 
-                  onClick={() => navigate('/progress')}
-                  className="text-xs text-violet-400 hover:text-violet-300"
-                >
-                  Details
-                </button>
-              </div>
-              
-              <div className="space-y-5">
-                {subjects.map((subject, i) => (
-                  <div key={i} className="space-y-2">
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm text-slate-300">{subject.name}</span>
-                      <div className="flex items-center gap-2">
-                        <span className="text-sm font-semibold text-white">
-                          {subject.score > 0 ? `${subject.score}%` : '—'}
-                        </span>
-                        {subject.score > 0 && (
-                          <>
-                            <span className={`text-xs ${subject.trend === 'up' ? 'text-emerald-400' : subject.trend === 'down' ? 'text-amber-400' : 'text-slate-500'}`}>
-                              {subject.change}
-                            </span>
-                            {subject.trend === 'up' && <TrendingUp className="w-3 h-3 text-emerald-400" />}
-                            {subject.trend === 'down' && <TrendingDown className="w-3 h-3 text-amber-400" />}
-                          </>
-                        )}
-                      </div>
+              <div className="space-y-2">
+                {studyPlan.blocks.slice(0, 3).filter(b => !b.completed && b.block_type !== 'break').map((block, i) => (
+                  <div 
+                    key={i}
+                    className="flex items-center gap-3 p-3 rounded-xl bg-slate-800/20 hover:bg-slate-800/40 transition-colors cursor-pointer"
+                    onClick={() => navigate(`/tutor?topic=${encodeURIComponent(block.topic || block.subject)}`)}
+                  >
+                    <div className="w-1.5 h-1.5 rounded-full bg-violet-400/50" />
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm text-slate-300 truncate">
+                        {block.topic || block.block_type?.replace('_', ' ')}
+                      </p>
+                      <p className="text-xs text-slate-600">{block.subject}</p>
                     </div>
-                    <div className="h-2 bg-slate-800 rounded-full overflow-hidden">
-                      <motion.div
-                        initial={{ width: 0 }}
-                        animate={{ width: `${Math.max(subject.score, 0)}%` }}
-                        transition={{ duration: 1, delay: i * 0.2, ease: "easeOut" }}
-                        className={`h-full rounded-full ${
-                          subject.color === 'violet' ? 'bg-gradient-to-r from-violet-500 to-fuchsia-500' :
-                          subject.color === 'amber' ? 'bg-gradient-to-r from-amber-500 to-orange-500' :
-                          'bg-gradient-to-r from-emerald-500 to-teal-500'
-                        }`}
-                      />
-                    </div>
+                    <ChevronRight className="w-4 h-4 text-slate-600" />
                   </div>
                 ))}
               </div>
-
-              {/* No data state */}
-              {subjects.every(s => s.score === 0) && (
-                <div className="mt-4 p-3 rounded-xl bg-slate-800/30 border border-slate-700/30">
-                  <p className="text-xs text-slate-500 text-center">
-                    Complete study sessions to track your progress
-                  </p>
-                </div>
-              )}
-            </motion.div>
-
-            {/* ACHIEVEMENTS - FROM API */}
-            <motion.div
-              initial={{ opacity: 0, x: 20 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: 0.2 }}
-              className="p-6 rounded-2xl bg-slate-900/50 border border-slate-800/60"
-            >
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="font-semibold text-white flex items-center gap-2">
-                  <Award className="w-4 h-4 text-amber-400" />
-                  Achievements
-                </h3>
-                <span className="text-xs text-slate-500">{badgesEarned.length} earned</span>
-              </div>
               
-              {badgesEarned.length > 0 ? (
-                <div className="flex flex-wrap gap-2">
-                  {badgesEarned.slice(0, 6).map((badge, i) => (
-                    <div
-                      key={i}
-                      className="flex items-center gap-2 px-3 py-2 rounded-xl bg-slate-800/50 border border-slate-700/30"
-                      title={badge.name || badge}
-                    >
-                      <span className="text-lg">{badge.emoji || '🏆'}</span>
-                      <span className="text-xs text-slate-400">{badge.name || badge}</span>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <div className="text-center py-4">
-                  <Trophy className="w-8 h-8 text-slate-700 mx-auto mb-2" />
-                  <p className="text-xs text-slate-500">
-                    Complete sessions to earn badges!
-                  </p>
-                </div>
-              )}
+              <p className="text-xs text-slate-600 text-center mt-3">
+                These are just ideas. Follow your curiosity.
+              </p>
             </motion.div>
+          )}
 
-            {/* UPGRADE PROMPT (only for free users with low chats) */}
-            {tier === 'Free' && aiChatsLeft < 5 && (
-              <motion.div
-                initial={{ opacity: 0, x: 20 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: 0.3 }}
-                className="p-5 rounded-2xl bg-gradient-to-br from-violet-600/20 to-indigo-600/20 border border-violet-500/30 relative overflow-hidden"
-              >
-                <div className="absolute top-0 right-0 w-20 h-20 bg-violet-500/20 blur-2xl rounded-full" />
-                <div className="relative z-10">
-                  <div className="flex items-center gap-2 mb-2">
-                    <Sparkles className="w-4 h-4 text-violet-400" />
-                    <span className="text-sm font-semibold text-white">Need More AI Chats?</span>
-                  </div>
-                  <p className="text-xs text-slate-400 mb-3">
-                    Only {aiChatsLeft} chats left. Upgrade for unlimited access.
-                  </p>
-                  <button 
-                    onClick={() => navigate('/subscription')}
-                    className="w-full py-2.5 text-sm font-semibold text-white bg-violet-600 hover:bg-violet-500 rounded-xl transition-colors"
+          {/* ACHIEVEMENTS - Simplified, not gamified */}
+          {badgesEarned.length > 0 && (
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.3 }}
+              className="p-5 rounded-2xl bg-slate-900/30 border border-slate-800/30"
+            >
+              <h3 className="text-sm font-medium text-slate-400 mb-4">Milestones</h3>
+              <div className="flex flex-wrap gap-2">
+                {badgesEarned.slice(0, 4).map((badge, i) => (
+                  <div
+                    key={i}
+                    className="flex items-center gap-2 px-3 py-2 rounded-lg bg-slate-800/30"
                   >
-                    Upgrade Plan
-                  </button>
+                    <span className="text-base">{badge.emoji || '✨'}</span>
+                    <span className="text-xs text-slate-400">{badge.name || badge}</span>
+                  </div>
+                ))}
+              </div>
+            </motion.div>
+          )}
+
+          {/* NEW USER - Warm Welcome */}
+          {isNewUser && (
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.2 }}
+              className="lg:col-span-2 p-6 rounded-2xl bg-slate-900/40 border border-slate-800/40"
+            >
+              <div className="text-center max-w-md mx-auto">
+                <div className="w-12 h-12 rounded-full bg-violet-500/10 flex items-center justify-center mx-auto mb-4">
+                  <Brain className="w-6 h-6 text-violet-400" />
                 </div>
-              </motion.div>
-            )}
-          </div>
+                <h3 className="text-lg font-medium text-white mb-2">Welcome to Cognito OS</h3>
+                <p className="text-slate-400 text-sm mb-4">
+                  I'm Sathi, your AI learning companion. I'm here to help you understand anything, 
+                  at your pace, without judgment. Ask me anything—there are no dumb questions.
+                </p>
+                <motion.button
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                  onClick={() => navigate('/tutor')}
+                  className="inline-flex items-center gap-2 px-5 py-2.5 bg-violet-600 hover:bg-violet-500 text-white rounded-xl font-medium transition-colors"
+                >
+                  Start a Conversation
+                  <ChevronRight className="w-4 h-4" />
+                </motion.button>
+              </div>
+            </motion.div>
+          )}
         </div>
 
-        {/* ============ FOOTER ============ */}
-        <footer className="flex items-center justify-center gap-6 py-6 opacity-40">
-          <span className="text-xs text-slate-500">DRON AI • Your Intelligent Study Partner</span>
+        {/* ============ FOOTER - Minimal ============ */}
+        <footer className="flex items-center justify-center py-8">
+          <span className="text-xs text-slate-600">Cognito OS • Your AI Learning Companion</span>
         </footer>
       </div>
     </div>

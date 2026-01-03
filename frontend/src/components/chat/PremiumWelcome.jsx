@@ -1,8 +1,14 @@
 /**
- * PremiumWelcome - Emotionally Intelligent AI Mentor Interface
- * DRON AI's signature welcome experience - warm, supportive, student-first
+ * 🧠 Cognito OS — AI Companion Welcome
+ * =====================================
  * 
- * Design Philosophy: "Someone smart, calm, and supportive is sitting next to the student"
+ * Philosophy: "Someone smart, calm, and supportive is sitting next to the student"
+ * 
+ * Language Principles:
+ * - No commanding language ("must", "complete", "deadline")
+ * - Supportive, calm tone always
+ * - Student sets the pace, AI follows
+ * - No pressure, no judgment
  */
 import React, { useState, useMemo, useCallback, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -757,9 +763,9 @@ const PremiumWelcome = ({ onSendMessage, userProfile }) => {
     
     if (isLateNight) {
       return [
-        "Late night grind? I respect the hustle. 💪",
-        "Sleep is important, but so is clearing doubts.",
-        "Quick question before bed? Let's do it.",
+        "Late night? I'm here with you.",
+        "Rest is important too. Take care of yourself.",
+        "One question, then maybe some sleep?",
         ...baseMessages
       ];
     }
@@ -809,7 +815,7 @@ const PremiumWelcome = ({ onSendMessage, userProfile }) => {
     
     return [
       ...basePlaceholders,
-      "Quick revision for tomorrow's test",
+      "Help me understand this better...",
       "I keep forgetting this concept..."
     ];
   }, []);
