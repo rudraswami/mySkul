@@ -317,7 +317,8 @@ export default function ClassroomLayout({
         {/* === WELCOME MODE (Full Width, Centered on Desktop, Top-aligned on Mobile) === */}
         {!hasStartedChat ? (
           <div className="flex-1 flex flex-col bg-slate-900 overflow-y-auto cognito-welcome-container">
-            <div className="flex-1 flex items-center justify-center md:items-center cognito-welcome-content">
+            {/* FIXED: Better alignment for mobile - content starts at safe distance from header */}
+            <div className="flex-1 flex items-start md:items-center justify-start md:justify-center cognito-welcome-content">
               <div className="w-full max-w-4xl mx-auto px-4 md:px-6 py-4 md:py-8">
                 {welcomeScreen || children}
               </div>

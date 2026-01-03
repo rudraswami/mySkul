@@ -193,30 +193,41 @@
   /* Welcome container - account for fixed header */
   .cognito-welcome-container {
     padding-top: 56px !important;
+    /* FIXED: Ensure welcome screen scrolls properly on all devices */
+    overflow-y: auto !important;
+    -webkit-overflow-scrolling: touch !important;
   }
 
   /* Fix vertical centering - align to top on mobile so content is visible */
   .cognito-welcome-content {
     align-items: flex-start !important;
     justify-content: flex-start !important;
-    padding-top: 10px;
+    /* FIXED: Better spacing - not too high, not too low */
+    padding-top: 24px !important;
+    min-height: auto !important;
   }
 
   /* Welcome wrapper - natural height, scrollable */
   .sathi-welcome-wrapper {
     min-height: auto !important;
-    padding-top: 8px !important;
-    padding-bottom: 120px !important;
+    /* FIXED: Consistent spacing with chat mode */
+    padding-top: 16px !important;
+    padding-bottom: 32px !important;
   }
 
   /* Welcome content - natural height */
   .sathi-welcome-content {
     min-height: auto !important;
+    /* FIXED: Proper spacing inside welcome content */
+    padding-left: 16px !important;
+    padding-right: 16px !important;
   }
   
   /* Hero section - ensure logo/mascot is visible */
   .sathi-hero-section {
-    padding-top: 8px !important;
+    /* FIXED: Better top spacing for logo/mascot */
+    padding-top: 20px !important;
+    padding-bottom: 16px !important;
   }
 
   /* ========================================
@@ -230,7 +241,13 @@
     -webkit-overflow-scrolling: touch;
     overscroll-behavior: contain;
     padding-top: 56px;
-    padding-bottom: 100px;
+    /* FIXED: Increased from 100px to 180px to accommodate full input container height
+       - Input container base: ~120px
+       - Follow-up chips: +30px
+       - Image preview: +40px
+       - Safe area inset (iOS): +20-34px
+       - Total safe zone: 180px ensures last message is always visible */
+    padding-bottom: 180px;
   }
 
   /* FOOTER/INPUT - Fixed at bottom */
@@ -243,6 +260,9 @@
     background: linear-gradient(180deg, transparent 0%, rgba(18, 18, 28, 0.98) 15%) !important;
     padding: 12px 12px 16px !important;
     padding-bottom: calc(16px + env(safe-area-inset-bottom)) !important;
+    /* FIXED: Ensure input container is fully visible and not cut off */
+    max-height: 40vh !important;
+    overflow-y: auto !important;
   }
 
   .sathi-chat-scroll {
@@ -756,6 +776,94 @@
   .mobile-transition {
     transition: all 0.3s ease !important;
   }
+  
+  /* ========================================
+     COMPREHENSIVE MOBILE SAFETY FIXES
+     Additional defensive CSS for edge cases
+     ======================================== */
+  
+  /* Ensure header never overlaps content */
+  header[class*="h-14"],
+  header.flex-shrink-0 {
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    z-index: 1000 !important;
+  }
+  
+  /* Ensure chat messages are readable and not hidden */
+  .sathi-user-message,
+  .sathi-ai-message-content {
+    max-width: 100% !important;
+    word-wrap: break-word !important;
+    overflow-wrap: break-word !important;
+  }
+  
+  /* Ensure input textarea doesn't get too small */
+  .sathi-chat-textarea,
+  textarea[class*="chat"] {
+    min-height: 44px !important;
+    font-size: 16px !important; /* Prevents iOS zoom on focus */
+  }
+  
+  /* Ensure buttons are touch-friendly */
+  .sathi-chat-send-btn,
+  .sathi-chat-attach-btn,
+  button[class*="sathi"] {
+    min-width: 44px !important;
+    min-height: 44px !important;
+    touch-action: manipulation !important;
+  }
+  
+  /* Prevent text selection issues on mobile */
+  .sathi-chat-input-form,
+  .sathi-chat-input-wrapper {
+    -webkit-user-select: text !important;
+    user-select: text !important;
+  }
+  
+  /* Ensure proper scrolling behavior */
+  .sathi-chat-scroll,
+  div[class*="overflow-y-auto"] {
+    -webkit-overflow-scrolling: touch !important;
+    scroll-behavior: smooth !important;
+  }
+  
+  /* Prevent horizontal overflow anywhere */
+  * {
+    max-width: 100vw !important;
+  }
+  
+  /* Allow code blocks and pre elements to scroll horizontally if needed */
+  pre,
+  code,
+  .code-block {
+    max-width: calc(100vw - 32px) !important;
+    overflow-x: auto !important;
+  }
+  
+  /* Ensure images in messages are responsive */
+  .sathi-user-message img,
+  .sathi-ai-message-content img {
+    max-width: 100% !important;
+    height: auto !important;
+    border-radius: 8px !important;
+  }
+  
+  /* Fix safe area insets for notched devices (iPhone X+) */
+  @supports (padding: max(0px)) {
+    .sathi-chat-input-container {
+      padding-left: max(12px, env(safe-area-inset-left)) !important;
+      padding-right: max(12px, env(safe-area-inset-right)) !important;
+      padding-bottom: max(16px, env(safe-area-inset-bottom)) !important;
+    }
+    
+    .cognito-tutor-container header {
+      padding-left: max(16px, env(safe-area-inset-left)) !important;
+      padding-right: max(16px, env(safe-area-inset-right)) !important;
+    }
+  }
 }
 
 /* Extra small devices (phones in portrait, less than 576px) */
@@ -793,6 +901,26 @@
     margin: 0 !important;
     border-radius: 0 !important;
   }
+  
+  /* FIXED: Extra padding for chat wrapper on very small screens */
+  .sathi-chat-wrapper {
+    padding-bottom: 200px !important;
+  }
+  
+  /* FIXED: Ensure input container doesn't take too much space on tiny screens */
+  .sathi-chat-input-container {
+    max-height: 45vh !important;
+  }
+  
+  /* FIXED: Welcome content spacing for small phones */
+  .cognito-welcome-content {
+    padding-top: 16px !important;
+  }
+  
+  .sathi-hero-section {
+    padding-top: 12px !important;
+    padding-bottom: 12px !important;
+  }
 }
 
 /* Landscape orientation on mobile */
@@ -805,6 +933,41 @@
   .modal,
   .upgrade-modal {
     max-height: 95vh !important;
+  }
+  
+  /* FIXED: Reduce padding in landscape to maximize screen space */
+  .sathi-chat-wrapper {
+    padding-top: 56px !important;
+    padding-bottom: 140px !important;
+  }
+  
+  /* FIXED: Input container should be more compact in landscape */
+  .sathi-chat-input-container {
+    padding: 8px 12px 12px !important;
+    max-height: 50vh !important;
+  }
+  
+  /* FIXED: Welcome screen should use minimal spacing in landscape */
+  .cognito-welcome-content {
+    padding-top: 12px !important;
+  }
+  
+  .sathi-hero-section {
+    padding-top: 8px !important;
+    padding-bottom: 8px !important;
+  }
+  
+  /* FIXED: Header should be more compact in landscape */
+  header.flex-shrink-0.h-14 {
+    height: 48px !important;
+  }
+  
+  .cognito-welcome-container {
+    padding-top: 48px !important;
+  }
+  
+  .sathi-chat-wrapper {
+    padding-top: 48px !important;
   }
 }
 

@@ -327,7 +327,7 @@ const ChatItem = ({ chat, isActive, onClick, onRename, onDelete, onPin }) => {
         {showMenu && (
           <>
             <div 
-              style={{ position: 'fixed', inset: 0, zIndex: 40 }}
+              style={{ position: 'fixed', inset: 0, zIndex: 45 }}
               onClick={() => setShowMenu(false)}
             />
             <motion.div
@@ -340,14 +340,17 @@ const ChatItem = ({ chat, isActive, onClick, onRename, onDelete, onPin }) => {
                 right: '12px',
                 top: '100%',
                 marginTop: '4px',
-                zIndex: 50,
+                /* FIXED: Higher z-index to ensure dropdown appears above all sidebar content */
+                zIndex: 55,
                 width: '140px',
                 backgroundColor: '#1c1c2a',
                 borderRadius: '12px',
                 boxShadow: '0 10px 40px rgba(0,0,0,0.5)',
                 border: '1px solid rgba(255, 255, 255, 0.08)',
                 padding: '4px 0',
-                overflow: 'hidden'
+                overflow: 'hidden',
+                /* FIXED: Prevent dropdown from being cut off at bottom of viewport */
+                maxHeight: 'calc(100vh - 100px)'
               }}
               onClick={(e) => e.stopPropagation()}
             >
@@ -638,7 +641,10 @@ const UserProfileDropdown = ({ onClose }) => {
               boxShadow: '0 10px 40px rgba(0,0,0,0.5)',
               border: '1px solid rgba(255, 255, 255, 0.08)',
               overflow: 'hidden',
-              zIndex: 60
+              zIndex: 60,
+              /* FIXED: Ensure dropdown doesn't overflow viewport */
+              maxHeight: 'calc(100vh - 180px)',
+              overflowY: 'auto'
             }}
           >
             {/* Navigation Items */}
@@ -976,6 +982,7 @@ export default function HistorySidebar({
       </AnimatePresence>
 
       {/* Sidebar Drawer - Responsive width */}
+      {/* FIXED: Better width calculation for small phones - leaves backdrop visible */}
       <motion.div
         initial={false}
         animate={{ x: isOpen ? 0 : '-100%' }}
@@ -985,8 +992,10 @@ export default function HistorySidebar({
           top: 0,
           left: 0,
           bottom: 0,
-          width: 'min(320px, 85vw)',
-          maxWidth: '320px',
+          /* FIXED: On phones < 375px, use 80vw (leaves 20% for backdrop)
+             On phones >= 375px, cap at 300px for better UX */
+          width: 'min(300px, 80vw)',
+          maxWidth: '300px',
           backgroundColor: '#0f0f16',
           boxShadow: '4px 0 30px rgba(0,0,0,0.5)',
           zIndex: 50,
@@ -1163,10 +1172,12 @@ export default function HistorySidebar({
 
         {/* === FOOTER: NEW CHAT + USER PROFILE === */}
         {/* Added safe-area padding for iOS devices */}
+        {/* FIXED: Added padding-top to ensure dropdown has space to expand upward */}
         <div style={{
           backgroundColor: '#141420',
           borderTop: '1px solid rgba(255, 255, 255, 0.08)',
-          paddingBottom: 'env(safe-area-inset-bottom, 0px)'
+          paddingTop: '8px',
+          paddingBottom: 'max(16px, env(safe-area-inset-bottom, 16px))'
         }}>
           {/* New Chat Button */}
           <div style={{ padding: '12px 16px 8px 16px' }}>
