@@ -169,7 +169,6 @@
   .cognito-tutor-container {
     height: 100dvh;
     height: -webkit-fill-available;
-    display: flex;
     flex-direction: column;
     position: relative;
   }
@@ -236,19 +235,12 @@
   
   /* Chat wrapper - account for fixed header and footer */
   .sathi-chat-wrapper {
-    flex: 1;
+    position: relative;
+    height: calc(100dvh - 56px); /* header */
     overflow-y: auto;
-    -webkit-overflow-scrolling: touch;
-    overscroll-behavior: contain;
-    padding-top: 56px;
-    /* FIXED: Increased from 100px to 180px to accommodate full input container height
-       - Input container base: ~120px
-       - Follow-up chips: +30px
-       - Image preview: +40px
-       - Safe area inset (iOS): +20-34px
-       - Total safe zone: 180px ensures last message is always visible */
-    padding-bottom: 180px;
+    padding-bottom: calc(120px + env(safe-area-inset-bottom)); /* input */
   }
+  
 
   /* FOOTER/INPUT - Fixed at bottom */
   .sathi-chat-input-container {
@@ -261,7 +253,7 @@
     padding: 12px 12px 16px !important;
     padding-bottom: calc(16px + env(safe-area-inset-bottom)) !important;
     /* FIXED: Ensure input container is fully visible and not cut off */
-    max-height: 40vh !important;
+    max-height: none;
     overflow-y: auto !important;
   }
 
