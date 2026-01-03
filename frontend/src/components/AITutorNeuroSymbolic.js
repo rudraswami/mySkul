@@ -2078,7 +2078,7 @@ export default function AITutorNeuroSymbolic() {
   }, []);
 
   return (
-    <div className="flex h-screen bg-gray-50 overflow-hidden relative">
+    <div className="cognito-tutor-container flex h-screen bg-gray-50 overflow-hidden relative">
       {/* 📡 OFFLINE INDICATOR - Shows when no internet connection */}
       <AnimatePresence>
         {!isOnline && (
@@ -2185,7 +2185,7 @@ export default function AITutorNeuroSymbolic() {
           }}
           isLoadingHistory={sessionsLoading}
           visualArtifact={visualArtifact}
-          headerTitle="Sathi"
+          headerTitle="DRON AI"
           headerRightActions={headerRightActions}
           hasStartedChat={messages.length > 0}
           isGeneratingVisual={isGeneratingVisual}

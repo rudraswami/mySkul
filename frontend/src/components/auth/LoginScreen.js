@@ -56,9 +56,9 @@ export default function LoginScreen() {
         throw new Error(result.error || 'Login failed');
       }
 
-      // V1: Always redirect to dashboard - profile setup removed
+      // Cognito OS: AI companion first - redirect to tutor
       setTimeout(() => {
-        navigate('/dashboard', { replace: true });
+        navigate('/tutor', { replace: true });
       }, 0);
     } catch (err) {
       setError(err.message || 'Login failed. Please check your credentials.');
@@ -106,9 +106,9 @@ export default function LoginScreen() {
         throw new Error(result.error || 'Registration failed');
       }
 
-      // Email/Password signup is complete with profile - navigate to dashboard
+      // Cognito OS: AI companion first - redirect to tutor
       setTimeout(() => {
-        navigate('/dashboard', { replace: true });
+        navigate('/tutor', { replace: true });
       }, 0);
     } catch (err) {
       setError(err.message || 'Registration failed. Please try again.');

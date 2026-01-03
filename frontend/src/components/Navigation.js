@@ -49,9 +49,9 @@ export default function Navigation({ mobileMenuOpen, setMobileMenuOpen, collapse
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  // Cognito OS: Tutor first (primary), Progress (secondary)
+  // Cognito OS: AI Companion first (primary), Progress (secondary)
   const navigation = [
-    { name: 'Sathi', href: '/tutor', icon: Sparkles, current: location.pathname === '/tutor', badge: 'AI' },
+    { name: 'Ask AI', href: '/tutor', icon: Sparkles, current: location.pathname === '/tutor' },
     { name: 'Progress', href: '/dashboard', icon: Home, current: location.pathname === '/dashboard' }
   ];
 

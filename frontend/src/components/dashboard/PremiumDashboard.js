@@ -55,6 +55,23 @@ const fetchWithAuth = async (endpoint) => {
   }
 };
 
+// Helper to format relative time
+const formatTimeAgo = (dateString) => {
+  if (!dateString) return '';
+  const date = new Date(dateString);
+  const now = new Date();
+  const diffMs = now - date;
+  const diffMins = Math.floor(diffMs / 60000);
+  const diffHours = Math.floor(diffMs / 3600000);
+  const diffDays = Math.floor(diffMs / 86400000);
+  
+  if (diffMins < 1) return 'Just now';
+  if (diffMins < 60) return `${diffMins}m ago`;
+  if (diffHours < 24) return `${diffHours}h ago`;
+  if (diffDays < 7) return `${diffDays}d ago`;
+  return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+};
+
 // ============================================================================
 // MAIN DASHBOARD COMPONENT
 // ============================================================================
@@ -71,16 +88,18 @@ const PremiumDashboard = () => {
   const [studyPlan, setStudyPlan] = useState(null);
   const [usageData, setUsageData] = useState(null);
   const [aiRecommendation, setAiRecommendation] = useState(null);
+  const [recentChats, setRecentChats] = useState([]);
 
   // Fetch ALL data from APIs
   useEffect(() => {
     const loadAllData = async () => {
-      const [progressData, masteryData, planData, usageRes, recsData] = await Promise.all([
+      const [progressData, masteryData, planData, usageRes, recsData, chatsData] = await Promise.all([
         fetchWithAuth('/api/user/progress'),
         fetchWithAuth('/api/analytics/subject-progress'),
         fetchWithAuth('/api/study-planner/today'),
         fetchWithAuth('/api/subscription/usage'),
-        fetchWithAuth('/api/cognitive/recommendations')
+        fetchWithAuth('/api/cognitive/recommendations'),
+        fetchWithAuth('/api/ai/chat/sessions')
       ]);
 
       setProgress(progressData);
@@ -88,6 +107,10 @@ const PremiumDashboard = () => {
       if (planData?.blocks?.length > 0) setStudyPlan(planData);
       setUsageData(usageRes);
       setAiRecommendation(recsData);
+      // Get last 3 conversations
+      if (chatsData?.sessions) {
+        setRecentChats(chatsData.sessions.slice(0, 3));
+      }
       setLoading(false);
     };
     loadAllData();
@@ -358,7 +381,7 @@ const PremiumDashboard = () => {
               className="inline-flex items-center justify-center gap-2 px-5 py-3 bg-violet-600 hover:bg-violet-500 text-white rounded-xl font-medium transition-colors"
             >
               <MessageCircle className="w-4 h-4" />
-              Talk to Sathi
+              Talk to AI
             </motion.button>
           </div>
         </motion.div>
@@ -393,6 +416,48 @@ const PremiumDashboard = () => {
             </div>
           </div>
         </motion.div>
+
+        {/* ============ RECENT CONVERSATIONS ============ */}
+        {recentChats.length > 0 && (
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.18 }}
+            className="p-5 rounded-2xl bg-slate-900/30 border border-slate-800/30"
+          >
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-sm font-medium text-slate-400">Recent Conversations</h3>
+              <button 
+                onClick={() => navigate('/tutor')}
+                className="text-xs text-violet-400 hover:text-violet-300 transition-colors"
+              >
+                View all
+              </button>
+            </div>
+            <div className="space-y-2">
+              {recentChats.map((chat, i) => (
+                <div 
+                  key={chat.session_id || i}
+                  className="flex items-center gap-3 p-3 rounded-xl bg-slate-800/20 hover:bg-slate-800/40 transition-colors cursor-pointer"
+                  onClick={() => navigate(`/tutor?session=${chat.session_id}`)}
+                >
+                  <div className="p-2 rounded-lg bg-violet-500/10">
+                    <MessageCircle className="w-4 h-4 text-violet-400" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm text-slate-300 truncate">
+                      {chat.title || 'Untitled chat'}
+                    </p>
+                    <p className="text-xs text-slate-600">
+                      {chat.subject || 'General'} • {formatTimeAgo(chat.updated_at || chat.created_at)}
+                    </p>
+                  </div>
+                  <ChevronRight className="w-4 h-4 text-slate-600 flex-shrink-0" />
+                </div>
+              ))}
+            </div>
+          </motion.div>
+        )}
 
         {/* ============ MAIN CONTENT GRID ============ */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -506,9 +571,9 @@ const PremiumDashboard = () => {
                 <div className="w-12 h-12 rounded-full bg-violet-500/10 flex items-center justify-center mx-auto mb-4">
                   <Brain className="w-6 h-6 text-violet-400" />
                 </div>
-                <h3 className="text-lg font-medium text-white mb-2">Welcome to Cognito OS</h3>
+                <h3 className="text-lg font-medium text-white mb-2">Welcome to DRON AI</h3>
                 <p className="text-slate-400 text-sm mb-4">
-                  I'm Sathi, your AI learning companion. I'm here to help you understand anything, 
+                  I'm your AI learning companion. I'm here to help you understand anything, 
                   at your pace, without judgment. Ask me anything—there are no dumb questions.
                 </p>
                 <motion.button
@@ -527,7 +592,7 @@ const PremiumDashboard = () => {
 
         {/* ============ FOOTER - Minimal ============ */}
         <footer className="flex items-center justify-center py-8">
-          <span className="text-xs text-slate-600">Cognito OS • Your AI Learning Companion</span>
+          <span className="text-xs text-slate-600">DRON AI • Your Learning Companion</span>
         </footer>
       </div>
     </div>

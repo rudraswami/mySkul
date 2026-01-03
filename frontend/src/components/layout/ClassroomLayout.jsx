@@ -54,7 +54,7 @@ const SMARTBOARD_ENABLED = false;
 // ============================================
 const ClassroomHeader = ({ 
   onMenuClick, 
-  title = 'Sathi',
+  title = 'DRON AI',
   rightActions,
   isBoardOpen,
   onToggleBoard,
@@ -63,7 +63,7 @@ const ClassroomHeader = ({
 }) => {
   // AI Status configurations
   const statusConfig = {
-    ready: { text: 'Sathi is ready', color: 'bg-emerald-500', pulse: false },
+    ready: { text: 'Ready to help', color: 'bg-emerald-500', pulse: false },
     listening: { text: 'Listening...', color: 'bg-blue-500', pulse: true },
     thinking: { text: 'Thinking...', color: 'bg-purple-500', pulse: true },
     explaining: { text: 'Explaining', color: 'bg-amber-500', pulse: false }
@@ -195,7 +195,7 @@ export default function ClassroomLayout({
   isLoadingHistory = false,
   visualArtifact = null,
   onVisualFullscreen,
-  headerTitle = 'Sathi',
+  headerTitle = 'DRON AI',
   headerRightActions,
   hasStartedChat = true, // Controls whether to show split layout or full-width welcome
   welcomeScreen = null, // Optional custom welcome screen component

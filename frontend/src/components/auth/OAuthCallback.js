@@ -62,9 +62,9 @@ export default function OAuthCallback() {
         // Clean URL query parameters
         window.history.replaceState({}, document.title, window.location.pathname);
 
-        // V1: Always redirect to dashboard - profile setup removed
-        console.log('→ Redirecting to dashboard...');
-        navigate('/dashboard', { replace: true });
+        // Cognito OS: AI companion first - redirect to tutor
+        console.log('→ Redirecting to tutor...');
+        navigate('/tutor', { replace: true });
       } catch (error) {
         console.error('❌ OAuth callback error:', error);
         console.error('Error details:', {

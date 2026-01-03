@@ -157,71 +157,62 @@
   }
   
   /* ========================================
-     AI TUTOR MOBILE - FIXED HEADER/FOOTER LAYOUT
-     Like ChatGPT: fixed header, fixed input, scrollable messages
+     COGNITO OS - MOBILE CHAT LAYOUT FIX
      ======================================== */
   
   /* 
-   * DOM STRUCTURE:
-   * <div h-screen>                    <- main container
-   *   <ClassroomLayout>
-   *     <header h-14>                 <- FIXED TOP
-   *     <div flex-1>                  <- content area
-   *       <sathi-chat-wrapper>        <- chat container
-   *         <sathi-chat-scroll>       <- SCROLLABLE
-   *         <sathi-chat-input-container> <- FIXED BOTTOM
-   *
-   * FIX: Pull header and input out of flow with fixed positioning.
-   * Messages area scrolls between them.
+   * ARCHITECTURE:
+   * .cognito-tutor-container <- main container (dedicated class)
+   *   ClassroomLayout
+   *     header               <- FIXED TOP (56px)
+   *     .sathi-chat-wrapper  <- fills between header & input
+   *       .sathi-chat-scroll <- SCROLLABLE messages
+   *     .sathi-chat-input-container <- FIXED BOTTOM
    */
   
-  /* Prevent body/html scroll */
-  html:has(.sathi-chat-wrapper),
-  body:has(.sathi-chat-wrapper) {
+  /* Lock body when in tutor */
+  html:has(.cognito-tutor-container),
+  body:has(.cognito-tutor-container) {
     overflow: hidden !important;
     position: fixed !important;
     width: 100% !important;
     height: 100% !important;
-    touch-action: none !important;
   }
   
-  /* Allow touch on chat scroll area */
-  .sathi-chat-scroll {
-    touch-action: pan-y !important;
-  }
-  
-  /* Main container - fixed viewport */
-  .flex.h-screen.bg-gray-50.overflow-hidden.relative {
-    position: fixed !important;
-    inset: 0 !important;
-  }
-  
-  /* Header - FIXED at top */
-  header.flex-shrink-0.h-14 {
+  /* Main container - fills viewport */
+  .cognito-tutor-container {
     position: fixed !important;
     top: 0 !important;
     left: 0 !important;
     right: 0 !important;
-    z-index: 100 !important;
-    height: 56px !important;
-    background: #0f172a !important; /* slate-900 */
+    bottom: 0 !important;
+    display: flex !important;
+    flex-direction: column !important;
   }
   
-  /* Input container - FIXED at bottom (pulled out of normal flow) */
-  .sathi-chat-input-container {
+  /* Header - FIXED at top (inside ClassroomLayout) */
+  .cognito-tutor-container header {
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    z-index: 1000 !important;
+    height: 56px !important;
+    flex-shrink: 0 !important;
+  }
+  
+  /* Input container - FIXED at bottom */
+  .cognito-tutor-container .sathi-chat-input-container {
     position: fixed !important;
     bottom: 0 !important;
     left: 0 !important;
     right: 0 !important;
-    z-index: 100 !important;
-    background: linear-gradient(180deg, transparent 0%, rgba(18, 18, 28, 0.98) 20%) !important;
-    padding: 12px 10px 16px !important;
+    z-index: 1000 !important;
     padding-bottom: calc(16px + env(safe-area-inset-bottom, 0px)) !important;
   }
   
-  /* Wrapper fills space below header - no bottom constraint */
-  /* Input is fixed separately, so wrapper can extend behind it */
-  .sathi-chat-wrapper {
+  /* Chat wrapper - positioned between header and input */
+  .cognito-tutor-container .sathi-chat-wrapper {
     position: fixed !important;
     top: 56px !important;
     left: 0 !important;
@@ -230,12 +221,13 @@
     overflow: hidden !important;
   }
   
-  /* Messages scroll area - leaves padding for fixed input */
-  .sathi-chat-scroll {
+  /* Messages scroll area - with bottom padding for input */
+  .cognito-tutor-container .sathi-chat-scroll {
     height: 100% !important;
     overflow-y: auto !important;
     overflow-x: hidden !important;
     -webkit-overflow-scrolling: touch !important;
+    touch-action: pan-y !important;
     overscroll-behavior: contain !important;
     /* Bottom padding = input height so content isn't hidden behind it */
     padding-bottom: 100px !important;
