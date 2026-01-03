@@ -581,13 +581,25 @@ export default function AITutorNeuroSymbolic() {
     getConfidenceStatus,
   } = useVoiceInput({ language: 'en-IN' }); // Default to Indian English
   
+  // Track last applied transcript to prevent re-applying stale values
+  const lastAppliedTranscriptRef = useRef('');
+  
   // AUTO-POPULATE: Update input when voice transcript changes
+  // FIX: Only apply if actively listening OR transcript is genuinely new
   useEffect(() => {
     if (transcript && transcript.trim()) {
-      console.log('🎙️ Voice transcript updated:', transcript.substring(0, 50));
-      setInputMessage(transcript);
+      // Only apply if:
+      // 1. User is actively listening (real-time updates), OR
+      // 2. Transcript is different from last applied (prevents stale re-application)
+      const isNewTranscript = transcript !== lastAppliedTranscriptRef.current;
+      
+      if (isListening || isNewTranscript) {
+        console.log('🎙️ Voice transcript updated:', transcript.substring(0, 50));
+        setInputMessage(transcript);
+        lastAppliedTranscriptRef.current = transcript;
+      }
     }
-  }, [transcript]);
+  }, [transcript, isListening]);
   
   // VOICE ERROR HANDLING: Show toast when voice error occurs (with auto-recovery message)
   useEffect(() => {
@@ -1108,6 +1120,9 @@ export default function AITutorNeuroSymbolic() {
     console.log('🧹 handleSend CLEARING input, was:', messageToSend);
     inputClearedByUserRef.current = true; // 🛡️ Mark as intentional clear
     setInputMessage('');
+    // 🛡️ FIX: Clear voice transcript tracking to prevent ghost re-population
+    lastAppliedTranscriptRef.current = '';
+    if (typeof clearTranscript === 'function') clearTranscript();
     setSelectedImage(null);
     setImagePreview(null);
     if (fileInputRef.current) {

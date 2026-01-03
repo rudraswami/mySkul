@@ -1931,15 +1931,60 @@
   min-width: 0;
 }
 
-/* ===== FORCE DARK THEME ON ALL RESPONSE CONTENT ===== */
-/* Override SmartResponse's light theme */
-.sathi-ai-message-content,
-.sathi-ai-message-content * {
-  color: #e2e8f0 !important;
+/* ===== DARK THEME TEXT COLORS FOR RESPONSE CONTENT ===== */
+/* Applied selectively - NOT blanket override to allow cards to have proper contrast */
+.sathi-ai-message-content {
+  color: #e2e8f0;
 }
 
 .sathi-ai-message-content .smart-response-container {
   background: transparent !important;
+}
+
+/* ===== FIX: Cards with light backgrounds must use DARK text ===== */
+/* CalculationResponse, ExampleResponse, Definition cards */
+.sathi-ai-message-content .bg-blue-50,
+.sathi-ai-message-content .bg-green-50,
+.sathi-ai-message-content .bg-yellow-50,
+.sathi-ai-message-content .bg-purple-50,
+.sathi-ai-message-content .bg-amber-50,
+.sathi-ai-message-content .bg-emerald-50,
+.sathi-ai-message-content .bg-red-50,
+.sathi-ai-message-content .bg-orange-50,
+.sathi-ai-message-content .bg-indigo-50,
+.sathi-ai-message-content .bg-gray-50 {
+  /* Override to use DARK backgrounds in dark theme */
+  background: rgba(30, 30, 50, 0.9) !important;
+  border: 1px solid rgba(99, 102, 241, 0.2) !important;
+}
+
+/* Ensure text inside these cards is readable */
+.sathi-ai-message-content .bg-blue-50 *,
+.sathi-ai-message-content .bg-green-50 *,
+.sathi-ai-message-content .bg-yellow-50 *,
+.sathi-ai-message-content .bg-purple-50 *,
+.sathi-ai-message-content .bg-amber-50 *,
+.sathi-ai-message-content .bg-emerald-50 *,
+.sathi-ai-message-content .bg-red-50 *,
+.sathi-ai-message-content .bg-orange-50 *,
+.sathi-ai-message-content .bg-indigo-50 *,
+.sathi-ai-message-content .bg-gray-50 * {
+  color: #e2e8f0 !important;
+}
+
+/* Card headers/icons should keep accent colors */
+.sathi-ai-message-content .text-blue-600,
+.sathi-ai-message-content .text-green-600,
+.sathi-ai-message-content .text-purple-600,
+.sathi-ai-message-content .text-amber-600 {
+  color: #a5b4fc !important;
+}
+
+.sathi-ai-message-content .text-blue-800,
+.sathi-ai-message-content .text-green-800,
+.sathi-ai-message-content .text-purple-800,
+.sathi-ai-message-content .text-amber-800 {
+  color: #c4b5fd !important;
 }
 
 /* Headings - Bright white */
@@ -1957,6 +2002,21 @@
   color: #cbd5e1 !important;
   line-height: 1.75 !important;
   font-size: 15px !important;
+}
+
+/* Spans inside AI content - inherit proper colors */
+.sathi-ai-message-content span {
+  color: inherit;
+}
+
+/* Text rendered via AdaptiveMarkdown */
+.sathi-ai-message-content .text-gray-700,
+.sathi-ai-message-content .text-gray-800 {
+  color: #cbd5e1 !important;
+}
+
+.sathi-ai-message-content .text-gray-900 {
+  color: #f1f5f9 !important;
 }
 
 /* Lists - Clean styling */
@@ -2001,13 +2061,34 @@
   text-decoration: underline !important;
 }
 
-/* Blockquotes */
+/* Blockquotes - Dark theme compatible */
 .sathi-ai-message-content blockquote {
   border-left: 3px solid #6366f1 !important;
-  background: rgba(99, 102, 241, 0.08) !important;
+  background: rgba(99, 102, 241, 0.12) !important;
   padding: 12px 16px !important;
   margin: 16px 0 !important;
   border-radius: 0 8px 8px 0 !important;
+}
+
+/* Blockquote text should be readable */
+.sathi-ai-message-content blockquote p,
+.sathi-ai-message-content blockquote span {
+  color: #e2e8f0 !important;
+}
+
+/* Special callout blockquotes (remember, tip, warning) - dark backgrounds */
+.sathi-ai-message-content .border-amber-400,
+.sathi-ai-message-content .border-emerald-400,
+.sathi-ai-message-content .border-red-400,
+.sathi-ai-message-content .border-purple-400 {
+  background: rgba(30, 30, 50, 0.95) !important;
+}
+
+.sathi-ai-message-content .bg-amber-50,
+.sathi-ai-message-content .bg-emerald-50,
+.sathi-ai-message-content .bg-red-50,
+.sathi-ai-message-content .bg-purple-50 {
+  background: rgba(30, 30, 50, 0.95) !important;
 }
 
 /* Tables */
