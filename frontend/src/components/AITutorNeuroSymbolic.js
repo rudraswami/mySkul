@@ -2192,7 +2192,7 @@ export default function AITutorNeuroSymbolic() {
           userQuestion={currentUserQuestion}
         >
           {/* Chat Content - Messages + Input (ChatGPT/Gemini style) */}
-          <div className={`flex flex-col h-full relative ${messages.length > 0 ? 'sathi-chat-wrapper' : ''}`}>
+          <div ref={chatContainerRef} className={`flex flex-col relative ${messages.length > 0 ? 'sathi-chat-wrapper' : ''}`}>
             {/* Scrollable Content Area */}
             <div 
               ref={chatContainerRef}

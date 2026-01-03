@@ -165,13 +165,13 @@
      - Content: scrolls between header and footer
      ======================================== */
 
-  /* Main container - fills dynamic viewport */
   .cognito-tutor-container {
-    height: 100dvh;
-    height: -webkit-fill-available;
+    min-height: 100dvh;
+    display: flex;
     flex-direction: column;
     position: relative;
   }
+  
 
   /* HEADER - Fixed at top for BOTH welcome and chat modes */
   .cognito-tutor-container header,
@@ -238,7 +238,7 @@
     position: relative;
     height: calc(100dvh - 56px); /* header */
     overflow-y: auto;
-    padding-bottom: 100px; /* input */
+    padding-bottom: calc(var(--chat-input-height, 96px) + env(safe-area-inset-bottom)); /* input */
   }
   
 
@@ -254,7 +254,7 @@
     padding-bottom: calc(16px + env(safe-area-inset-bottom)) !important;
     /* FIXED: Ensure input container is fully visible and not cut off */
     max-height: none;
-    overflow-y: auto !important;
+    overflow: hidden !important;
   }
 
   .sathi-chat-scroll {
