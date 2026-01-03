@@ -2077,62 +2077,8 @@ export default function AITutorNeuroSymbolic() {
     return () => window.removeEventListener('keydown', onKey);
   }, []);
 
-  // ========================================
-  // MOBILE VIEWPORT HEIGHT FIX
-  // Fixes 100vh issue on mobile browsers
-  // where browser chrome (URL bar) is included
-  // ========================================
-  const [viewportHeight, setViewportHeight] = useState('100vh');
-  
-  useEffect(() => {
-    const updateViewportHeight = () => {
-      // Get the actual visible viewport height
-      const vh = window.innerHeight;
-      setViewportHeight(`${vh}px`);
-      // Also set CSS variable for other elements
-      document.documentElement.style.setProperty('--real-vh', `${vh}px`);
-    };
-    
-    // Set initial value
-    updateViewportHeight();
-    
-    // Update on resize, orientation change, and when keyboard opens/closes
-    window.addEventListener('resize', updateViewportHeight);
-    window.addEventListener('orientationchange', updateViewportHeight);
-    
-    // For iOS Safari - handle keyboard
-    if (window.visualViewport) {
-      window.visualViewport.addEventListener('resize', updateViewportHeight);
-    }
-    
-    return () => {
-      window.removeEventListener('resize', updateViewportHeight);
-      window.removeEventListener('orientationchange', updateViewportHeight);
-      if (window.visualViewport) {
-        window.visualViewport.removeEventListener('resize', updateViewportHeight);
-      }
-    };
-  }, []);
-
-  // Lock body scroll when in chat mode (prevents mobile bounce/scroll issues)
-  useEffect(() => {
-    // Only lock on mobile
-    const isMobile = window.innerWidth <= 768;
-    if (isMobile && messages.length > 0) {
-      document.body.classList.add('chat-open');
-    } else {
-      document.body.classList.remove('chat-open');
-    }
-    return () => {
-      document.body.classList.remove('chat-open');
-    };
-  }, [messages.length]);
-
   return (
-    <div 
-      className="cognito-tutor-container flex flex-col bg-gray-50 overflow-hidden relative"
-      style={{ height: viewportHeight }}
-    >
+    <div className="cognito-tutor-container flex flex-col h-screen bg-gray-50 overflow-hidden relative">
       {/* 📡 OFFLINE INDICATOR - Shows when no internet connection */}
       <AnimatePresence>
         {!isOnline && (

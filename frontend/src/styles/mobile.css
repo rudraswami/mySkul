@@ -159,69 +159,43 @@
   /* ========================================
      COGNITO OS - MOBILE CHAT LAYOUT FIX
      ======================================== */
-  
-  /* 
-   * ARCHITECTURE (Like ChatGPT/WhatsApp):
-   * - JavaScript sets --real-vh to actual window.innerHeight
-   * - Container uses this height instead of 100vh
-   * - Header fixed at top
-   * - Input fixed at bottom  
-   * - Messages scroll between them
-   */
-  
- 
-  
-  /* Main container - uses JS-calculated height */
+
   .cognito-tutor-container {
-    position: relative !important;
-    display: flex !important;
-    flex-direction: column !important;
-    /* Height is set via inline style from JS using window.innerHeight */
-    overflow: hidden !important;
+    height: 100dvh;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
   }
-  
-  /* Header - FIXED at top */
+
   .cognito-tutor-container header {
-    position: fixed !important;
-    top: 0 !important;
-    left: 0 !important;
-    right: 0 !important;
-    z-index: 1000 !important;
-    height: 56px !important;
-    flex-shrink: 0 !important;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 56px;
+    z-index: 1000;
   }
-  
-  /* Input container - FIXED at bottom */
-  .cognito-tutor-container .sathi-chat-input-container {
-    position: fixed !important;
-    bottom: 0 !important;
-    left: 0 !important;
-    right: 0 !important;
-    z-index: 1000 !important;
-    padding-bottom: calc(16px + env(safe-area-inset-bottom, 0px)) !important;
-    background: linear-gradient(180deg, transparent 0%, rgba(18, 18, 28, 0.98) 20%) !important;
+
+  .sathi-chat-input-container {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    z-index: 1000;
+    background: rgba(18, 18, 28, 0.98);
+    padding-bottom: env(safe-area-inset-bottom);
   }
-  
-  /* Chat wrapper - fills space, positioned for fixed header */
-  .cognito-tutor-container .sathi-chat-wrapper {
-    position: absolute !important;
-    top: 56px !important;
-    left: 0 !important;
-    right: 0 !important;
-    bottom: 0 !important;
-    overflow: hidden !important;
+
+  .sathi-chat-wrapper {
+    margin-top: 56px;
+    margin-bottom: 72px;
+    flex: 1;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
   }
-  
-  /* Messages scroll area - with bottom padding for fixed input */
-  .cognito-tutor-container .sathi-chat-scroll {
-    height: 100% !important;
-    overflow-y: auto !important;
-    overflow-x: hidden !important;
-    -webkit-overflow-scrolling: touch !important;
-    touch-action: pan-y !important;
-    overscroll-behavior: contain !important;
-    /* Space for fixed input - ~120px accounts for input + safe area */
-    /*padding-bottom: 120px !important;
+
+  .sathi-chat-scroll {
+    padding-bottom: 0;
   }
   
   /* Chat Container (legacy) */
