@@ -238,7 +238,7 @@
     position: relative;
     height: calc(100dvh - 56px); /* header */
     overflow-y: auto;
-    padding-bottom: calc(120px + env(safe-area-inset-bottom)); /* input */
+    padding-bottom: 100px; /* input */
   }
   
 
