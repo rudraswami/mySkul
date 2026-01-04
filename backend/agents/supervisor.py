@@ -344,7 +344,7 @@ class SupervisorAgent(BaseAgent):
                     # Continue with unverified responses
             
             # Step 5: Combine and structure final response
-            combined_response = self._merge_responses(
+            combined_response = await self._merge_responses(
                 query=query,
                 intent=intent,
                 agent_responses=validated_responses,
@@ -951,7 +951,7 @@ class SupervisorAgent(BaseAgent):
         
         return agent_responses
     
-    def _merge_responses(
+    async def _merge_responses(
         self,
         query: str,
         intent: str,
