@@ -203,7 +203,8 @@ class LongTermMemory:
     
     def _get_memory_service(self, db=None):
         """Get or create MemoryService instance."""
-        actual_db = db or self._db
+        # FIX: Use explicit None check - Motor DB objects don't support truthiness
+        actual_db = db if db is not None else self._db
         if actual_db is not None and self._memory_service is None:
             try:
                 from services.memory_service import MemoryService
@@ -218,7 +219,8 @@ class LongTermMemory:
         
         This is the SINGLE SOURCE OF TRUTH for long-term memory.
         """
-        self._db = db or self._db
+        # FIX: Use explicit None check - Motor DB objects don't support truthiness
+        self._db = db if db is not None else self._db
         memory_service = self._get_memory_service(db)
         
         if memory_service:
@@ -256,7 +258,8 @@ class LongTermMemory:
         
         This persists across restarts and is shared across all agents.
         """
-        self._db = db or self._db
+        # FIX: Use explicit None check - Motor DB objects don't support truthiness
+        self._db = db if db is not None else self._db
         memory_service = self._get_memory_service(db)
         
         if memory_service:
@@ -405,7 +408,8 @@ class MemorySystem:
     
     async def initialize(self, db=None) -> None:
         """Initialize memory system with database connection."""
-        actual_db = db or self._db
+        # FIX: Use explicit None check - Motor DB objects don't support truthiness
+        actual_db = db if db is not None else self._db
         if actual_db is not None:
             self._db = actual_db
         await self.long_term.load(self._db)
@@ -414,7 +418,8 @@ class MemorySystem:
     
     async def save(self, db=None) -> None:
         """Persist long-term memories to database."""
-        actual_db = db or self._db
+        # FIX: Use explicit None check - Motor DB objects don't support truthiness
+        actual_db = db if db is not None else self._db
         await self.long_term.save(actual_db)
         logger.info(f"🧠 Memory saved for {self.student_id}")
     

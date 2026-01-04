@@ -230,9 +230,10 @@ class MemoryIntegrationService:
             
             # Run all in parallel with timeout protection
             # FIX: Added 3s timeout to prevent slow semantic search from blocking
-            # FIX: Handle CancelledError to prevent "_GatheringFuture never retrieved"
+            # FIX: Use return_exceptions=True to prevent "_GatheringFuture never retrieved" error
+            # When gather is cancelled, individual task exceptions must be retrieved
             try:
-                results = await asyncio.wait_for(
+                raw_results = await asyncio.wait_for(
                     asyncio.gather(
                         safe_get_conversation(),
                         safe_search_memories(),
@@ -240,10 +241,24 @@ class MemoryIntegrationService:
                         safe_get_mastery(),
                         safe_get_profile(),
                         safe_get_weak_topics(),
-                        return_exceptions=False  # Exceptions already handled in safe_* functions
+                        return_exceptions=True  # FIX: Capture exceptions as results to prevent unretrieved futures
                     ),
                     timeout=3.0  # Aggressive 3s timeout for all memory operations
                 )
+                
+                # FIX: Process results - replace any exceptions with default values
+                defaults = ([], [], {}, 0, {}, [])
+                results = []
+                for i, result in enumerate(raw_results):
+                    if isinstance(result, Exception):
+                        # Log the exception but use default
+                        if not isinstance(result, asyncio.CancelledError):
+                            memory_errors.append((f"component_{i}", str(result)))
+                        results.append(defaults[i])
+                    else:
+                        results.append(result)
+                results = tuple(results)
+                
             except asyncio.TimeoutError:
                 logger.warning(f"⚠️ Memory parallel gather timed out (>3s), using defaults")
                 # Return empty results for all components

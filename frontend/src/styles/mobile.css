@@ -165,13 +165,12 @@
      - Content: scrolls between header and footer
      ======================================== */
 
+  /* Main container - fills dynamic viewport */
   .cognito-tutor-container {
-    min-height: 100dvh;
-    display: flex;
+    height: 100dvh;
     flex-direction: column;
     position: relative;
   }
-  
 
   /* HEADER - Fixed at top for BOTH welcome and chat modes */
   .cognito-tutor-container header,
@@ -233,14 +232,22 @@
      CHAT MODE - Fixed header/footer
      ======================================== */
   
-  /* Chat wrapper - account for fixed header and footer */
+  /* Chat wrapper - OUTER container (no scroll - just contains) */
   .sathi-chat-wrapper {
     position: relative;
-    height: calc(100dvh - 56px); /* header */
-    overflow-y: auto;
-    padding-bottom: calc(var(--chat-input-height, 96px) + env(safe-area-inset-bottom)); /* input */
+    display: flex;
+    flex-direction: column;
+    height: calc(100dvh - 56px); /* Full height minus header */
+    overflow: hidden; /* NO scroll here - prevents nested scroll bug */
   }
   
+  /* Chat scroll - INNER container (the ONLY scroll container) */
+  .sathi-chat-scroll {
+    flex: 1;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    padding-bottom: 120px; /* Space for fixed input at bottom */
+  }
 
   /* FOOTER/INPUT - Fixed at bottom */
   .sathi-chat-input-container {
@@ -252,13 +259,6 @@
     background: linear-gradient(180deg, transparent 0%, rgba(18, 18, 28, 0.98) 15%) !important;
     padding: 12px 12px 16px !important;
     padding-bottom: calc(16px + env(safe-area-inset-bottom)) !important;
-    /* FIXED: Ensure input container is fully visible and not cut off */
-    max-height: none;
-    overflow: hidden !important;
-  }
-
-  .sathi-chat-scroll {
-    padding-bottom: 0;
   }
   
   /* Chat Container (legacy) */
@@ -894,14 +894,9 @@
     border-radius: 0 !important;
   }
   
-  /* FIXED: Extra padding for chat wrapper on very small screens */
-  .sathi-chat-wrapper {
-    padding-bottom: 200px !important;
-  }
-  
-  /* FIXED: Ensure input container doesn't take too much space on tiny screens */
-  .sathi-chat-input-container {
-    max-height: 45vh !important;
+  /* FIXED: Extra padding for scroll area on very small screens */
+  .sathi-chat-scroll {
+    padding-bottom: 140px !important;
   }
   
   /* FIXED: Welcome content spacing for small phones */
@@ -927,19 +922,22 @@
     max-height: 95vh !important;
   }
   
-  /* FIXED: Reduce padding in landscape to maximize screen space */
+  /* Landscape: Adjust wrapper height for smaller header */
   .sathi-chat-wrapper {
-    padding-top: 56px !important;
-    padding-bottom: 140px !important;
+    height: calc(100dvh - 48px) !important; /* Smaller header in landscape */
   }
   
-  /* FIXED: Input container should be more compact in landscape */
+  /* Landscape: Scroll area padding */
+  .sathi-chat-scroll {
+    padding-bottom: 100px !important; /* Less padding in landscape */
+  }
+  
+  /* Input container compact in landscape */
   .sathi-chat-input-container {
     padding: 8px 12px 12px !important;
-    max-height: 50vh !important;
   }
   
-  /* FIXED: Welcome screen should use minimal spacing in landscape */
+  /* Welcome screen minimal spacing in landscape */
   .cognito-welcome-content {
     padding-top: 12px !important;
   }
@@ -949,16 +947,12 @@
     padding-bottom: 8px !important;
   }
   
-  /* FIXED: Header should be more compact in landscape */
+  /* Header more compact in landscape */
   header.flex-shrink-0.h-14 {
     height: 48px !important;
   }
   
   .cognito-welcome-container {
-    padding-top: 48px !important;
-  }
-  
-  .sathi-chat-wrapper {
     padding-top: 48px !important;
   }
 }
