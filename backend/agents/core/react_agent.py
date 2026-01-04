@@ -690,27 +690,27 @@ Student Name: {state.context.get('student_profile', {}).get('user_name', 'Studen
         context: Dict[str, Any]
     ) -> Dict[str, Any]:
         """
-        Generate a helpful fallback response when ReAct loop times out.
+        Generate fallback response when ReAct loop times out.
         
-        Never leave the student with no response!
+        PRINCIPLE: Be honest about timeouts, don't pretend to think.
         """
         subject = context.get('subject', 'your question')
-        short_query = query[:80] + "..." if len(query) > 80 else query
+        short_query = query[:60] + "..." if len(query) > 60 else query
         
-        # CRITICAL: Natural continuation, NO capability menus, NO numbered options
-        fallback_content = f"""That's a thoughtful question about {subject}! 🤔
+        # Honest acknowledgment - don't say "let me think" when no thinking is happening
+        fallback_content = f"""I'm taking longer than expected to process your question about {subject}.
 
-I want to give you a really good answer to "{short_query}"
+Your question: "{short_query}"
 
-Let me think about the clearest way to explain this. What's the specific part that's confusing you most? That way I can focus on exactly what you need."""
+This is a complex topic that needs more time. Please try asking again - I want to give you a proper answer."""
         
-        logger.info(f"⏰ Generated timeout fallback for: {query[:50]}...")
+        logger.warning(f"⏰ [ReAct] Timeout fallback for: {query[:50]}...")
         
         return {
-            "success": True,  # Still successful - we provided a response
+            "success": False,  # Timeout is a failure, be honest
             "agent": self.get_agent_name(),
             "content": fallback_content,
-            "confidence": 0.4,
+            "confidence": 0.3,
             "reasoning_chain": [],
             "tools_used": [],
             "iterations": 0,
@@ -729,29 +729,30 @@ Let me think about the clearest way to explain this. What's the specific part th
     ) -> Dict[str, Any]:
         """
         Generate a graceful error response.
+        
+        PRINCIPLE: Be honest about errors, don't blame the student.
+        - Acknowledge the issue is on our side
+        - Don't ask them to rephrase
+        - Offer to try again
         """
         subject = context.get('subject', 'your question')
+        short_query = query[:60] + "..." if len(query) > 60 else query
         
-        fallback_content = f"""I encountered a small hiccup while processing your question about {subject}! 😅
+        # Contextual acknowledgment without blaming student
+        fallback_content = f"""I ran into a technical issue while working on your question about {subject}.
 
-Don't worry - let me try a different approach:
+Your question was: "{short_query}"
 
-**What you asked:** {query[:80]}{'...' if len(query) > 80 else ''}
-
-Could you try:
-1. **Rephrasing your question** slightly differently?
-2. **Asking about one concept at a time** if it's multi-part?
-
-I'm here to help you understand! 📚"""
+This is on my end, not yours. Please try asking again - I want to help you understand this topic properly."""
         
-        logger.warning(f"❌ Generated error fallback for: {query[:50]}... (error: {error[:50]})")
+        logger.error(f"❌ [ReAct] Error fallback for: {query[:50]}... (error: {error[:100]})")
         
         return {
             "success": False,
             "agent": self.get_agent_name(),
             "content": fallback_content,
             "error": error,
-            "confidence": 0.3,
+            "confidence": 0.2,
             "reasoning_chain": [],
             "tools_used": [],
             "iterations": 0,
@@ -829,36 +830,77 @@ What should you do next?"""
     async def _generate_direct_answer(self, state: AgentState) -> str:
         """
         Generate a direct answer when ReAct reasoning fails.
-        This is NOT a fallback to skip reasoning - it's error recovery
-        that still uses LLM intelligence.
+        
+        PRINCIPLE: Failures reduce richness, NOT intelligence.
+        - This is error recovery that STILL uses LLM intelligence
+        - Try multiple providers before giving up
+        - Never return static templates
         """
-        try:
-            from services.llm_service import call_llm
-            
-            # Build context from any observations we've gathered
-            observations = [ta.observation for ta in state.reasoning_chain if ta.observation]
-            context_str = "\n".join(observations[-3:]) if observations else "No prior context."
-            
-            prompt = f"""You are a knowledgeable mentor. Answer this question directly:
+        # Build context from any observations we've gathered
+        observations = [ta.observation for ta in state.reasoning_chain if ta.observation]
+        context_str = "\n".join(observations[-3:]) if observations else "No prior context."
+        subject = state.context.get('subject', 'the topic')
+        
+        prompt = f"""You are a knowledgeable mentor. Answer this question directly:
 
 Question: {state.query}
+Subject: {subject}
 
 Context from analysis: {context_str}
 
-Provide a clear, helpful, well-structured answer."""
+Provide a clear, helpful, well-structured answer. Be accurate and educational."""
+        
+        # Attempt 1: Primary LLM (gpt-4o-mini)
+        try:
+            from services.llm_service import call_llm
             
-            response = await call_llm(
-                prompt=prompt,
-                api_key=self.llm_key,
-                temperature=0.7,
-                max_tokens=1000,
-                model="gpt-4o-mini",
-                system_message=self.get_agent_persona()
+            response = await asyncio.wait_for(
+                call_llm(
+                    prompt=prompt,
+                    api_key=self.llm_key,
+                    temperature=0.7,
+                    max_tokens=800,
+                    model="gpt-4o-mini",
+                    system_message=self.get_agent_persona()
+                ),
+                timeout=12.0
             )
-            return response if response else "I understand your question. Could you provide more details so I can give you a thorough explanation?"
+            if response and len(response.strip()) > 30:
+                logger.info("[ReAct] Direct answer generated successfully")
+                return response
         except Exception as e:
-            logger.error(f"[ReAct] Direct answer generation failed: {e}")
-            return f"I'm analyzing your question about {state.context.get('subject', 'this topic')}. Could you tell me more about what specific aspect you'd like me to explain?"
+            logger.warning(f"[ReAct] Primary LLM failed: {e}")
+        
+        # Attempt 2: Gemini Flash (very fast, good quality)
+        try:
+            import google.generativeai as genai
+            from core.config import settings
+            
+            if settings.GEMINI_API_KEY:
+                genai.configure(api_key=settings.GEMINI_API_KEY)
+                model = genai.GenerativeModel('gemini-2.0-flash')
+                
+                response = await asyncio.wait_for(
+                    asyncio.get_event_loop().run_in_executor(
+                        None,
+                        lambda: model.generate_content(prompt)
+                    ),
+                    timeout=10.0
+                )
+                
+                if response and response.text and len(response.text.strip()) > 30:
+                    logger.info("[ReAct] Direct answer via Gemini successful")
+                    return response.text
+        except Exception as e:
+            logger.warning(f"[ReAct] Gemini fallback failed: {e}")
+        
+        # Final: Honest acknowledgment (contextual, not static template)
+        logger.error("[ReAct] All LLM attempts failed for direct answer")
+        short_q = state.query[:60] + "..." if len(state.query) > 60 else state.query
+        
+        return f"""I'm having trouble processing your question about "{short_q}" right now.
+
+This is about {subject}. Could you try asking again? I want to give you a proper explanation."""
     
     async def _act(self, thought_action: ThoughtAction, state: AgentState) -> str:
         """
@@ -1024,7 +1066,14 @@ Respond in valid JSON format with these fields:
         }
     
     async def _generate_fallback_answer(self, state: AgentState) -> str:
-        """Generate a fallback answer when max iterations reached"""
+        """
+        Generate fallback answer when max iterations reached.
+        
+        PRINCIPLE: Failures reduce richness, NOT intelligence.
+        - Use observations if available
+        - Otherwise attempt LLM recovery
+        - Never return static templates
+        """
         # Summarize what we learned
         observations = [
             ta.observation for ta in state.reasoning_chain 
@@ -1032,13 +1081,16 @@ Respond in valid JSON format with these fields:
         ]
         
         if observations:
+            # We have real insights - synthesize them
             return f"""Based on my analysis:
 
 {chr(10).join(observations[:3])}
 
 I hope this helps! Let me know if you'd like me to explore further."""
         
-        return "I apologize, but I need more information to fully answer your question. Could you please clarify or rephrase?"
+        # No observations - attempt LLM recovery instead of static template
+        logger.info("[ReAct] No observations gathered, attempting LLM recovery...")
+        return await self._generate_direct_answer(state)
     
     def _format_response(self, state: AgentState) -> Dict[str, Any]:
         """
@@ -1085,21 +1137,15 @@ I hope this helps! Let me know if you'd like me to explore further."""
             content = content.strip()
         
         # ================================================================
-        # CRITICAL FIX: NEVER return empty content
-        # If content is empty after all processing, provide a helpful fallback
-        # This ensures the UI always has something to display
+        # CRITICAL: Log if content is unexpectedly empty
+        # At this point, all recovery attempts should have been made
+        # If still empty, pass through with warning (don't insert fake content)
         # ================================================================
         if not content or len(content.strip()) < 20:
+            logger.error(f"[ReAct] CRITICAL: Empty content after all recovery attempts for: {state.query[:50]}...")
+            # Provide minimal contextual response (not a menu)
             subject = state.context.get('subject', 'your question')
-            query_short = state.query[:80] + "..." if len(state.query) > 80 else state.query
-            content = f"""I can help you with {subject}. To give you the clearest answer, which aspect would you like me to focus on?
-
-• The core concept and why it works
-• Step-by-step problem solving approach
-• Common mistakes to avoid
-
-Let me know and I'll explain it clearly."""
-            logger.warning(f"[ReAct] Empty content detected, using fallback for: {state.query[:50]}...")
+            content = f"I encountered an issue processing your question about {subject}. Please try again."
         
         # ================================================================
         # NEVER include reasoning_chain in the response sent to frontend

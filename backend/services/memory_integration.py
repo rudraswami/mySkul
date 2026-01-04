@@ -62,6 +62,11 @@ class MemoryIntegrationService:
         self._recent_write_keys: Dict[str, float] = {}  # {key: timestamp}
         self._dedup_window_seconds = 5  # Ignore duplicate writes within 5 seconds
         self._max_dedup_cache_size = 100
+        
+        # OPTIMIZATION: Micro-cache for user_learning_profile (deduplicates 4 queries)
+        # TTL is very short (500ms) - only deduplicates within a single request
+        self._profile_cache: Dict[str, tuple] = {}  # {user_id: (profile, timestamp)}
+        self._profile_cache_ttl_ms = 500  # 500ms - covers one request's parallel operations
     
     @property
     def memory_service(self):
@@ -146,139 +151,217 @@ class MemoryIntegrationService:
             context["current_topic"] = current_topic
             
             # ================================================================
-            # PARALLEL EXECUTION: Run independent async calls concurrently
-            # This reduces total time from ~sum(all_calls) to ~max(slowest_call)
-            # FIX #4: Track failures for visibility (not silent degradation)
+            # PROGRESSIVE CONTEXT ACCUMULATION (Resilient Architecture)
             # ================================================================
-            memory_errors = []  # FIX #4: Track all component failures
+            # Instead of all-or-nothing, we:
+            # 1. Give each operation its own individual timeout (fail fast)
+            # 2. Collect results as they complete
+            # 3. On global timeout, PRESERVE whatever completed
+            # 4. Track explicit context quality level
+            # ================================================================
             
-            async def safe_get_conversation():
+            # Component definitions with priorities and individual timeouts
+            # Priority 0 = CRITICAL (must have for coherent response)
+            # Priority 1 = HIGH (needed for personalization)
+            # Priority 2 = MEDIUM (enhancement)
+            # Priority 3 = LOW (nice to have)
+            
+            COMPONENT_CONFIG = {
+                "conversation": {"timeout": 1.0, "priority": 0, "default": []},
+                "profile": {"timeout": 0.8, "priority": 1, "default": {}},
+                "mastery": {"timeout": 0.6, "priority": 1, "default": 0},
+                "semantic_memory": {"timeout": 1.5, "priority": 2, "default": []},
+                "weak_topics": {"timeout": 0.6, "priority": 2, "default": []},
+                "continuity": {"timeout": 0.8, "priority": 3, "default": {}},
+            }
+            
+            # Track component outcomes
+            component_results = {}
+            component_status = {}  # "success", "timeout", "error", "cancelled"
+            
+            async def timed_operation(name: str, coro, timeout: float, default):
+                """Execute operation with individual timeout, return (name, result, status)"""
                 try:
-                    return await self.memory_service.get_conversation_context(
-                        session_id=session_id,
-                        user_id=user_id,
-                        window_size=10
-                    )
+                    result = await asyncio.wait_for(coro, timeout=timeout)
+                    return (name, result, "success")
+                except asyncio.TimeoutError:
+                    logger.debug(f"⏱️ {name} timed out (>{timeout}s)")
+                    return (name, default, "timeout")
                 except asyncio.CancelledError:
-                    # Re-raise CancelledError to let gather handle it properly
-                    raise
+                    # Client disconnect - graceful, not an error
+                    return (name, default, "cancelled")
                 except Exception as e:
-                    memory_errors.append(("conversation_context", str(e)))
-                    logger.warning(f"Conversation context fetch failed: {e}")
-                    return []
+                    logger.warning(f"❌ {name} failed: {str(e)[:80]}")
+                    return (name, default, "error")
             
-            async def safe_search_memories():
-                try:
-                    return await self.semantic_memory.search_relevant_memories(
-                        user_id=user_id,
-                        query=question,
-                        top_k=3,
-                        min_similarity=0.4
-                    )
-                except asyncio.CancelledError:
-                    raise
-                except Exception as e:
-                    memory_errors.append(("semantic_memory", str(e)))
-                    logger.warning(f"Semantic memory search failed: {e}")
-                    return []
-            
-            async def safe_detect_continuation():
-                try:
-                    return await self.continuity_engine.detect_topic_continuation(
-                        user_id=user_id,
-                        current_query=question
-                    )
-                except asyncio.CancelledError:
-                    raise
-                except Exception as e:
-                    memory_errors.append(("continuity", str(e)))
-                    logger.warning(f"Continuity detection failed: {e}")
-                    return {}
-            
-            async def safe_get_mastery():
-                try:
-                    return await self.mastery_tracker.get_mastery_level(
-                        user_id=user_id,
-                        topic=current_topic
-                    )
-                except asyncio.CancelledError:
-                    raise
-                except Exception as e:
-                    memory_errors.append(("mastery", str(e)))
-                    logger.warning(f"Mastery fetch failed: {e}")
-                    return 0
-            
-            async def safe_get_profile():
-                try:
-                    return await self._get_user_profile(user_id)
-                except asyncio.CancelledError:
-                    raise
-                except Exception as e:
-                    memory_errors.append(("profile", str(e)))
-                    logger.warning(f"User profile fetch failed: {e}")
-                    return {}
-            
-            async def safe_get_weak_topics():
-                try:
-                    return await self.mastery_tracker.get_weak_topics(user_id, threshold=40)
-                except asyncio.CancelledError:
-                    raise
-                except Exception as e:
-                    memory_errors.append(("weak_topics", str(e)))
-                    logger.warning(f"Weak topics fetch failed: {e}")
-                    return []
-            
-            # Run all in parallel with timeout protection
-            # FIX: Added 3s timeout to prevent slow semantic search from blocking
-            # FIX: Use return_exceptions=True to prevent "_GatheringFuture never retrieved" error
-            # When gather is cancelled, individual task exceptions must be retrieved
-            try:
-                raw_results = await asyncio.wait_for(
-                    asyncio.gather(
-                        safe_get_conversation(),
-                        safe_search_memories(),
-                        safe_detect_continuation(),
-                        safe_get_mastery(),
-                        safe_get_profile(),
-                        safe_get_weak_topics(),
-                        return_exceptions=True  # FIX: Capture exceptions as results to prevent unretrieved futures
+            # Create all tasks with individual timeouts
+            tasks = [
+                asyncio.create_task(
+                    timed_operation(
+                        "conversation",
+                        self.memory_service.get_conversation_context(
+                            session_id=session_id,
+                            user_id=user_id,
+                            window_size=10
+                        ),
+                        COMPONENT_CONFIG["conversation"]["timeout"],
+                        COMPONENT_CONFIG["conversation"]["default"]
                     ),
-                    timeout=3.0  # Aggressive 3s timeout for all memory operations
+                    name="conversation"
+                ),
+                asyncio.create_task(
+                    timed_operation(
+                        "profile",
+                        self._get_user_profile(user_id),
+                        COMPONENT_CONFIG["profile"]["timeout"],
+                        COMPONENT_CONFIG["profile"]["default"]
+                    ),
+                    name="profile"
+                ),
+                asyncio.create_task(
+                    timed_operation(
+                        "mastery",
+                        self.mastery_tracker.get_mastery_level(
+                            user_id=user_id,
+                            topic=current_topic
+                        ),
+                        COMPONENT_CONFIG["mastery"]["timeout"],
+                        COMPONENT_CONFIG["mastery"]["default"]
+                    ),
+                    name="mastery"
+                ),
+                asyncio.create_task(
+                    timed_operation(
+                        "semantic_memory",
+                        self.semantic_memory.search_relevant_memories(
+                            user_id=user_id,
+                            query=question,
+                            top_k=3,
+                            min_similarity=0.4
+                        ),
+                        COMPONENT_CONFIG["semantic_memory"]["timeout"],
+                        COMPONENT_CONFIG["semantic_memory"]["default"]
+                    ),
+                    name="semantic_memory"
+                ),
+                asyncio.create_task(
+                    timed_operation(
+                        "weak_topics",
+                        self.mastery_tracker.get_weak_topics(user_id, threshold=40),
+                        COMPONENT_CONFIG["weak_topics"]["timeout"],
+                        COMPONENT_CONFIG["weak_topics"]["default"]
+                    ),
+                    name="weak_topics"
+                ),
+                asyncio.create_task(
+                    timed_operation(
+                        "continuity",
+                        self.continuity_engine.detect_topic_continuation(
+                            user_id=user_id,
+                            current_query=question
+                        ),
+                        COMPONENT_CONFIG["continuity"]["timeout"],
+                        COMPONENT_CONFIG["continuity"]["default"]
+                    ),
+                    name="continuity"
+                ),
+            ]
+            
+            # Global deadline: collect whatever completes within 2.5s
+            # Individual timeouts are shorter, so most will complete or fail fast
+            GLOBAL_DEADLINE = 2.5
+            
+            try:
+                done, pending = await asyncio.wait(
+                    tasks,
+                    timeout=GLOBAL_DEADLINE,
+                    return_when=asyncio.ALL_COMPLETED
                 )
-                
-                # FIX: Process results - replace any exceptions with default values
-                defaults = ([], [], {}, 0, {}, [])
-                results = []
-                for i, result in enumerate(raw_results):
-                    if isinstance(result, Exception):
-                        # Log the exception but use default
-                        if not isinstance(result, asyncio.CancelledError):
-                            memory_errors.append((f"component_{i}", str(result)))
-                        results.append(defaults[i])
-                    else:
-                        results.append(result)
-                results = tuple(results)
-                
-            except asyncio.TimeoutError:
-                logger.warning(f"⚠️ Memory parallel gather timed out (>3s), using defaults")
-                # Return empty results for all components
-                results = ([], [], {}, 0, {}, [])
             except asyncio.CancelledError:
-                # Streaming client disconnected - graceful degradation, not crash
-                logger.info("Memory load cancelled (client disconnect), using defaults")
-                results = ([], [], {}, 0, {}, [])
+                # Client disconnected - cancel all pending and use defaults
+                for task in tasks:
+                    if not task.done():
+                        task.cancel()
+                logger.info("🔌 Memory load cancelled (client disconnect)")
+                done, pending = set(), set(tasks)
             
-            # Unpack results
-            recent_messages, relevant_memories, continuity, mastery_level, user_profile, weak_topics = results
+            # Process completed tasks
+            for task in done:
+                try:
+                    name, result, status = task.result()
+                    component_results[name] = result
+                    component_status[name] = status
+                except Exception as e:
+                    # Should not happen, but safety net
+                    task_name = task.get_name()
+                    component_results[task_name] = COMPONENT_CONFIG.get(task_name, {}).get("default")
+                    component_status[task_name] = "error"
+                    logger.error(f"Unexpected task error for {task_name}: {e}")
             
-            # FIX #4: Track component health in context for visibility
-            if memory_errors:
-                context["_memory_degraded"] = True
-                context["_memory_errors"] = memory_errors
-                context["_components_failed"] = len(memory_errors)
-                logger.warning(f"⚠️ Memory partially degraded: {len(memory_errors)}/6 components failed: {[e[0] for e in memory_errors]}")
+            # Handle pending tasks (didn't complete before global deadline)
+            for task in pending:
+                task_name = task.get_name()
+                task.cancel()  # Stop the pending task
+                component_results[task_name] = COMPONENT_CONFIG.get(task_name, {}).get("default")
+                component_status[task_name] = "deadline"
+                logger.debug(f"⏰ {task_name} exceeded global deadline")
+            
+            # Extract results with defaults for any missing
+            recent_messages = component_results.get("conversation", [])
+            user_profile = component_results.get("profile", {})
+            mastery_level = component_results.get("mastery", 0)
+            relevant_memories = component_results.get("semantic_memory", [])
+            weak_topics = component_results.get("weak_topics", [])
+            continuity = component_results.get("continuity", {})
+            
+            # ================================================================
+            # CONTEXT QUALITY LEVEL CALCULATION
+            # ================================================================
+            # Level 5: All components succeeded
+            # Level 4: conversation + profile + mastery succeeded
+            # Level 3: conversation + profile succeeded
+            # Level 2: Only conversation succeeded
+            # Level 1: No critical components (fallback mode)
+            # ================================================================
+            
+            successful_components = [k for k, v in component_status.items() if v == "success"]
+            failed_components = [k for k, v in component_status.items() if v != "success"]
+            
+            # Calculate quality level based on what succeeded
+            has_conversation = component_status.get("conversation") == "success" and len(recent_messages) > 0
+            has_profile = component_status.get("profile") == "success" and bool(user_profile)
+            has_mastery = component_status.get("mastery") == "success"
+            has_semantic = component_status.get("semantic_memory") == "success"
+            has_weak_topics = component_status.get("weak_topics") == "success"
+            has_continuity = component_status.get("continuity") == "success"
+            
+            if all([has_conversation, has_profile, has_mastery, has_semantic, has_weak_topics, has_continuity]):
+                context_quality = 5  # Full intelligence
+            elif has_conversation and has_profile and has_mastery:
+                context_quality = 4  # Strong intelligence
+            elif has_conversation and has_profile:
+                context_quality = 3  # Moderate intelligence
+            elif has_conversation:
+                context_quality = 2  # Minimal intelligence (knows recent context)
             else:
-                context["_memory_degraded"] = False
+                context_quality = 1  # Degraded (fresh start)
+            
+            # Track context quality in the context object
+            context["_context_quality"] = context_quality
+            context["_components_loaded"] = successful_components
+            context["_components_failed"] = failed_components
+            context["_component_status"] = component_status
+            
+            # Backward compatibility: set _memory_degraded flag
+            context["_memory_degraded"] = context_quality < 5
+            
+            # Log context quality
+            if context_quality == 5:
+                logger.info(f"🧠 Context quality: FULL (5/5) - all 6 components loaded")
+            elif context_quality >= 3:
+                logger.info(f"🧠 Context quality: {context_quality}/5 - {len(successful_components)}/6 components ({', '.join(successful_components)})")
+            else:
+                logger.warning(f"⚠️ Context quality: {context_quality}/5 - degraded mode ({len(failed_components)} failed: {', '.join(failed_components)})")
             
             # 1. Recent conversation context
             context["recent_context"] = recent_messages
@@ -511,8 +594,18 @@ class MemoryIntegrationService:
     # ==================== Private Helpers ====================
     
     async def _get_user_profile(self, user_id: str) -> Dict[str, Any]:
-        """Get or create user learning profile"""
+        """Get or create user learning profile with micro-caching"""
         try:
+            # OPTIMIZATION: Check micro-cache first (deduplicates queries within same request)
+            import time
+            now_ms = time.time() * 1000
+            cached = self._profile_cache.get(user_id)
+            if cached:
+                cached_profile, cached_time = cached
+                if (now_ms - cached_time) < self._profile_cache_ttl_ms:
+                    logger.debug(f"⚡ Profile cache hit for {user_id[:8]}")
+                    return cached_profile
+            
             # Try to get from learning profile
             profile = await self.db.user_learning_profile.find_one({"user_id": user_id})
             
@@ -522,6 +615,10 @@ class MemoryIntegrationService:
                 if user is not None:
                     full_name = user.get("full_name", "")
                     profile["name"] = full_name.split()[0] if full_name else ""
+                
+                # Cache the result
+                self._profile_cache[user_id] = (profile, now_ms)
+                self._cleanup_profile_cache()
                 return profile
             
             # Create default profile
@@ -572,6 +669,10 @@ class MemoryIntegrationService:
                 full_name = user.get("full_name", "")
                 default_profile["name"] = full_name.split()[0] if full_name else ""
             
+            # Cache the new profile
+            self._profile_cache[user_id] = (default_profile, now_ms)
+            self._cleanup_profile_cache()
+            
             return default_profile
             
         except asyncio.CancelledError:
@@ -580,6 +681,27 @@ class MemoryIntegrationService:
         except Exception as e:
             logger.error(f"❌ Failed to get user profile: {e}")
             return {}
+    
+    def _cleanup_profile_cache(self):
+        """Clean up expired entries from profile cache (prevents memory leak)"""
+        import time
+        now_ms = time.time() * 1000
+        expired_keys = [
+            k for k, (_, cached_time) in self._profile_cache.items()
+            if (now_ms - cached_time) > self._profile_cache_ttl_ms
+        ]
+        for k in expired_keys:
+            del self._profile_cache[k]
+        
+        # Safety: limit cache size (should rarely hit this)
+        if len(self._profile_cache) > 50:
+            # Remove oldest entries
+            sorted_entries = sorted(
+                self._profile_cache.items(),
+                key=lambda x: x[1][1]  # Sort by timestamp
+            )
+            for k, _ in sorted_entries[:25]:  # Remove oldest 25
+                del self._profile_cache[k]
     
     async def _update_user_preference(
         self,

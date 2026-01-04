@@ -378,34 +378,103 @@ NEVER:
             return self._format_error_response(state)
     
     async def _generate_empathetic_fallback(self, state: AgentState) -> str:
-        """Generate an empathetic fallback response"""
-        # Summarize what we learned from reasoning
+        """
+        Generate empathetic fallback response.
+        
+        PRINCIPLE: Failures reduce richness, NOT intelligence.
+        - Use insights if available to synthesize an answer
+        - Otherwise attempt LLM recovery
+        - Never present menus or ask clarifying questions as primary response
+        """
+        import asyncio
+        
+        # Gather any insights from reasoning
         insights = []
         for ta in state.reasoning_chain:
             if ta.observation and len(ta.observation) > 10:
                 insights.append(ta.observation)
         
-        if insights:
-            return f"""Let me help you understand this.
-
-Based on what I found:
-{chr(10).join(['- ' + i[:150] for i in insights[:3]])}
-
-Would you like me to:
-1. **Explain with a simple analogy** - Connect it to something familiar
-2. **Show step-by-step** - Break it down into smaller pieces  
-3. **Give an example** - See how it works in practice
-
-What would help you most?"""
+        subject = state.context.get('subject', 'this topic')
         
-        return """I want to make sure I fully understand your doubt before explaining. 🤔
+        if insights:
+            # We have insights - synthesize them into a coherent answer using LLM
+            insights_text = "\n".join([f"- {i[:200]}" for i in insights[:4]])
+            
+            synthesis_prompt = f"""Based on these observations about a student's question, provide a helpful explanation:
 
-Could you tell me a bit more about:
-- What specific part is confusing?
-- Have you seen this concept before?
-- Would you prefer a simple analogy or step-by-step explanation?
+Question: {state.query}
+Subject: {subject}
 
-I'm here to help you truly understand, not just give you an answer! 💪"""
+Observations gathered:
+{insights_text}
+
+Synthesize these into a clear, helpful explanation. Be educational and encouraging."""
+
+            try:
+                import google.generativeai as genai
+                from core.config import settings
+                
+                if settings.GEMINI_API_KEY:
+                    genai.configure(api_key=settings.GEMINI_API_KEY)
+                    model = genai.GenerativeModel('gemini-2.0-flash')
+                    
+                    response = await asyncio.wait_for(
+                        asyncio.get_event_loop().run_in_executor(
+                            None,
+                            lambda: model.generate_content(synthesis_prompt)
+                        ),
+                        timeout=10.0
+                    )
+                    
+                    if response and response.text and len(response.text.strip()) > 30:
+                        logger.info("[DoubtResolver] Synthesized answer from insights")
+                        return response.text
+            except Exception as e:
+                logger.warning(f"[DoubtResolver] Synthesis failed: {e}")
+            
+            # If synthesis fails, at least return the insights directly
+            return f"""Here's what I found about your question on {subject}:
+
+{insights_text}
+
+I hope this helps clarify things! Let me know if you'd like me to explain further."""
+        
+        # No insights - attempt direct LLM answer
+        logger.info("[DoubtResolver] No insights, attempting direct LLM answer")
+        
+        direct_prompt = f"""You are a helpful tutor. A student has a doubt about {subject}.
+
+Their question: {state.query}
+
+Provide a clear, empathetic explanation. Be educational and encouraging."""
+
+        try:
+            import google.generativeai as genai
+            from core.config import settings
+            
+            if settings.GEMINI_API_KEY:
+                genai.configure(api_key=settings.GEMINI_API_KEY)
+                model = genai.GenerativeModel('gemini-2.0-flash')
+                
+                response = await asyncio.wait_for(
+                    asyncio.get_event_loop().run_in_executor(
+                        None,
+                        lambda: model.generate_content(direct_prompt)
+                    ),
+                    timeout=10.0
+                )
+                
+                if response and response.text and len(response.text.strip()) > 30:
+                    logger.info("[DoubtResolver] Direct LLM answer successful")
+                    return response.text
+        except Exception as e:
+            logger.warning(f"[DoubtResolver] Direct LLM failed: {e}")
+        
+        # Final: honest acknowledgment
+        short_q = state.query[:60] + "..." if len(state.query) > 60 else state.query
+        return f"""I'm having trouble processing your question about "{short_q}".
+
+This is about {subject}. Please try asking again - I want to help you understand this properly."""
     
     def _format_response(self, state: AgentState) -> Dict[str, Any]:
         """Format response with full reasoning chain and verification"""

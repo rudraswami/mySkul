@@ -106,9 +106,9 @@ class IntelligentAgentBase(BaseAgent):
             response_text = await self._call_llm(query, system_prompt, context)
             
             if not response_text:
-                # Fallback to template if LLM fails
-                logger.warning(f"⚠️ LLM call failed, using fallback")
-                response_text = self._get_fallback_response(query, context)
+                # Attempt LLM-based recovery instead of static template
+                logger.warning(f"⚠️ LLM call failed, attempting recovery")
+                response_text = await self._get_recovery_response(query, context)
             
             # Post-process if needed
             final_response = self._post_process_response(response_text, query, context)
@@ -205,9 +205,54 @@ Current query: {query}
             logger.error(f"LLM call failed: {e}")
             return None
     
-    def _get_fallback_response(self, query: str, context: Dict[str, Any]) -> str:
-        """Fallback response if LLM fails - override in subclass"""
-        return "I'm here to help! What would you like to learn about today?"
+    async def _get_recovery_response(self, query: str, context: Dict[str, Any]) -> str:
+        """
+        Recovery response using alternate LLM when primary fails.
+        
+        PRINCIPLE: Failures reduce richness, NOT intelligence.
+        - Always attempt real LLM reasoning
+        - Never return static templates
+        """
+        logger.info(f"🔄 {self.get_agent_type()} attempting LLM recovery...")
+        
+        subject = context.get('subject', 'your question')
+        recovery_prompt = f"""You are a helpful tutor. Answer this student's question directly:
+
+Question: {query}
+Subject: {subject}
+
+Provide a clear, helpful answer. Be concise but complete."""
+
+        try:
+            # Try Gemini Flash for fast recovery
+            import google.generativeai as genai
+            from core.config import settings
+            import asyncio
+            
+            if settings.GEMINI_API_KEY:
+                genai.configure(api_key=settings.GEMINI_API_KEY)
+                model = genai.GenerativeModel('gemini-2.0-flash')
+                
+                response = await asyncio.wait_for(
+                    asyncio.get_event_loop().run_in_executor(
+                        None,
+                        lambda: model.generate_content(recovery_prompt)
+                    ),
+                    timeout=10.0
+                )
+                
+                if response and response.text and len(response.text.strip()) > 20:
+                    logger.info(f"✅ {self.get_agent_type()} recovery successful")
+                    return response.text
+                    
+        except Exception as e:
+            logger.warning(f"⚠️ {self.get_agent_type()} Gemini recovery failed: {e}")
+        
+        # Final fallback: contextual acknowledgment
+        short_q = query[:50] + "..." if len(query) > 50 else query
+        return f"""I'm having trouble processing your question about "{short_q}" right now.
+
+Could you try asking again? I want to give you a helpful answer about {subject}."""
     
     def _post_process_response(
         self,

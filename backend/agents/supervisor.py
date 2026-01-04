@@ -1024,29 +1024,30 @@ class SupervisorAgent(BaseAgent):
         
         # ================================================================
         # CRITICAL FIX: Ensure primary_response ALWAYS has content
-        # If primary agent returned empty content, generate INTELLIGENT fallback
+        # If primary agent returned empty content, generate LLM-based recovery
+        # PRINCIPLE: Failures reduce richness, NOT intelligence
         # ================================================================
         primary_content = primary_response.get('content', '') if primary_response else ''
         if not primary_content or len(primary_content.strip()) < 20:
-            logger.warning(f"⚠️ [Supervisor] Primary response empty, generating intelligent fallback for: {query[:50]}...")
+            logger.warning(f"⚠️ [Supervisor] Primary response empty, attempting LLM recovery for: {query[:50]}...")
             
-            # Generate fallback that PROVIDES VALUE, not asks questions
             # Check if this is an urgent context
             is_urgent = (context or {}).get('is_urgent', False)
             urgency_level = (context or {}).get('urgency_level', 'medium')
+            is_urgent_context = is_urgent or urgency_level == 'high'
             
-            if is_urgent or urgency_level == 'high':
-                # URGENT FALLBACK: Provide immediate actionable help
-                fallback_content = self._generate_urgent_fallback(query)
-            else:
-                # STANDARD FALLBACK: Provide helpful generic content + one clarifying option
-                fallback_content = self._generate_helpful_fallback(query)
+            # Use LLM-based recovery instead of static templates
+            fallback_content = await self._generate_recovery_response(query, context or {}, is_urgent_context)
             
             primary_response = {
                 'content': fallback_content,
-                'metadata': {'fallback': True, 'is_urgent': is_urgent, 'original_agent': primary_response.get('agent', 'unknown') if primary_response else 'none'},
+                'metadata': {
+                    'recovery_mode': True, 
+                    'is_urgent': is_urgent_context, 
+                    'original_agent': primary_response.get('agent', 'unknown') if primary_response else 'none'
+                },
                 'success': True,
-                'agent': 'mentor'
+                'agent': 'recovery'
             }
         
         result = {
@@ -1141,75 +1142,98 @@ class SupervisorAgent(BaseAgent):
         
         return response
     
-    def _generate_urgent_fallback(self, query: str) -> str:
+    async def _generate_recovery_response(self, query: str, context: Dict[str, Any], is_urgent: bool = False) -> str:
         """
-        🚨 Generate fallback content for URGENT situations.
+        Generate recovery response using LLM when primary agents fail.
         
-        CRITICAL PRINCIPLES:
-        1. NEVER ask clarifying questions under urgency
-        2. ALWAYS provide actionable content immediately
-        3. Use generic but useful exam/preparation tips
-        4. Offer to help with specifics as a follow-up (not gating)
-        
-        This is triggered when:
-        - is_urgent=True in context
-        - urgency_level='high' in context
+        PRINCIPLE: Failures reduce richness, NOT intelligence.
+        - Always attempt real LLM reasoning
+        - Never return static templates
+        - Never pretend to think without thinking
+        - Honest acknowledgment if all fails
         """
-        query_lower = query.lower()
+        logger.info(f"🔄 [Supervisor] Attempting LLM recovery for: {query[:50]}...")
         
-        # Detect if it's revision/tips/preparation related
-        is_revision_related = any(word in query_lower for word in 
-            ['revision', 'revise', 'tips', 'prepare', 'last minute', 'quick', 'exam', 'test', 'viva', 'interview'])
+        subject = context.get('subject', 'the topic')
+        urgency_note = "The student seems to be in a hurry, so be concise and actionable." if is_urgent else ""
         
-        if is_revision_related:
-            return f"""Got it! Here's your quick action plan: 🎯
+        recovery_prompt = f"""You are a knowledgeable and helpful tutor. A student has asked a question but the primary response system encountered an issue.
 
-**📋 Priority Revision Strategy:**
-1. **Formula Sheet Review** (15 min): Go through all key formulas/definitions you've noted
-2. **Previous Questions** (30 min): Solve 3-5 previous year questions - they reveal exam patterns
-3. **Weak Spots** (20 min): Quick review of topics you find challenging - even basics help
-4. **Mental Prep** (5 min): Deep breaths, confidence affirmations - you've got this!
+Your task: Provide a helpful, accurate answer to their question directly.
 
-**⏰ Time Tips:**
-- Don't start new topics now - reinforce what you know
-- Take 5-min breaks every 25 minutes
-- Stay hydrated, avoid heavy meals
+Student's Question: {query}
+Subject Area: {subject}
+{urgency_note}
 
-**💪 Remember:** You've prepared for this moment. Trust yourself!
+Guidelines:
+- Answer the question directly and helpfully
+- Be accurate and educational
+- Use clear explanations
+- If the question is unclear, make a reasonable interpretation and answer that
+- Do NOT ask clarifying questions - provide value immediately
+- Do NOT list menu options or capabilities
+- Be warm and encouraging"""
 
-Which subject or topic should we focus on? I can give you targeted tips!"""
-        else:
-            # Generic helpful response for other urgent queries
-            return f"""I'm here to help! Here's what I can do for you right now: 🤝
-
-**Based on your question:** "{query[:80]}{'...' if len(query) > 80 else ''}"
-
-**🎯 Quick Options:**
-1. **Explain a concept** - I'll break it down step by step
-2. **Solve a problem** - Walk through the solution together
-3. **Quick revision** - Key points on any topic
-4. **Practice questions** - Test your understanding
-
-**💡 Pro Tip:** The more specific you are, the better I can help!
-
-What would you like to start with?"""
-    
-    def _generate_helpful_fallback(self, query: str) -> str:
-        """
-        Generate helpful fallback for non-urgent situations.
+        try:
+            # Try fast LLM recovery
+            from services.llm_service import call_llm
+            import os
+            
+            api_key = os.environ.get('OPENAI_API_KEY') or os.environ.get('EMERGENT_LLM_KEY')
+            
+            response = await asyncio.wait_for(
+                call_llm(
+                    prompt=recovery_prompt,
+                    api_key=api_key,
+                    temperature=0.7,
+                    max_tokens=600,
+                    model="gpt-4o-mini"
+                ),
+                timeout=12.0
+            )
+            
+            if response and len(response.strip()) > 30:
+                logger.info("✅ [Supervisor] Recovery response generated successfully")
+                return response
+                
+        except asyncio.TimeoutError:
+            logger.warning("⚠️ [Supervisor] Recovery LLM timed out")
+        except Exception as e:
+            logger.warning(f"⚠️ [Supervisor] Recovery LLM failed: {e}")
         
-        This is BETTER than the old fallback because:
-        1. It acknowledges the query
-        2. Provides SOME immediate value (general guidance)
-        3. Offers one clear path forward (not multiple confusing questions)
+        # Try Gemini as backup
+        try:
+            import google.generativeai as genai
+            from core.config import settings
+            
+            if settings.GEMINI_API_KEY:
+                genai.configure(api_key=settings.GEMINI_API_KEY)
+                model = genai.GenerativeModel('gemini-2.0-flash')
+                
+                response = await asyncio.wait_for(
+                    asyncio.get_event_loop().run_in_executor(
+                        None,
+                        lambda: model.generate_content(recovery_prompt)
+                    ),
+                    timeout=10.0
+                )
+                
+                if response and response.text and len(response.text.strip()) > 30:
+                    logger.info("✅ [Supervisor] Recovery via Gemini successful")
+                    return response.text
+                    
+        except Exception as e:
+            logger.warning(f"⚠️ [Supervisor] Gemini recovery failed: {e}")
         
-        This is NOT used for urgent situations.
-        """
-        query_short = query[:100] + '...' if len(query) > 100 else query
+        # Final fallback: Honest, contextual acknowledgment (still no static template)
+        logger.error("❌ [Supervisor] All LLM recovery attempts failed")
+        short_q = query[:60] + "..." if len(query) > 60 else query
         
-        return f"""I can help you with this. To give you the clearest explanation:
+        return f"""I'm experiencing some technical difficulties processing your question about "{short_q}".
 
-Could you let me know the subject area (Physics, Chemistry, Math, or Biology)?
+I want to give you a proper answer. Could you try asking again? If this continues, you might try:
+- Asking about one specific concept at a time
+- Mentioning which subject this relates to
 
-Once I know that, I'll explain the concept clearly with examples that make sense."""
+I'm here to help you learn - let's try again!"""
 

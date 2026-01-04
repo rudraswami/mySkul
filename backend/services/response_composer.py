@@ -485,12 +485,12 @@ class ResponseComposer:
                 )
             
         except asyncio.TimeoutError:
-            logger.warning(f"⏰ LLM call timeout after {timeout}s - using fallback")
-            raw_response = self._get_fallback_response(question, intent)
+            logger.warning(f"⏰ LLM call timeout after {timeout}s - attempting recovery with faster model")
+            raw_response = await self._get_recovery_response(question, subject, intent, "timeout")
             
         except Exception as e:
             logger.error(f"❌ LLM call failed: {e}")
-            raw_response = self._get_fallback_response(question, intent)
+            raw_response = await self._get_recovery_response(question, subject, intent, str(e))
         
         generation_time = time.time() - start_time
         logger.info(f"✅ Response generated in {generation_time:.2f}s")
@@ -1360,28 +1360,85 @@ Does this make more sense? What part is still unclear?""",
         lines = response.strip().split('\n')
         return lines[0] if lines else "Hello!"
     
-    def _get_fallback_response(self, question: str, intent: str) -> str:
+    async def _get_recovery_response(self, question: str, subject: str, intent: str, original_error: str = None) -> str:
         """
-        Fallback response if LLM fails.
+        Recovery response using fast LLM when primary fails.
         
-        CRITICAL: Fallback must:
-        - Continue the conversation naturally
-        - Reference what they asked
-        - Never expose limitations or ask to "try again"
-        - Never list capabilities mid-conversation
+        PRINCIPLE: Failures reduce richness, NOT intelligence.
+        - Always attempt real LLM reasoning
+        - Use faster model with simpler prompt
+        - Never return static templates
+        - Never pretend to think without thinking
         """
-        if intent == "greeting":
-            return "Hey! 👋 Great to have you here. What's on your mind?"
+        logger.info(f"🔄 Attempting recovery response for: {question[:50]}...")
         
-        # Natural continuation that references their question
-        # NO capability menus, NO "try again" language
-        short_question = question[:50] + "..." if len(question) > 50 else question
+        # Simple, focused prompt for fast recovery
+        recovery_prompt = f"""You are a knowledgeable tutor. Answer this student's question directly and helpfully.
+
+Subject: {subject or 'General'}
+Question: {question}
+
+Provide a clear, accurate answer. Be concise but complete. If you're not certain about something, acknowledge it honestly."""
+
+        try:
+            # Attempt 1: Fast model with short timeout (gpt-4o-mini is fastest)
+            from services.llm_service import call_llm
+            
+            response = await asyncio.wait_for(
+                call_llm(
+                    prompt=recovery_prompt,
+                    api_key=self.llm_api_key,
+                    temperature=0.7,
+                    max_tokens=500,  # Shorter for speed
+                    model="gpt-4o-mini"
+                ),
+                timeout=10.0  # Short timeout for recovery
+            )
+            
+            if response and len(response.strip()) > 20:
+                logger.info("✅ Recovery response generated successfully")
+                return response
+            
+        except asyncio.TimeoutError:
+            logger.warning("⚠️ Recovery LLM also timed out")
+        except Exception as e:
+            logger.warning(f"⚠️ Recovery LLM failed: {e}")
         
-        return f"""Let me think about "{short_question}" for a moment.
+        # Attempt 2: Try Gemini Flash (even faster)
+        try:
+            import google.generativeai as genai
+            from core.config import settings
+            
+            if settings.GEMINI_API_KEY:
+                genai.configure(api_key=settings.GEMINI_API_KEY)
+                model = genai.GenerativeModel('gemini-2.0-flash')
+                
+                response = await asyncio.wait_for(
+                    asyncio.get_event_loop().run_in_executor(
+                        None,
+                        lambda: model.generate_content(recovery_prompt)
+                    ),
+                    timeout=8.0
+                )
+                
+                if response and response.text and len(response.text.strip()) > 20:
+                    logger.info("✅ Recovery via Gemini Flash successful")
+                    return response.text
+                    
+        except Exception as e:
+            logger.warning(f"⚠️ Gemini Flash recovery failed: {e}")
+        
+        # Final fallback: Honest acknowledgment (still no static template)
+        # This should rarely happen - only if ALL LLM providers are down
+        logger.error("❌ All LLM recovery attempts failed - returning honest acknowledgment")
+        
+        # Even this is contextual, not a generic template
+        short_q = question[:60] + "..." if len(question) > 60 else question
+        return f"""I'm having trouble processing your question about "{short_q}" right now due to high demand.
 
-This is an interesting question! I want to give you a really good answer.
+Your question is important - please try again in a moment and I'll give you a thorough answer. If this persists, the topic you're asking about is: {subject or 'general knowledge'}.
 
-Could you tell me a bit more about what specifically you're trying to understand? That way I can explain it in the most helpful way for you. 🎯"""
+In the meantime, could you share which specific aspect is most urgent for you?"""
 
 
 # Singleton instance for easy import

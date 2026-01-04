@@ -1181,182 +1181,32 @@ You're making great progress! Keep up the excellent work and stay curious. Learn
     
     def _generate_enhanced_contextual_fallback(self, role_type: str, subject: str, user_message: str) -> str:
         """
-        Generate enhanced contextual fallback responses that are subject-specific
-        These provide better user experience than generic templates
+        DEPRECATED: This method is no longer used.
+        
+        Static template-based responses violate the "most intelligent AI" principle.
+        The code now raises TimeoutError instead of returning static templates.
+        
+        This method is kept only for backward compatibility if there are legacy code paths.
+        If called, it logs an error and raises an exception.
         """
-        
-        # Detect question type and subject for contextual responses
-        message_lower = user_message.lower()
-        
-        # Subject-specific knowledge bases for better fallbacks
-        subject_contexts = {
-            'mathematics': {
-                'keywords': ['equation', 'solve', 'calculate', 'formula', 'function', 'derivative', 'integral', 'algebra', 'geometry', 'calculus'],
-                'concepts': ['equations', 'functions', 'graphs', 'proofs', 'formulas', 'calculations']
-            },
-            'physics': {
-                'keywords': ['force', 'energy', 'motion', 'velocity', 'acceleration', 'newton', 'momentum', 'wave', 'electric', 'magnetic'],
-                'concepts': ['forces', 'energy systems', 'motion analysis', 'wave properties', 'electromagnetic fields']
-            },
-            'chemistry': {
-                'keywords': ['reaction', 'molecule', 'atom', 'bond', 'compound', 'element', 'solution', 'acid', 'base', 'electron'],
-                'concepts': ['chemical reactions', 'molecular structures', 'periodic trends', 'bonding patterns']
-            },
-            'biology': {
-                'keywords': ['cell', 'dna', 'protein', 'organism', 'evolution', 'photosynthesis', 'respiration', 'genetics', 'ecosystem'],
-                'concepts': ['cellular processes', 'genetic mechanisms', 'evolutionary principles', 'ecological systems']
-            }
-        }
-        
-        # Detect most relevant subject context
-        subject_key = subject.lower()
-        context = subject_contexts.get(subject_key, subject_contexts.get('mathematics'))  # default fallback
-        
-        # Find relevant keywords in the user's question
-        relevant_keywords = [kw for kw in context['keywords'] if kw in message_lower]
-        
-        if role_type == "professor":
-            if len(relevant_keywords) >= 2:
-                # High relevance - detailed contextual response
-                return f"""Excellent question about {subject}! I can see you're exploring {', '.join(relevant_keywords[:2])}.
-
-**Core Concept:**
-This involves understanding the fundamental relationships in {context['concepts'][0]} and how they apply to your specific question.
-
-**Structured Approach:**
-1. **Identify Key Elements:** Break down what we know and what we're trying to find
-2. **Apply Relevant Principles:** Use the core {subject.lower()} concepts that govern this situation  
-3. **Work Through Steps:** Systematically apply the method to reach the solution
-4. **Verify & Interpret:** Check our result makes sense in the context
-
-**Key Insight:** 
-In {subject}, problems like this often involve {context['concepts'][1] if len(context['concepts']) > 1 else 'systematic analysis'}.
-
-Let me know if you'd like me to elaborate on any specific aspect of this approach!"""
-            
-            elif len(relevant_keywords) == 1:
-                # Medium relevance - focused contextual response
-                return f"""Great {subject} question about {relevant_keywords[0]}! This is a fundamental concept.
-
-**Understanding {relevant_keywords[0].title()}:**
-This concept is central to many {subject.lower()} problems and connects to broader principles in the field.
-
-**Problem-Solving Framework:**
-1. **Foundation:** Start with the basic definitions and relationships
-2. **Application:** Apply the relevant {subject.lower()} principles systematically
-3. **Analysis:** Work through the logic step by step
-4. **Solution:** Arrive at the answer using proper methodology
-
-**Study Tip:** 
-Focus on understanding the underlying principles rather than just memorizing procedures - this will help you tackle similar problems with confidence."""
-            
-            else:
-                # General subject-specific response
-                return f"""Thank you for your {subject} question! This area involves important concepts that build foundational understanding.
-
-**Learning Strategy for {subject}:**
-1. **Conceptual Foundation:** Master the core principles and definitions
-2. **Pattern Recognition:** Learn to identify the type of problem and appropriate methods
-3. **Practice Application:** Work through examples to reinforce understanding
-4. **Critical Analysis:** Always check if your solutions make sense
-
-**Next Steps:**
-Focus on understanding the fundamental concepts first, then practice applying them to similar problems. Each question helps strengthen your {subject.lower()} problem-solving skills!"""
-        
-        else:  # mentor response
-            encouragement_phrases = [
-                "I love your curiosity about",
-                "You're asking exactly the right questions about", 
-                "Your interest in", 
-                "It's fantastic that you're exploring"
-            ]
-            
-            return f"""{encouragement_phrases[len(user_message) % len(encouragement_phrases)]} {subject}! 
-
-**Why This Matters:**
-Questions like yours show you're thinking deeply about the subject. That's exactly how strong {subject.lower()} understanding develops.
-
-**Your Learning Journey:**
-• **Stay Curious:** Every question brings you closer to mastery
-• **Be Patient:** Complex {subject.lower()} concepts take time to fully understand
-• **Practice Regularly:** Consistent engagement with {subject.lower()} builds confidence
-• **Ask Follow-ups:** Don't hesitate to dig deeper when something interests you
-
-**Confidence Builder:**
-You're developing excellent {subject.lower()} thinking skills. The fact that you're asking this question shows you're on the right path to understanding these concepts deeply.
-
-Keep up this excellent approach to learning! 🌟"""
+        logger.error("❌ DEPRECATED: _generate_enhanced_contextual_fallback called - this should not happen!")
+        raise NotImplementedError(
+            "Static template fallbacks are deprecated. Use LLM-based recovery instead."
+        )
     
     def _generate_fast_fallback(self, role_type: str, subject: str, user_message: str) -> str:
         """
-        Generate immediate fallback responses when LLM calls fail or timeout
-        These are crafted to be helpful while indicating they're simplified responses
+        DEPRECATED: This method is no longer used.
+        
+        Static template-based responses violate the "most intelligent AI" principle.
+        
+        This method is kept only for backward compatibility if there are legacy code paths.
+        If called, it logs an error and raises an exception.
         """
-        
-        # Detect question type for better fallbacks
-        is_math = any(word in user_message.lower() for word in ['solve', 'equation', 'calculate', '+', '-', '*', '/', '=', 'x^', 'formula'])
-        is_physics = 'physics' in subject.lower() or any(word in user_message.lower() for word in ['force', 'velocity', 'acceleration', 'newton', 'energy'])
-        is_concept = any(word in user_message.lower() for word in ['what is', 'explain', 'define', 'how does', 'why'])
-        
-        if role_type == "professor":
-            if is_math:
-                return f"""I can help you with this {subject} problem! Here's a structured approach:
-
-**Understanding the Problem:**
-Let's break down what we're being asked to find and identify the key information given.
-
-**Solution Strategy:**
-1. Identify the known values and what we need to solve for
-2. Choose the appropriate method or formula
-3. Apply the method step by step
-4. Check our answer for reasonableness
-
-**Next Steps:**
-Work through each step carefully, and feel free to ask if you need clarification on any part of the solution process."""
-            
-            elif is_physics:
-                return f"""This is a great {subject} question! Let me guide you through the concept:
-
-**Core Principle:**
-Understanding the fundamental relationship between the physical quantities involved.
-
-**Key Approach:**
-1. Identify the relevant physical laws or principles
-2. Set up the problem with known and unknown variables
-3. Apply the appropriate equations
-4. Solve systematically
-
-**Practical Application:**
-This concept appears frequently in real-world scenarios and is foundational for advanced topics."""
-                
-            else:
-                return f"""Thank you for your {subject} question! Here's how we can approach this:
-
-**Concept Overview:**
-This topic involves understanding key relationships and principles in {subject}.
-
-**Learning Strategy:**
-1. Start with the fundamental definitions
-2. Understand how concepts connect to each other
-3. Practice with examples to reinforce understanding
-4. Apply knowledge to solve problems
-
-**Study Tip:**
-Focus on understanding the 'why' behind concepts, not just memorizing facts."""
-        
-        else:  # mentor
-            return f"""I love your curiosity about {subject}! You're asking exactly the right kind of questions.
-
-**Why This Matters:**
-Every question you ask helps build a stronger foundation for your learning journey.
-
-**Study Approach:**
-• Take your time to understand each concept thoroughly
-• Don't worry if it seems challenging at first - that's completely normal
-• Practice regularly and be patient with yourself
-
-**Encouragement:**
-You're making great progress by actively seeking to understand. Keep up this excellent attitude toward learning!"""
+        logger.error("❌ DEPRECATED: _generate_fast_fallback called - this should not happen!")
+        raise NotImplementedError(
+            "Static template fallbacks are deprecated. Use LLM-based recovery instead."
+        )
     
     async def _background_llm_improvement(self, professor_chat, mentor_chat, professor_message, mentor_message, subject: str, user_message: str, user_id: str):
         """
