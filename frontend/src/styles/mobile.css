@@ -11,11 +11,20 @@
 :root {
   /* Fallback for browsers that don't support dvh */
   --app-height: 100vh;
+  /* JavaScript will set --real-vh for actual viewport height */
+  --real-vh: 1vh;
 }
 
 @supports (height: 100dvh) {
   :root {
     --app-height: 100dvh;
+  }
+}
+
+/* Small viewport height (svh) - minimum possible viewport */
+@supports (height: 100svh) {
+  :root {
+    --app-height: 100svh;
   }
 }
 
@@ -230,6 +239,9 @@
 
   /* ========================================
      CHAT MODE - Fixed header/footer
+     REAL MOBILE BROWSER FIX:
+     Uses JavaScript-calculated viewport height (--real-vh)
+     with fallbacks for browsers that don't support dvh/svh
      ======================================== */
   
   /* Chat wrapper - OUTER container (no scroll - just contains) */
@@ -237,9 +249,17 @@
     position: relative;
     display: flex;
     flex-direction: column;
-    height: calc(100dvh - 56px) !important; /* Full height minus header */
+    /* Use JS-calculated height with dvh fallback */
+    height: calc(var(--real-vh, 1vh) * 100 - 56px) !important;
     margin-top: 56px !important; /* Push content below fixed header */
     overflow: hidden !important; /* NO scroll here - prevents nested scroll bug */
+  }
+  
+  /* Modern browsers: Use svh (small viewport height) for consistent behavior */
+  @supports (height: 100svh) {
+    .sathi-chat-wrapper {
+      height: calc(100svh - 56px) !important;
+    }
   }
   
   /* Chat scroll - INNER container (the ONLY scroll container) */
@@ -252,16 +272,20 @@
     padding-bottom: 140px !important; /* Space for fixed input at bottom */
   }
 
-  /* FOOTER/INPUT - Fixed at bottom */
+  /* FOOTER/INPUT - Fixed at bottom with real viewport awareness */
   .sathi-chat-input-container {
     position: fixed !important;
-    bottom: 0 !important;
+    /* Use safe-area for bottom positioning on notched devices */
+    bottom: env(safe-area-inset-bottom, 0px) !important;
     left: 0 !important;
     right: 0 !important;
     z-index: 1000 !important;
     background: linear-gradient(180deg, transparent 0%, rgba(18, 18, 28, 0.98) 15%) !important;
     padding: 12px 12px 16px !important;
-    padding-bottom: calc(16px + env(safe-area-inset-bottom)) !important;
+    /* Extra padding for safe area on notched devices */
+    padding-bottom: max(16px, env(safe-area-inset-bottom, 16px)) !important;
+    /* Ensure input stays within visible viewport */
+    max-height: calc(var(--real-vh, 1vh) * 30) !important;
   }
   
   /* Chat Container (legacy) */
