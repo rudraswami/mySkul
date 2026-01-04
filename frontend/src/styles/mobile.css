@@ -237,16 +237,19 @@
     position: relative;
     display: flex;
     flex-direction: column;
-    height: calc(100dvh - 56px); /* Full height minus header */
-    overflow: hidden; /* NO scroll here - prevents nested scroll bug */
+    height: calc(100dvh - 56px) !important; /* Full height minus header */
+    margin-top: 56px !important; /* Push content below fixed header */
+    overflow: hidden !important; /* NO scroll here - prevents nested scroll bug */
   }
   
   /* Chat scroll - INNER container (the ONLY scroll container) */
   .sathi-chat-scroll {
-    flex: 1;
-    overflow-y: auto;
-    -webkit-overflow-scrolling: touch;
-    padding-bottom: 120px; /* Space for fixed input at bottom */
+    flex: 1 1 auto !important;
+    min-height: 0 !important; /* Critical for flex child to shrink */
+    overflow-y: auto !important;
+    -webkit-overflow-scrolling: touch !important;
+    padding-top: 16px !important; /* Space at top for first message visibility */
+    padding-bottom: 140px !important; /* Space for fixed input at bottom */
   }
 
   /* FOOTER/INPUT - Fixed at bottom */
@@ -925,6 +928,7 @@
   /* Landscape: Adjust wrapper height for smaller header */
   .sathi-chat-wrapper {
     height: calc(100dvh - 48px) !important; /* Smaller header in landscape */
+    margin-top: 48px !important; /* Push content below fixed header */
   }
   
   /* Landscape: Scroll area padding */

@@ -327,7 +327,7 @@ const ChatItem = ({ chat, isActive, onClick, onRename, onDelete, onPin }) => {
         {showMenu && (
           <>
             <div 
-              style={{ position: 'fixed', inset: 0, zIndex: 45 }}
+              style={{ position: 'fixed', inset: 0, zIndex: 1160 }}
               onClick={() => setShowMenu(false)}
             />
             <motion.div
@@ -341,7 +341,7 @@ const ChatItem = ({ chat, isActive, onClick, onRename, onDelete, onPin }) => {
                 top: '100%',
                 marginTop: '4px',
                 /* FIXED: Higher z-index to ensure dropdown appears above all sidebar content */
-                zIndex: 55,
+                zIndex: 1170,
                 width: '140px',
                 backgroundColor: '#1c1c2a',
                 borderRadius: '12px',
@@ -641,7 +641,7 @@ const UserProfileDropdown = ({ onClose }) => {
               boxShadow: '0 10px 40px rgba(0,0,0,0.5)',
               border: '1px solid rgba(255, 255, 255, 0.08)',
               overflow: 'hidden',
-              zIndex: 60,
+              zIndex: 1200,
               /* FIXED: Ensure dropdown doesn't overflow viewport */
               maxHeight: 'calc(100vh - 180px)',
               overflowY: 'auto'
@@ -974,7 +974,7 @@ export default function HistorySidebar({
               inset: 0,
               backgroundColor: 'rgba(0,0,0,0.3)',
               backdropFilter: 'blur(4px)',
-              zIndex: 40
+              zIndex: 1100
             }}
             onClick={onClose}
           />
@@ -998,7 +998,7 @@ export default function HistorySidebar({
           maxWidth: '300px',
           backgroundColor: '#0f0f16',
           boxShadow: '4px 0 30px rgba(0,0,0,0.5)',
-          zIndex: 50,
+          zIndex: 1150,
           display: 'flex',
           flexDirection: 'column'
         }}

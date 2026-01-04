@@ -794,6 +794,7 @@ export default function AITutorNeuroSymbolic() {
   const messagesEndRef = useRef(null);
   const inputRef = useRef(null);
   const chatContainerRef = useRef(null);
+  const scrollContainerRef = useRef(null); // Separate ref for scroll area
   
   // Scroll state - tracks if user is near bottom
   const [isNearBottom, setIsNearBottom] = useState(true);
@@ -915,7 +916,7 @@ export default function AITutorNeuroSymbolic() {
   
   // Track scroll position to detect if user is near bottom
   useEffect(() => {
-    const container = chatContainerRef.current;
+    const container = scrollContainerRef.current;
     if (!container) return;
     
     const handleScroll = () => {
@@ -933,7 +934,7 @@ export default function AITutorNeuroSymbolic() {
    * Scroll to bottom - smooth and non-jumpy
    */
   const scrollToBottom = (force = false) => {
-    const container = chatContainerRef.current;
+    const container = scrollContainerRef.current;
     if (!container) return;
     
     // If not forced and user has scrolled up, don't auto-scroll
@@ -954,6 +955,22 @@ export default function AITutorNeuroSymbolic() {
   useEffect(() => {
     setHeaderCollapsed(messages.length > 0);
     setShowWelcome(messages.length === 0);
+  }, [messages.length]);
+
+  // MOBILE FIX: Ensure first message is visible when chat starts
+  // This handles the case where layout changes from welcome to chat mode
+  useEffect(() => {
+    if (messages.length === 1) {
+      // Small delay to ensure DOM is fully rendered after layout switch
+      const timer = setTimeout(() => {
+        const container = scrollContainerRef.current;
+        if (container) {
+          // Scroll to top to show the first user message
+          container.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+      }, 100);
+      return () => clearTimeout(timer);
+    }
   }, [messages.length]);
 
   // Load default prompts (generic, not subject-specific)
@@ -2195,7 +2212,7 @@ export default function AITutorNeuroSymbolic() {
           <div ref={chatContainerRef} className={`flex flex-col relative ${messages.length > 0 ? 'sathi-chat-wrapper' : ''}`}>
             {/* Scrollable Content Area */}
             <div 
-              ref={chatContainerRef}
+              ref={scrollContainerRef}
               className={`flex-1 overflow-y-auto ${messages.length > 0 ? 'sathi-chat-scroll' : ''}`}
             >
               {/* Welcome Screen - PREMIUM NEURAL AI MENTOR INTERFACE */}
