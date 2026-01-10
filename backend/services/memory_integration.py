@@ -176,13 +176,17 @@ class MemoryIntegrationService:
             # Priority 2 = MEDIUM (enhancement)
             # Priority 3 = LOW (nice to have)
             
+            # TIMEOUT ALIGNMENT FIX (2026-01-11):
+            # All component timeouts < global deadline (1.5s)
+            # Ensures components complete or fail BEFORE global timeout
+            # Previous issue: semantic_memory had 1.5s = global deadline (race condition)
             COMPONENT_CONFIG = {
-                "conversation": {"timeout": 1.0, "priority": 0, "default": []},
-                "profile": {"timeout": 0.8, "priority": 1, "default": {}},
-                "mastery": {"timeout": 0.6, "priority": 1, "default": 0},
-                "semantic_memory": {"timeout": 1.5, "priority": 2, "default": []},
-                "weak_topics": {"timeout": 0.6, "priority": 2, "default": []},
-                "continuity": {"timeout": 0.8, "priority": 3, "default": {}},
+                "conversation": {"timeout": 0.8, "priority": 0, "default": []},   # Reduced from 1.0s
+                "profile": {"timeout": 0.6, "priority": 1, "default": {}},        # Reduced from 0.8s
+                "mastery": {"timeout": 0.5, "priority": 1, "default": 0},         # Reduced from 0.6s
+                "semantic_memory": {"timeout": 1.0, "priority": 2, "default": []},# Reduced from 1.5s
+                "weak_topics": {"timeout": 0.5, "priority": 2, "default": []},    # Reduced from 0.6s
+                "continuity": {"timeout": 0.6, "priority": 3, "default": {}},     # Reduced from 0.8s
             }
             
             # Track component outcomes

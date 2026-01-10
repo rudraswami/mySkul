@@ -10,17 +10,51 @@ PRODUCTION-GRADE ARCHITECTURE (like ChatGPT/Claude):
 CONCURRENCY FIX (2026-01-11):
 - Added threading.Lock to EmbeddingCache (sync cache, used in sync context)
 - Made cache operations atomic
+
+EMBEDDING STABILITY FIX (2026-01-11):
+- Dedicated ThreadPoolExecutor for embedding calls (isolated from default pool)
+- Semaphore-based backpressure to limit concurrent embedding requests
+- Better timeout alignment with global deadlines
 """
 import logging
 import asyncio
 import threading
 import numpy as np
 import hashlib
+from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime, timezone
 from typing import List, Dict, Any, Optional
 from collections import OrderedDict
 
 logger = logging.getLogger(__name__)
+
+# EMBEDDING STABILITY: Dedicated executor for embedding operations
+# Isolated from default asyncio executor to prevent thread pool exhaustion
+_EMBEDDING_EXECUTOR: ThreadPoolExecutor = None  # type: ignore
+_EMBEDDING_EXECUTOR_LOCK = threading.Lock()
+_EMBEDDING_MAX_WORKERS = 8  # Limit concurrent OpenAI API calls
+_EMBEDDING_SEMAPHORE: asyncio.Semaphore = None  # type: ignore
+
+
+def _get_embedding_executor() -> ThreadPoolExecutor:
+    """Get or create dedicated embedding executor (thread-safe singleton)"""
+    global _EMBEDDING_EXECUTOR
+    with _EMBEDDING_EXECUTOR_LOCK:
+        if _EMBEDDING_EXECUTOR is None:
+            _EMBEDDING_EXECUTOR = ThreadPoolExecutor(
+                max_workers=_EMBEDDING_MAX_WORKERS,
+                thread_name_prefix="embedding_"
+            )
+            logger.info(f"🧠 Embedding executor created: max_workers={_EMBEDDING_MAX_WORKERS}")
+    return _EMBEDDING_EXECUTOR
+
+
+def _get_embedding_semaphore() -> asyncio.Semaphore:
+    """Get or create embedding semaphore for backpressure"""
+    global _EMBEDDING_SEMAPHORE
+    if _EMBEDDING_SEMAPHORE is None:
+        _EMBEDDING_SEMAPHORE = asyncio.Semaphore(_EMBEDDING_MAX_WORKERS)
+    return _EMBEDDING_SEMAPHORE
 
 
 class EmbeddingCache:
@@ -181,10 +215,16 @@ class SemanticMemoryService:
     
     async def _generate_embedding_async(self, text: str) -> List[float]:
         """
-        Generate embedding using asyncio thread pool
-        Runs OpenAI sync call in background thread
+        Generate embedding using dedicated thread pool with backpressure
+        
+        EMBEDDING STABILITY FIX (2026-01-11):
+        - Uses dedicated executor (not default asyncio pool)
+        - Semaphore limits concurrent requests to prevent overload
+        - Dedicated threads prevent blocking other async operations
         """
         loop = asyncio.get_event_loop()
+        executor = _get_embedding_executor()
+        semaphore = _get_embedding_semaphore()
         
         def _sync_call():
             from openai import OpenAI
@@ -195,8 +235,10 @@ class SemanticMemoryService:
             )
             return response.data[0].embedding
         
-        # Run in thread pool to avoid blocking
-        return await loop.run_in_executor(None, _sync_call)
+        # BACKPRESSURE: Limit concurrent embedding requests
+        async with semaphore:
+            # Run in dedicated executor (not default pool)
+            return await loop.run_in_executor(executor, _sync_call)
     
     def get_embedding_health(self) -> Dict[str, Any]:
         """
