@@ -6,9 +6,14 @@ PRODUCTION-GRADE ARCHITECTURE (like ChatGPT/Claude):
 - In-memory LRU cache for embeddings (5 min TTL)
 - Instant keyword fallback (no waiting for OpenAI)
 - Non-blocking design (never blocks AI response)
+
+CONCURRENCY FIX (2026-01-11):
+- Added threading.Lock to EmbeddingCache (sync cache, used in sync context)
+- Made cache operations atomic
 """
 import logging
 import asyncio
+import threading
 import numpy as np
 import hashlib
 from datetime import datetime, timezone
@@ -24,6 +29,10 @@ class EmbeddingCache:
     
     Prevents repeated OpenAI calls for same/similar queries.
     Cache hit = instant response (0ms vs 200-500ms)
+    
+    CONCURRENCY FIX (2026-01-11):
+    - Added threading.Lock for thread-safe access
+    - All cache operations are now atomic
     """
     
     def __init__(self, max_size: int = 1000, ttl_seconds: int = 300):
@@ -32,47 +41,53 @@ class EmbeddingCache:
         self._ttl = ttl_seconds
         self._hits = 0
         self._misses = 0
+        # CONCURRENCY FIX: Lock for thread-safe cache access
+        # Using threading.Lock since cache is accessed from sync methods
+        self._lock = threading.Lock()
     
     def _hash_key(self, text: str) -> str:
         """Create cache key from text"""
         return hashlib.md5(text.lower().strip()[:500].encode()).hexdigest()
     
     def get(self, text: str) -> Optional[List[float]]:
-        """Get cached embedding if exists and not expired"""
+        """Get cached embedding if exists and not expired (thread-safe)"""
         key = self._hash_key(text)
-        if key in self._cache:
-            embedding, timestamp = self._cache[key]
-            age = (datetime.now(timezone.utc) - timestamp).total_seconds()
-            if age < self._ttl:
-                self._hits += 1
-                # Move to end (LRU)
-                self._cache.move_to_end(key)
-                return embedding
-            else:
-                # Expired
-                del self._cache[key]
-        self._misses += 1
-        return None
+        with self._lock:
+            if key in self._cache:
+                embedding, timestamp = self._cache[key]
+                age = (datetime.now(timezone.utc) - timestamp).total_seconds()
+                if age < self._ttl:
+                    self._hits += 1
+                    # Move to end (LRU)
+                    self._cache.move_to_end(key)
+                    return embedding
+                else:
+                    # Expired - remove under lock
+                    del self._cache[key]
+            self._misses += 1
+            return None
     
     def set(self, text: str, embedding: List[float]) -> None:
-        """Cache an embedding"""
+        """Cache an embedding (thread-safe)"""
         key = self._hash_key(text)
-        self._cache[key] = (embedding, datetime.now(timezone.utc))
-        self._cache.move_to_end(key)
-        
-        # Evict oldest if over capacity
-        while len(self._cache) > self._max_size:
-            self._cache.popitem(last=False)
+        with self._lock:
+            self._cache[key] = (embedding, datetime.now(timezone.utc))
+            self._cache.move_to_end(key)
+            
+            # Evict oldest if over capacity (atomic under lock)
+            while len(self._cache) > self._max_size:
+                self._cache.popitem(last=False)
     
     def stats(self) -> Dict[str, Any]:
-        """Cache statistics"""
-        total = self._hits + self._misses
-        return {
-            "size": len(self._cache),
-            "hits": self._hits,
-            "misses": self._misses,
-            "hit_rate": self._hits / total if total > 0 else 0
-        }
+        """Cache statistics (thread-safe)"""
+        with self._lock:
+            total = self._hits + self._misses
+            return {
+                "size": len(self._cache),
+                "hits": self._hits,
+                "misses": self._misses,
+                "hit_rate": self._hits / total if total > 0 else 0
+            }
 
 
 # Global embedding cache (shared across requests)

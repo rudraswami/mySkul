@@ -12,10 +12,16 @@ MEMORY CONTRACT: Uses canonical schemas from models/memory.py
 MULTI-TENANT: All operations require user_id for isolation
 
 PERFORMANCE: All DB operations have timeout protection
+
+CONCURRENCY FIX (2026-01-11):
+- Added asyncio.Lock to all shared in-memory structures
+- Replaced shallow copies with copy.deepcopy
+- Made cache eviction atomic
 """
 import logging
 import os
 import uuid
+import copy
 import asyncio
 from datetime import datetime, timezone
 from typing import List, Dict, Any, Optional
@@ -47,6 +53,8 @@ class MemoryService:
         # FIX #5: Backup cache for session states (prevents context wipe on DB error)
         self._session_state_backup: Dict[str, Dict[str, Any]] = {}
         self._backup_max_size = 500  # Bounded to prevent memory leak
+        # CONCURRENCY FIX: Lock protects _session_state_backup from race conditions
+        self._backup_lock = asyncio.Lock()
     
     async def get_conversation_context(
         self,
@@ -280,7 +288,8 @@ class MemoryService:
                 state = self._doc_to_session_state(state_doc)
                 
                 # FIX #5: Update backup cache on successful load
-                self._update_session_backup(backup_key, state)
+                # CONCURRENCY FIX: Now async with lock
+                await self._update_session_backup(backup_key, state)
                 return state
             
             # Return default state if not found (new session)
@@ -290,26 +299,37 @@ class MemoryService:
             logger.error(f"❌ Failed to get session state: {e}")
             
             # FIX #5: Return backup cache if available (don't wipe context)
-            if backup_key in self._session_state_backup:
-                logger.warning(f"⚠️ Using backup session state (DB unavailable)")
-                backup = self._session_state_backup[backup_key]
-                backup["_from_backup"] = True  # Mark as from backup for visibility
-                return backup
+            # CONCURRENCY FIX: Access backup under lock with deepcopy
+            async with self._backup_lock:
+                if backup_key in self._session_state_backup:
+                    logger.warning(f"⚠️ Using backup session state (DB unavailable)")
+                    # Deep copy to prevent mutation of cached data
+                    backup = copy.deepcopy(self._session_state_backup[backup_key])
+                    backup["_from_backup"] = True  # Mark as from backup for visibility
+                    return backup
             
             # Only create default if no backup exists
             logger.warning(f"⚠️ No backup available, creating new session state")
             return self._create_default_session_state(user_id, session_id)
     
-    def _update_session_backup(self, key: str, state: Dict[str, Any]) -> None:
-        """FIX #5: Update backup cache with bounded growth"""
-        # Evict oldest if at capacity
-        if len(self._session_state_backup) >= self._backup_max_size and key not in self._session_state_backup:
-            # Remove first (oldest) entry
-            oldest_key = next(iter(self._session_state_backup))
-            del self._session_state_backup[oldest_key]
+    async def _update_session_backup(self, key: str, state: Dict[str, Any]) -> None:
+        """
+        FIX #5: Update backup cache with bounded growth
         
-        # Store backup (shallow copy to avoid mutation issues)
-        self._session_state_backup[key] = dict(state)
+        CONCURRENCY FIX (2026-01-11):
+        - Made async with lock to prevent race conditions
+        - Use deepcopy to prevent mutation issues with nested structures
+        - Atomic eviction under lock
+        """
+        async with self._backup_lock:
+            # Evict oldest if at capacity (atomic under lock)
+            if len(self._session_state_backup) >= self._backup_max_size and key not in self._session_state_backup:
+                # Remove first (oldest) entry - safe under lock
+                oldest_key = next(iter(self._session_state_backup))
+                del self._session_state_backup[oldest_key]
+            
+            # Store backup (deep copy to prevent mutation of nested structures like last_turns)
+            self._session_state_backup[key] = copy.deepcopy(state)
     
     async def save_session_state(
         self,

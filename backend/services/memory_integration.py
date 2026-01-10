@@ -18,8 +18,14 @@ This service orchestrates:
 - Topic continuity (ContinuityEngine)
 - Spaced repetition (SpacedRepetitionEngine)
 - Memory extraction (MemoryExtractor)
+
+CONCURRENCY FIX (2026-01-11):
+- Added asyncio.Lock to _profile_cache and _recent_write_keys
+- Made cache operations atomic and thread-safe
+- Replaced shallow copies with copy.deepcopy
 """
 import asyncio
+import copy
 import logging
 import os
 from datetime import datetime, timezone, timedelta
@@ -62,11 +68,15 @@ class MemoryIntegrationService:
         self._recent_write_keys: Dict[str, float] = {}  # {key: timestamp}
         self._dedup_window_seconds = 5  # Ignore duplicate writes within 5 seconds
         self._max_dedup_cache_size = 100
+        # CONCURRENCY FIX: Lock for dedup cache
+        self._dedup_lock = asyncio.Lock()
         
         # OPTIMIZATION: Micro-cache for user_learning_profile (deduplicates 4 queries)
         # TTL is very short (500ms) - only deduplicates within a single request
         self._profile_cache: Dict[str, tuple] = {}  # {user_id: (profile, timestamp)}
         self._profile_cache_ttl_ms = 500  # 500ms - covers one request's parallel operations
+        # CONCURRENCY FIX: Lock for profile cache
+        self._profile_cache_lock = asyncio.Lock()
     
     @property
     def memory_service(self):
@@ -619,17 +629,27 @@ class MemoryIntegrationService:
     # ==================== Private Helpers ====================
     
     async def _get_user_profile(self, user_id: str) -> Dict[str, Any]:
-        """Get or create user learning profile with micro-caching"""
+        """
+        Get or create user learning profile with micro-caching
+        
+        CONCURRENCY FIX (2026-01-11):
+        - Cache access protected by asyncio.Lock
+        - Returns deepcopy to prevent mutation of cached data
+        """
         try:
             # OPTIMIZATION: Check micro-cache first (deduplicates queries within same request)
             import time
             now_ms = time.time() * 1000
-            cached = self._profile_cache.get(user_id)
-            if cached:
-                cached_profile, cached_time = cached
-                if (now_ms - cached_time) < self._profile_cache_ttl_ms:
-                    logger.debug(f"⚡ Profile cache hit for {user_id[:8]}")
-                    return cached_profile
+            
+            # CONCURRENCY FIX: Check cache under lock
+            async with self._profile_cache_lock:
+                cached = self._profile_cache.get(user_id)
+                if cached:
+                    cached_profile, cached_time = cached
+                    if (now_ms - cached_time) < self._profile_cache_ttl_ms:
+                        logger.debug(f"⚡ Profile cache hit for {user_id[:8]}")
+                        # Return deepcopy to prevent mutation of cached data
+                        return copy.deepcopy(cached_profile)
             
             # Try to get from learning profile
             profile = await self.db.user_learning_profile.find_one({"user_id": user_id})
@@ -641,9 +661,10 @@ class MemoryIntegrationService:
                     full_name = user.get("full_name", "")
                     profile["name"] = full_name.split()[0] if full_name else ""
                 
-                # Cache the result
-                self._profile_cache[user_id] = (profile, now_ms)
-                self._cleanup_profile_cache()
+                # Cache the result under lock
+                async with self._profile_cache_lock:
+                    self._profile_cache[user_id] = (copy.deepcopy(profile), now_ms)
+                await self._cleanup_profile_cache()
                 return profile
             
             # Create default profile
@@ -694,9 +715,10 @@ class MemoryIntegrationService:
                 full_name = user.get("full_name", "")
                 default_profile["name"] = full_name.split()[0] if full_name else ""
             
-            # Cache the new profile
-            self._profile_cache[user_id] = (default_profile, now_ms)
-            self._cleanup_profile_cache()
+            # Cache the new profile under lock
+            async with self._profile_cache_lock:
+                self._profile_cache[user_id] = (copy.deepcopy(default_profile), now_ms)
+            await self._cleanup_profile_cache()
             
             return default_profile
             
@@ -707,26 +729,36 @@ class MemoryIntegrationService:
             logger.error(f"❌ Failed to get user profile: {e}")
             return {}
     
-    def _cleanup_profile_cache(self):
-        """Clean up expired entries from profile cache (prevents memory leak)"""
+    async def _cleanup_profile_cache(self):
+        """
+        Clean up expired entries from profile cache (prevents memory leak)
+        
+        CONCURRENCY FIX (2026-01-11):
+        - Made async with lock to prevent dict modification during iteration
+        - Collect keys to delete first, then delete under lock
+        """
         import time
         now_ms = time.time() * 1000
-        expired_keys = [
-            k for k, (_, cached_time) in self._profile_cache.items()
-            if (now_ms - cached_time) > self._profile_cache_ttl_ms
-        ]
-        for k in expired_keys:
-            del self._profile_cache[k]
         
-        # Safety: limit cache size (should rarely hit this)
-        if len(self._profile_cache) > 50:
-            # Remove oldest entries
-            sorted_entries = sorted(
-                self._profile_cache.items(),
-                key=lambda x: x[1][1]  # Sort by timestamp
-            )
-            for k, _ in sorted_entries[:25]:  # Remove oldest 25
+        async with self._profile_cache_lock:
+            # Collect expired keys first (don't modify during iteration)
+            expired_keys = [
+                k for k, (_, cached_time) in list(self._profile_cache.items())
+                if (now_ms - cached_time) > self._profile_cache_ttl_ms
+            ]
+            for k in expired_keys:
                 del self._profile_cache[k]
+            
+            # Safety: limit cache size (should rarely hit this)
+            if len(self._profile_cache) > 50:
+                # Remove oldest entries - collect keys first
+                sorted_entries = sorted(
+                    list(self._profile_cache.items()),
+                    key=lambda x: x[1][1]  # Sort by timestamp
+                )
+                keys_to_remove = [k for k, _ in sorted_entries[:25]]
+                for k in keys_to_remove:
+                    del self._profile_cache[k]
     
     async def _update_user_preference(
         self,
@@ -1149,35 +1181,38 @@ class MemoryIntegrationService:
             Dict with update summary
         """
         # FIX #12: Deduplication check
+        # CONCURRENCY FIX (2026-01-11): Protected by lock
         import time
         dedup_key = f"{user_id}:{session_id}:{request_id or user_message[:50]}"
         current_time = time.time()
         
-        # Clean old entries from dedup cache
-        if len(self._recent_write_keys) > self._max_dedup_cache_size:
-            cutoff = current_time - self._dedup_window_seconds
-            self._recent_write_keys = {
-                k: v for k, v in self._recent_write_keys.items()
-                if v > cutoff
-            }
-        
-        # Check for duplicate
-        if dedup_key in self._recent_write_keys:
-            last_write = self._recent_write_keys[dedup_key]
-            if current_time - last_write < self._dedup_window_seconds:
-                logger.debug(f"🔄 Deduplicated memory write: {dedup_key[:30]}...")
-                return {
-                    "turn_added": False,
-                    "summary_updated": False,
-                    "mastery_updated": False,
-                    "event_logged": False,
-                    "errors": [],
-                    "retries": 0,
-                    "deduplicated": True  # FIX #12: Mark as deduplicated
+        async with self._dedup_lock:
+            # Clean old entries from dedup cache (under lock)
+            if len(self._recent_write_keys) > self._max_dedup_cache_size:
+                cutoff = current_time - self._dedup_window_seconds
+                # Create new dict instead of modifying during iteration
+                self._recent_write_keys = {
+                    k: v for k, v in list(self._recent_write_keys.items())
+                    if v > cutoff
                 }
-        
-        # Record this write
-        self._recent_write_keys[dedup_key] = current_time
+            
+            # Check for duplicate
+            if dedup_key in self._recent_write_keys:
+                last_write = self._recent_write_keys[dedup_key]
+                if current_time - last_write < self._dedup_window_seconds:
+                    logger.debug(f"🔄 Deduplicated memory write: {dedup_key[:30]}...")
+                    return {
+                        "turn_added": False,
+                        "summary_updated": False,
+                        "mastery_updated": False,
+                        "event_logged": False,
+                        "errors": [],
+                        "retries": 0,
+                        "deduplicated": True  # FIX #12: Mark as deduplicated
+                    }
+            
+            # Record this write (under lock)
+            self._recent_write_keys[dedup_key] = current_time
         
         results = {
             "turn_added": False,
