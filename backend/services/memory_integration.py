@@ -77,6 +77,15 @@ class MemoryIntegrationService:
         self._profile_cache_ttl_ms = 500  # 500ms - covers one request's parallel operations
         # CONCURRENCY FIX: Lock for profile cache
         self._profile_cache_lock = asyncio.Lock()
+        
+        # OBSERVABILITY FIX (2026-01-11): Cache metrics
+        self._cache_stats = {
+            "profile_hits": 0,
+            "profile_misses": 0,
+            "dedup_hits": 0,
+            "dedup_total": 0
+        }
+        self._cache_stats_lock = asyncio.Lock()
     
     @property
     def memory_service(self):
@@ -125,7 +134,8 @@ class MemoryIntegrationService:
         user_id: str,
         session_id: str,
         question: str,
-        subject: str = None
+        subject: str = None,
+        request_id: str = None
     ) -> Dict[str, Any]:
         """
         Get comprehensive context for AI response generation
@@ -143,17 +153,33 @@ class MemoryIntegrationService:
             session_id: Current chat session
             question: Current question
             subject: Subject (optional, will be detected)
+            request_id: Request correlation ID for tracing (OBSERVABILITY FIX)
         
         Returns:
             Dict with all context needed for personalized response
         
         OPTIMIZED: Parallel execution of independent async calls to reduce latency.
+        
+        OBSERVABILITY FIX (2026-01-11):
+        - Added request_id parameter for correlation
+        - Tracks per-component latency
+        - Logs context_quality metrics
         """
+        import time
+        import uuid
+        
+        # Generate request_id if not provided
+        if request_id is None:
+            request_id = str(uuid.uuid4())[:8]
+        
+        request_start = time.time()
+        
         try:
             context = {
                 "user_id": user_id,
                 "session_id": session_id,
-                "timestamp": datetime.now(timezone.utc).isoformat()
+                "timestamp": datetime.now(timezone.utc).isoformat(),
+                "_request_id": request_id  # OBSERVABILITY: Include in context for downstream tracing
             }
             
             # Extract current topic early (sync operation)
@@ -193,19 +219,34 @@ class MemoryIntegrationService:
             component_results = {}
             component_status = {}  # "success", "timeout", "error", "cancelled"
             
+            # OBSERVABILITY: Track per-component latency
+            component_latencies = {}
+            
             async def timed_operation(name: str, coro, timeout: float, default):
-                """Execute operation with individual timeout, return (name, result, status)"""
+                """
+                Execute operation with individual timeout, return (name, result, status)
+                
+                OBSERVABILITY FIX (2026-01-11): Tracks latency per component
+                """
+                start = time.time()
                 try:
                     result = await asyncio.wait_for(coro, timeout=timeout)
+                    latency_ms = (time.time() - start) * 1000
+                    component_latencies[name] = {"latency_ms": latency_ms, "status": "success"}
                     return (name, result, "success")
                 except asyncio.TimeoutError:
-                    logger.debug(f"⏱️ {name} timed out (>{timeout}s)")
+                    latency_ms = (time.time() - start) * 1000
+                    component_latencies[name] = {"latency_ms": latency_ms, "status": "timeout"}
+                    logger.debug(f"⏱️ {name} timed out (>{timeout}s) [rid={request_id}]")
                     return (name, default, "timeout")
                 except asyncio.CancelledError:
-                    # Client disconnect - graceful, not an error
+                    latency_ms = (time.time() - start) * 1000
+                    component_latencies[name] = {"latency_ms": latency_ms, "status": "cancelled"}
                     return (name, default, "cancelled")
                 except Exception as e:
-                    logger.warning(f"❌ {name} failed: {str(e)[:80]}")
+                    latency_ms = (time.time() - start) * 1000
+                    component_latencies[name] = {"latency_ms": latency_ms, "status": "error", "error": str(e)[:50]}
+                    logger.warning(f"❌ {name} failed: {str(e)[:80]} [rid={request_id}]")
                     return (name, default, "error")
             
             # Create all tasks with individual timeouts
@@ -400,16 +441,29 @@ class MemoryIntegrationService:
             # Backward compatibility: set _memory_degraded flag
             context["_memory_degraded"] = context_quality < 5
             
-            # Log context quality with data presence info
+            # OBSERVABILITY FIX (2026-01-11): Enhanced logging with request_id and latency
+            total_latency_ms = (time.time() - request_start) * 1000
             data_info = f"msgs={len(recent_messages)}, profile={'yes' if has_profile_data else 'no'}"
+            
+            # Store metrics in context for downstream use
+            context["_component_latencies"] = component_latencies
+            context["_total_latency_ms"] = total_latency_ms
+            
+            # Build latency summary for log
+            latency_summary = ", ".join([
+                f"{k}={v['latency_ms']:.0f}ms" 
+                for k, v in component_latencies.items()
+            ])
+            
             if context_quality == 5:
-                logger.info(f"🧠 Context quality: FULL (5/5) - all 6 components loaded ({data_info})")
+                logger.info(f"🧠 Context quality: FULL (5/5) - all 6 components loaded ({data_info}) [rid={request_id}] [{total_latency_ms:.0f}ms]")
             elif context_quality >= 3:
-                logger.info(f"🧠 Context quality: {context_quality}/5 - {len(successful_components)}/6 components ({data_info})")
+                logger.info(f"🧠 Context quality: {context_quality}/5 - {len(successful_components)}/6 components ({data_info}) [rid={request_id}] [{total_latency_ms:.0f}ms]")
             elif context_quality == 2:
-                logger.info(f"🧠 Context quality: {context_quality}/5 - limited but working ({data_info})")
+                logger.info(f"🧠 Context quality: {context_quality}/5 - limited but working ({data_info}) [rid={request_id}] [{total_latency_ms:.0f}ms]")
             else:
-                logger.warning(f"⚠️ Context quality: {context_quality}/5 - CRITICAL: components not responding ({len(failed_components)} failed: {', '.join(failed_components)})")
+                logger.warning(f"⚠️ Context quality: {context_quality}/5 - CRITICAL: components not responding ({len(failed_components)} failed: {', '.join(failed_components)}) [rid={request_id}] [{total_latency_ms:.0f}ms]")
+                logger.warning(f"   Component latencies: {latency_summary}")
             
             # 1. Recent conversation context
             context["recent_context"] = recent_messages
@@ -447,8 +501,8 @@ class MemoryIntegrationService:
             # 7. Build context summary for AI prompt
             context["context_summary"] = self._build_context_summary(context)
             
-            logger.info(f"🧠 Enhanced context (parallel): {len(recent_messages)} recent, "
-                       f"{len(relevant_memories)} memories, mastery={mastery_level}")
+            logger.info(f"🧠 Enhanced context: {len(recent_messages)} recent, "
+                       f"{len(relevant_memories)} memories, mastery={mastery_level} [rid={request_id}]")
             
             return context
             
@@ -661,9 +715,16 @@ class MemoryIntegrationService:
                 if cached:
                     cached_profile, cached_time = cached
                     if (now_ms - cached_time) < self._profile_cache_ttl_ms:
+                        # OBSERVABILITY FIX: Track cache hit
+                        async with self._cache_stats_lock:
+                            self._cache_stats["profile_hits"] += 1
                         logger.debug(f"⚡ Profile cache hit for {user_id[:8]}")
                         # Return deepcopy to prevent mutation of cached data
                         return copy.deepcopy(cached_profile)
+            
+            # OBSERVABILITY FIX: Track cache miss
+            async with self._cache_stats_lock:
+                self._cache_stats["profile_misses"] += 1
             
             # Try to get from learning profile
             profile = await self.db.user_learning_profile.find_one({"user_id": user_id})
@@ -1352,6 +1413,75 @@ class MemoryIntegrationService:
         
         summary = " | ".join(parts)
         return summary[:800]  # Enforce bound
+    
+    # =========================================================================
+    # OBSERVABILITY: Health and Metrics (2026-01-11)
+    # =========================================================================
+    
+    async def get_cache_stats(self) -> Dict[str, Any]:
+        """
+        Get cache statistics for monitoring
+        
+        OBSERVABILITY FIX (2026-01-11): Exposes cache metrics for dashboards
+        
+        Returns:
+            Dict with profile cache and dedup cache statistics
+        """
+        async with self._cache_stats_lock:
+            profile_total = self._cache_stats["profile_hits"] + self._cache_stats["profile_misses"]
+            profile_hit_rate = (
+                self._cache_stats["profile_hits"] / profile_total 
+                if profile_total > 0 else 0
+            )
+            
+            return {
+                "profile_cache": {
+                    "hits": self._cache_stats["profile_hits"],
+                    "misses": self._cache_stats["profile_misses"],
+                    "total": profile_total,
+                    "hit_rate_percent": round(profile_hit_rate * 100, 1),
+                    "size": len(self._profile_cache)
+                },
+                "dedup_cache": {
+                    "hits": self._cache_stats["dedup_hits"],
+                    "total": self._cache_stats["dedup_total"],
+                    "size": len(self._recent_write_keys)
+                },
+                "embedding_cache": self.semantic_memory._cache.stats() if self._semantic_memory else {}
+            }
+    
+    async def get_memory_health(self) -> Dict[str, Any]:
+        """
+        Get overall memory system health
+        
+        OBSERVABILITY FIX (2026-01-11): Provides health check for monitoring
+        
+        Returns:
+            Dict with health status and component availability
+        """
+        health = {
+            "status": "healthy",
+            "components": {
+                "memory_service": self._memory_service is not None,
+                "semantic_memory": self._semantic_memory is not None,
+                "mastery_tracker": self._mastery_tracker is not None,
+                "continuity_engine": self._continuity_engine is not None,
+            },
+            "embedding_status": "unknown"
+        }
+        
+        # Check embedding health
+        if self._semantic_memory:
+            health["embedding_status"] = self.semantic_memory.get_embedding_health()
+        
+        # Determine overall status
+        components_up = sum(health["components"].values())
+        if components_up < 2:
+            health["status"] = "degraded"
+        elif components_up < 4:
+            health["status"] = "partial"
+        
+        return health
 
 
 # Convenience function for easy import
