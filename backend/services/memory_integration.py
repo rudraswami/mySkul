@@ -328,6 +328,16 @@ class MemoryIntegrationService:
             # Final status check
             logger.info(f"🧠 Memory components: {len(component_status)} processed - {dict(component_status)}")
             
+            # DATABASE PRESSURE DETECTION (2026-01-11):
+            # If ALL components timeout, it's likely DB pool exhaustion
+            timeout_count = sum(1 for s in component_status.values() if s in ("timeout", "deadline"))
+            if timeout_count >= 4:
+                logger.error(
+                    f"🔥 CRITICAL: {timeout_count}/6 memory components timed out - "
+                    f"Possible MongoDB connection pool exhaustion. "
+                    f"Consider checking pool stats and increasing maxPoolSize."
+                )
+            
             # Extract results with defaults for any missing
             recent_messages = component_results.get("conversation", [])
             user_profile = component_results.get("profile", {})
