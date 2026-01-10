@@ -13,9 +13,11 @@ from services.llm_compat import LlmChat, UserMessage
 logger = logging.getLogger(__name__)
 
 # Timeout constants
-DEFAULT_LLM_TIMEOUT = 60.0  # 60 seconds (DeepSeek reasoning can take longer)
-STREAMING_LLM_TIMEOUT = 180.0  # 3 minutes for streaming
-DEEPSEEK_TIMEOUT = 90.0  # DeepSeek needs more time for deep reasoning
+# CRITICAL FIX: LLM timeout MUST be shorter than Agent timeout (25s)
+# This ensures agents can handle slow LLM gracefully, not timeout themselves
+DEFAULT_LLM_TIMEOUT = 15.0  # 15 seconds (was 60s - too long)
+STREAMING_LLM_TIMEOUT = 60.0  # 1 minute for streaming (was 180s)
+DEEPSEEK_TIMEOUT = 30.0  # DeepSeek for deep reasoning (was 90s)
 
 # Model configuration
 DEEPSEEK_BASE_URL = os.getenv("DEEPSEEK_BASE_URL", "https://api.deepseek.com")

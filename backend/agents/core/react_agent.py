@@ -144,7 +144,8 @@ class ReActAgent(ABC):
     """
     
     # Default timeout in seconds for the entire ReAct loop
-    DEFAULT_GLOBAL_TIMEOUT = 45.0  # Increased from 25s for deeper reasoning
+    # OPTIMIZED: Reduced from 45s since iterations are now more efficient
+    DEFAULT_GLOBAL_TIMEOUT = 25.0  # Balanced: allows deep reasoning without excessive wait
     
     # Adaptive iteration limits based on complexity
     ITERATION_LIMITS = {
@@ -352,12 +353,50 @@ class ReActAgent(ABC):
         
         Deep reasoning queries get more iterations.
         Simple queries get fewer to save time.
+        
+        CRITICAL OPTIMIZATION: Continuation/follow-up questions use TRIVIAL (2-3 iterations)
+        to avoid 45s timeouts on simple "explain again" requests.
         """
         import re
         query_lower = query.lower()
         word_count = len(query.split())
         
+        # ================================================================
+        # TRIVIAL: Simple follow-ups, continuations, clarifications
+        # These should be FAST (2-3 iterations max) - no deep reasoning needed
+        # ================================================================
+        trivial_indicators = [
+            # Clarification requests
+            "explain in simple", "explain simply", "in simple words",
+            "i did not get", "i didn't get", "i dont get", "i don't get",
+            "didn't understand", "don't understand", "did not understand",
+            "can you explain", "explain again", "say again", "repeat",
+            "make it simple", "simpler", "easier", "more clearly",
+            # Short confirmations/follow-ups
+            "yes", "no", "ok", "okay", "sure", "thanks", "thank you",
+            "got it", "understood", "i see", "hmm", "hm",
+            # Context references (needs prior context, not new reasoning)
+            "what about", "and what", "also", "more about",
+        ]
+        
+        # Check for trivial patterns
+        if any(ind in query_lower for ind in trivial_indicators):
+            logger.info("📊 Query complexity: TRIVIAL - fast continuation (2 iterations)")
+            return self.ITERATION_LIMITS['trivial']
+        
+        # Very short queries (< 6 words) without complex keywords are trivial
+        if word_count < 6 and not any(kw in query_lower for kw in ['prove', 'solve', 'calculate', 'derive']):
+            logger.info(f"📊 Query complexity: TRIVIAL - short query ({word_count} words)")
+            return self.ITERATION_LIMITS['trivial']
+        
+        # Check context for continuation signal
+        if context.get('is_continuation') or context.get('awaiting_continuation'):
+            logger.info("📊 Query complexity: TRIVIAL - continuation context detected")
+            return self.ITERATION_LIMITS['trivial']
+        
+        # ================================================================
         # DEEP complexity indicators
+        # ================================================================
         deep_indicators = [
             'prove', 'proof', 'derive', 'derivation', 'show that',
             'step by step completely', 'rigorous', 'comprehensive',
@@ -394,9 +433,9 @@ class ReActAgent(ABC):
             logger.info("📊 Query complexity: MODERATE (long query)")
             return self.ITERATION_LIMITS['moderate']
         
-        # Default to moderate
-        logger.info("📊 Query complexity: DEFAULT/MODERATE")
-        return self.ITERATION_LIMITS['moderate']
+        # Default to simple (not moderate) for faster responses
+        logger.info("📊 Query complexity: DEFAULT/SIMPLE")
+        return self.ITERATION_LIMITS['simple']
     
     @abstractmethod
     def get_agent_name(self) -> str:
@@ -583,6 +622,15 @@ Student Name: {state.context.get('student_profile', {}).get('user_name', 'Studen
         # Track failures for observability
         failure_log = []
         
+        # ================================================================
+        # PER-ITERATION TIMEOUT: Each step gets max 10s
+        # This ensures slow iterations don't consume the entire agent budget
+        # If one iteration is slow, we finish early rather than timeout
+        # ================================================================
+        ITERATION_TIMEOUT = 10.0  # Max 10s per think+act cycle
+        slow_iteration_count = 0
+        MAX_SLOW_ITERATIONS = 2  # After 2 slow iterations, finish early
+        
         try:
             logger.info(f"[ReAct] Starting loop for {self.get_agent_name()}: max_iter={adaptive_max}")
             
@@ -591,11 +639,28 @@ Student Name: {state.context.get('student_profile', {}).get('user_name', 'Studen
                 state.iterations += 1
                 step_start = datetime.now()
                 
-                # THINK: Generate next thought/action
+                # THINK: Generate next thought/action with iteration timeout
                 state.status = AgentStatus.THINKING
                 logger.info(f"[ReAct] Step {state.iterations}/{adaptive_max}: THINKING...")
                 
-                thought_action = await self._think(state)
+                try:
+                    thought_action = await asyncio.wait_for(
+                        self._think(state),
+                        timeout=ITERATION_TIMEOUT
+                    )
+                except asyncio.TimeoutError:
+                    logger.warning(f"⏰ [ReAct] Step {state.iterations} THINK timed out (>{ITERATION_TIMEOUT}s)")
+                    slow_iteration_count += 1
+                    if slow_iteration_count >= MAX_SLOW_ITERATIONS:
+                        logger.warning(f"[ReAct] Too many slow iterations, finishing early")
+                        state.status = AgentStatus.COMPLETE
+                        state.final_answer = await self._generate_direct_answer(state)
+                        state.confidence = 0.6
+                        break
+                    # Create a FINISH action to complete gracefully
+                    thought_action = state.add_thought("I'll provide a direct answer due to response time.")
+                    thought_action.action = "FINISH"
+                    thought_action.action_input = {"answer": await self._generate_direct_answer(state)}
                 
                 # ================================================================
                 # SHARED REASONING: Post insight to shared state if available
@@ -634,11 +699,19 @@ Student Name: {state.context.get('student_profile', {}).get('user_name', 'Studen
                     logger.info(f"[ReAct] Completed at step {state.iterations} with FINISH action")
                     break
                 
-                # ACT: Execute the chosen tool
+                # ACT: Execute the chosen tool with timeout protection
                 state.status = AgentStatus.ACTING
                 logger.info(f"[ReAct] Step {state.iterations}: ACTING with {thought_action.action}")
                 
-                observation = await self._act(thought_action, state)
+                try:
+                    observation = await asyncio.wait_for(
+                        self._act(thought_action, state),
+                        timeout=ITERATION_TIMEOUT
+                    )
+                except asyncio.TimeoutError:
+                    logger.warning(f"⏰ [ReAct] Step {state.iterations} ACT timed out (>{ITERATION_TIMEOUT}s)")
+                    slow_iteration_count += 1
+                    observation = f"Tool '{thought_action.action}' is taking too long. Proceeding with available information."
                 thought_action.observation = observation
                 
                 # Track if this was a failure observation

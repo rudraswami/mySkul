@@ -351,6 +351,19 @@ async def create_indexes():
             await safe_create_index(db.chat_messages, index_spec, "chat_messages")
         
         # =========================================================================
+        # STUDENT PROFILES INDEX (CRITICAL PERFORMANCE FIX - 2026-01-03)
+        # =========================================================================
+        # FIX: student_profiles collection was missing index causing 2s+ query times!
+        print("\n👤 Creating indexes for 'student_profiles' collection...")
+        
+        student_profiles_indexes = [
+            ("user_id", {"unique": True}),  # Primary lookup - MUST be indexed
+        ]
+        
+        for index_spec in student_profiles_indexes:
+            await safe_create_index(db.student_profiles, index_spec, "student_profiles")
+        
+        # =========================================================================
         # SUMMARY
         # =========================================================================
         print("\n" + "="*60)

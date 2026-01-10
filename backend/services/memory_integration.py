@@ -267,9 +267,12 @@ class MemoryIntegrationService:
                 ),
             ]
             
-            # Global deadline: collect whatever completes within 2.5s
+            # Global deadline: collect whatever completes within 1.5s
             # Individual timeouts are shorter, so most will complete or fail fast
-            GLOBAL_DEADLINE = 2.5
+            # REDUCED from 2.5s to 1.5s to prevent memory from blocking agent startup
+            GLOBAL_DEADLINE = 1.5
+            
+            logger.debug(f"🧠 Starting {len(tasks)} memory tasks with {GLOBAL_DEADLINE}s deadline")
             
             try:
                 done, pending = await asyncio.wait(
@@ -277,12 +280,17 @@ class MemoryIntegrationService:
                     timeout=GLOBAL_DEADLINE,
                     return_when=asyncio.ALL_COMPLETED
                 )
+                logger.debug(f"🧠 asyncio.wait completed: {len(done)} done, {len(pending)} pending")
             except asyncio.CancelledError:
                 # Client disconnected - cancel all pending and use defaults
                 for task in tasks:
                     if not task.done():
                         task.cancel()
                 logger.info("🔌 Memory load cancelled (client disconnect)")
+                done, pending = set(), set(tasks)
+            except Exception as e:
+                # Catch any other unexpected errors
+                logger.error(f"❌ Memory task wait failed: {e}")
                 done, pending = set(), set(tasks)
             
             # Process completed tasks
@@ -291,12 +299,13 @@ class MemoryIntegrationService:
                     name, result, status = task.result()
                     component_results[name] = result
                     component_status[name] = status
+                    logger.debug(f"  ✓ {name}: {status}")
                 except Exception as e:
                     # Should not happen, but safety net
                     task_name = task.get_name()
                     component_results[task_name] = COMPONENT_CONFIG.get(task_name, {}).get("default")
                     component_status[task_name] = "error"
-                    logger.error(f"Unexpected task error for {task_name}: {e}")
+                    logger.error(f"❌ Unexpected task error for {task_name}: {e}")
             
             # Handle pending tasks (didn't complete before global deadline)
             for task in pending:
@@ -304,7 +313,10 @@ class MemoryIntegrationService:
                 task.cancel()  # Stop the pending task
                 component_results[task_name] = COMPONENT_CONFIG.get(task_name, {}).get("default")
                 component_status[task_name] = "deadline"
-                logger.debug(f"⏰ {task_name} exceeded global deadline")
+                logger.warning(f"⏰ {task_name} exceeded global deadline")
+            
+            # Final status check
+            logger.info(f"🧠 Memory components: {len(component_status)} processed - {dict(component_status)}")
             
             # Extract results with defaults for any missing
             recent_messages = component_results.get("conversation", [])
@@ -327,24 +339,33 @@ class MemoryIntegrationService:
             successful_components = [k for k, v in component_status.items() if v == "success"]
             failed_components = [k for k, v in component_status.items() if v != "success"]
             
-            # Calculate quality level based on what succeeded
-            has_conversation = component_status.get("conversation") == "success" and len(recent_messages) > 0
-            has_profile = component_status.get("profile") == "success" and bool(user_profile)
-            has_mastery = component_status.get("mastery") == "success"
-            has_semantic = component_status.get("semantic_memory") == "success"
-            has_weak_topics = component_status.get("weak_topics") == "success"
-            has_continuity = component_status.get("continuity") == "success"
+            # ================================================================
+            # Calculate quality level based on what SUCCEEDED (not data presence)
+            # For new users/sessions, components succeed with empty data - that's OK
+            # ================================================================
+            conv_succeeded = component_status.get("conversation") == "success"
+            profile_succeeded = component_status.get("profile") == "success"
+            mastery_succeeded = component_status.get("mastery") == "success"
+            semantic_succeeded = component_status.get("semantic_memory") == "success"
+            weak_topics_succeeded = component_status.get("weak_topics") == "success"
+            continuity_succeeded = component_status.get("continuity") == "success"
             
-            if all([has_conversation, has_profile, has_mastery, has_semantic, has_weak_topics, has_continuity]):
-                context_quality = 5  # Full intelligence
-            elif has_conversation and has_profile and has_mastery:
+            # Also track if we have ACTUAL data (for richer context)
+            has_prior_messages = len(recent_messages) > 0
+            has_profile_data = bool(user_profile)
+            
+            if all([conv_succeeded, profile_succeeded, mastery_succeeded, semantic_succeeded, weak_topics_succeeded, continuity_succeeded]):
+                context_quality = 5  # Full intelligence - all systems working
+            elif conv_succeeded and profile_succeeded and mastery_succeeded:
                 context_quality = 4  # Strong intelligence
-            elif has_conversation and has_profile:
+            elif conv_succeeded and profile_succeeded:
                 context_quality = 3  # Moderate intelligence
-            elif has_conversation:
-                context_quality = 2  # Minimal intelligence (knows recent context)
+            elif conv_succeeded:
+                context_quality = 2  # Minimal but working
+            elif len(component_status) > 0:
+                context_quality = 2  # Some components working
             else:
-                context_quality = 1  # Degraded (fresh start)
+                context_quality = 1  # No components responded (critical failure)
             
             # Track context quality in the context object
             context["_context_quality"] = context_quality
@@ -355,17 +376,21 @@ class MemoryIntegrationService:
             # Backward compatibility: set _memory_degraded flag
             context["_memory_degraded"] = context_quality < 5
             
-            # Log context quality
+            # Log context quality with data presence info
+            data_info = f"msgs={len(recent_messages)}, profile={'yes' if has_profile_data else 'no'}"
             if context_quality == 5:
-                logger.info(f"🧠 Context quality: FULL (5/5) - all 6 components loaded")
+                logger.info(f"🧠 Context quality: FULL (5/5) - all 6 components loaded ({data_info})")
             elif context_quality >= 3:
-                logger.info(f"🧠 Context quality: {context_quality}/5 - {len(successful_components)}/6 components ({', '.join(successful_components)})")
+                logger.info(f"🧠 Context quality: {context_quality}/5 - {len(successful_components)}/6 components ({data_info})")
+            elif context_quality == 2:
+                logger.info(f"🧠 Context quality: {context_quality}/5 - limited but working ({data_info})")
             else:
-                logger.warning(f"⚠️ Context quality: {context_quality}/5 - degraded mode ({len(failed_components)} failed: {', '.join(failed_components)})")
+                logger.warning(f"⚠️ Context quality: {context_quality}/5 - CRITICAL: components not responding ({len(failed_components)} failed: {', '.join(failed_components)})")
             
             # 1. Recent conversation context
             context["recent_context"] = recent_messages
-            context["has_prior_context"] = len(recent_messages) > 0
+            context["has_prior_context"] = has_prior_messages
+            context["_has_profile_data"] = has_profile_data
             
             # Build conversation summary for AI prompt
             if recent_messages:

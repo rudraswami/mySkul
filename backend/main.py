@@ -228,6 +228,33 @@ def create_app() -> FastAPI:
 
         # Initialize database
         db = await init_database()
+        
+        # ================================================================
+        # CRITICAL: Ensure essential indexes exist (fast, idempotent)
+        # This prevents slow queries that cause timeouts
+        # ================================================================
+        try:
+            logger.info("🔍 Checking essential database indexes...")
+            
+            # User profile index (critical for memory queries)
+            await db.user_learning_profile.create_index(
+                "user_id", 
+                unique=True, 
+                background=True,
+                name="idx_profile_user"
+            )
+            
+            # Chat messages index (critical for conversation context)
+            await db.chat_messages.create_index(
+                [("session_id", 1), ("user_id", 1), ("timestamp", -1)],
+                background=True,
+                name="idx_messages_session_user_time"
+            )
+            
+            logger.info("✅ Essential indexes verified")
+        except Exception as e:
+            # Don't fail startup, just warn
+            logger.warning(f"⚠️ Index check failed (may already exist): {e}")
 
         # Initialize services and inject dependencies
         logger.info("Initializing services...")

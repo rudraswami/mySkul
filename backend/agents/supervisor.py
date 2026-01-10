@@ -751,21 +751,75 @@ class SupervisorAgent(BaseAgent):
             logger.info("   👨‍👩‍👧 Routing to ParentReport agent...")
             tasks['parent_report'] = self.parent_report.process(query, context)
         
-        # Run all tasks in parallel
-        results = await asyncio.gather(*tasks.values(), return_exceptions=True)
+        # ================================================================
+        # SMART PARALLEL EXECUTION with Early Termination
+        # - Run agents in parallel (for speed)
+        # - If primary agent finishes with high confidence, don't wait for others
+        # - Reduces LLM pressure when one agent is sufficient
+        # ================================================================
+        if len(tasks) == 0:
+            return {}
         
-        # Map results back to agent names
+        # Determine primary agent (first in list is usually most relevant)
+        primary_agent = list(tasks.keys())[0]
+        
+        # Create wrapped tasks that include agent name
+        async def run_agent(name: str, coro):
+            try:
+                result = await coro
+                return (name, result)
+            except Exception as e:
+                return (name, {'agent': name, 'success': False, 'error': str(e)})
+        
+        wrapped_tasks = [run_agent(name, coro) for name, coro in tasks.items()]
+        
         agent_responses = {}
-        for agent_name, result in zip(tasks.keys(), results):
-            if isinstance(result, Exception):
-                logger.error(f"❌ {agent_name} agent failed: {result}")
-                agent_responses[agent_name] = {
-                    'agent': agent_name,
-                    'success': False,
-                    'error': str(result)
-                }
-            else:
-                agent_responses[agent_name] = result
+        pending = set(asyncio.create_task(t) for t in wrapped_tasks)
+        
+        # Wait for results with early termination option
+        # If primary agent finishes with high confidence, use that immediately
+        EARLY_TERMINATION_CONFIDENCE = 0.85
+        MAX_WAIT_FOR_OTHERS = 5.0  # Wait max 5s for other agents after primary finishes
+        
+        primary_finished = False
+        primary_result = None
+        
+        while pending:
+            done, pending = await asyncio.wait(pending, return_when=asyncio.FIRST_COMPLETED)
+            
+            for task in done:
+                try:
+                    name, result = task.result()
+                    agent_responses[name] = result
+                    
+                    # Check if this is the primary agent with high confidence
+                    if name == primary_agent:
+                        primary_finished = True
+                        primary_result = result
+                        confidence = result.get('confidence', 0) if isinstance(result, dict) else 0
+                        
+                        if confidence >= EARLY_TERMINATION_CONFIDENCE and len(pending) > 0:
+                            logger.info(f"🚀 Primary agent {name} finished with high confidence ({confidence:.2f}), early termination")
+                            # Give other agents a short window to finish
+                            if pending:
+                                try:
+                                    remaining_done, still_pending = await asyncio.wait(
+                                        pending, timeout=MAX_WAIT_FOR_OTHERS, return_when=asyncio.ALL_COMPLETED
+                                    )
+                                    for t in remaining_done:
+                                        try:
+                                            n, r = t.result()
+                                            agent_responses[n] = r
+                                        except Exception:
+                                            pass
+                                    # Cancel still pending
+                                    for t in still_pending:
+                                        t.cancel()
+                                    pending = set()
+                                except Exception:
+                                    pass
+                except Exception as e:
+                    logger.error(f"❌ Agent task failed: {e}")
         
         return agent_responses
     

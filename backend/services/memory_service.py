@@ -458,13 +458,16 @@ class MemoryService:
         MEMORY CONTRACT: Returns StudentProfile schema fields.
         MULTI-TENANT: Isolated by user_id.
         
-        PERFORMANCE: 2s timeout to prevent slow DB from blocking
+        PERFORMANCE: 0.5s timeout - with proper indexes, this should be <100ms
+        If consistently slow, check database indexes and connection pool
         """
         try:
-            # Add timeout protection
+            # FIX: Use user_learning_profile (indexed) instead of student_profiles (no index)
+            # This unifies all profile access across the codebase
+            # REDUCED timeout from 2s to 0.5s to prevent blocking agents
             profile_doc = await asyncio.wait_for(
-                self.db.student_profiles.find_one({"user_id": user_id}),
-                timeout=2.0
+                self.db.user_learning_profile.find_one({"user_id": user_id}),
+                timeout=0.5
             )
             
             if profile_doc is not None:
@@ -476,7 +479,7 @@ class MemoryService:
             return await self._create_default_student_profile(user_id)
             
         except asyncio.TimeoutError:
-            logger.warning(f"⚡ Student profile query timed out (>2s)")
+            logger.warning(f"⚡ Student profile query timed out (>0.5s) - check database indexes!")
             return self._default_profile(user_id)
         except Exception as e:
             logger.error(f"❌ Failed to get student profile: {e}")
@@ -502,7 +505,8 @@ class MemoryService:
             if "strong_topics" in updates:
                 updates["strong_topics"] = updates["strong_topics"][-10:]
             
-            await self.db.student_profiles.update_one(
+            # FIX: Use user_learning_profile (unified collection)
+            await self.db.user_learning_profile.update_one(
                 {"user_id": user_id},
                 {"$set": updates},
                 upsert=True
@@ -532,8 +536,8 @@ class MemoryService:
         try:
             topic_key = topic.lower().replace(" ", "_")[:50]  # Normalize + bound
             
-            # Get current mastery
-            profile = await self.db.student_profiles.find_one(
+            # Get current mastery (FIX: use unified collection)
+            profile = await self.db.user_learning_profile.find_one(
                 {"user_id": user_id},
                 {f"mastery_by_topic.{topic_key}": 1}
             )
@@ -546,7 +550,8 @@ class MemoryService:
             # Calculate new mastery (bounded 0-1)
             new_mastery = max(0.0, min(1.0, current + mastery_delta))
             
-            await self.db.student_profiles.update_one(
+            # FIX: Use user_learning_profile (unified collection)
+            await self.db.user_learning_profile.update_one(
                 {"user_id": user_id},
                 {
                     "$set": {
@@ -716,7 +721,8 @@ class MemoryService:
         profile = self._default_profile(user_id)
         
         try:
-            await self.db.student_profiles.insert_one(profile)
+            # FIX: Use user_learning_profile (unified collection with index)
+            await self.db.user_learning_profile.insert_one(profile)
             logger.info(f"👤 Created default profile for user {user_id[:8]}")
         except Exception as e:
             # May already exist (race condition)
