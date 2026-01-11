@@ -32,7 +32,7 @@ export default function ShippingPolicy() {
               <div>
                 <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-3 mt-0">100% Digital Platform - No Physical Shipping</h2>
                 <p className="text-gray-700 dark:text-gray-300 mb-0">
-                  <strong>DRON AI is a fully digital educational platform.</strong> We provide AI-powered tutoring, 
+                  <strong>MySckul is a fully digital educational platform.</strong> We provide AI-powered tutoring, 
                   mock tests, and study materials through our online platform. We do not ship any physical products, 
                   books, materials, or hardware.
                 </p>
@@ -43,7 +43,7 @@ export default function ShippingPolicy() {
           <section className="mb-8">
             <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">1. Nature of Services</h2>
             <p className="text-gray-700 dark:text-gray-300 mb-4">
-              All DRON AI services are delivered digitally via the internet:
+              All MySckul services are delivered digitally via the internet:
             </p>
 
             <div className="grid md:grid-cols-2 gap-4 mb-6">
@@ -135,7 +135,7 @@ export default function ShippingPolicy() {
               <li><strong>Internet Connection:</strong> Stable broadband or mobile data (minimum 2 Mbps recommended)</li>
               <li><strong>Compatible Device:</strong> Computer, laptop, tablet, or smartphone</li>
               <li><strong>Modern Web Browser:</strong> Chrome, Firefox, Safari, or Edge (latest versions)</li>
-              <li><strong>Active Account:</strong> Registered DRON AI account with valid subscription</li>
+              <li><strong>Active Account:</strong> Registered MySckul account with valid subscription</li>
               <li><strong>Email Access:</strong> For account notifications and support</li>
             </ul>
           </section>
@@ -186,7 +186,7 @@ export default function ShippingPolicy() {
             <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">6. No Physical Products</h2>
             <div className="bg-yellow-50 dark:bg-yellow-900/20 p-4 rounded-lg border border-yellow-200 dark:border-yellow-800">
               <p className="text-gray-700 dark:text-gray-300 mb-3">
-                <strong>Important Clarification:</strong> DRON AI does NOT provide:
+                <strong>Important Clarification:</strong> MySckul does NOT provide:
               </p>
               <ul className="list-disc pl-6 text-gray-700 dark:text-gray-300 space-y-2 mb-0">
                 <li>Physical books, study guides, or printed materials</li>

@@ -28,7 +28,7 @@ export default function RefundPolicy() {
           <section className="mb-8">
             <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">1. Overview</h2>
             <p className="text-gray-700 dark:text-gray-300">
-              At DRON AI, we are committed to providing high-quality AI-powered educational services. This Cancellation & Refund Policy 
+              At MySckul AI, we are committed to providing high-quality AI-powered educational services. This Cancellation & Refund Policy 
               explains our policies regarding subscription cancellations and refund eligibility for our digital services.
             </p>
             <div className="bg-yellow-50 dark:bg-yellow-900/20 p-4 rounded-lg mt-4 border border-yellow-200 dark:border-yellow-800">
@@ -250,7 +250,7 @@ export default function RefundPolicy() {
                 <div className="flex items-center gap-3">
                   <MapPin className="w-5 h-5 text-blue-600 dark:text-blue-400" />
                   <span className="text-gray-700 dark:text-gray-300">
-                    DRON AI<br />
+                    MySckul AI<br />
                     Near Laksmi Hospital<br />
                     Kaggadasapur, Bangalore - 560093<br />
                     Karnataka, India

@@ -28,12 +28,12 @@ export default function TermsAndConditions() {
           <section className="mb-8">
             <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">1. Acceptance of Terms</h2>
             <p className="text-gray-700 dark:text-gray-300">
-              Welcome to DRON AI. By accessing or using our AI-powered educational platform 
+              Welcome to MySckul. By accessing or using our AI-powered educational platform 
               ("Platform"), you agree to be bound by these Terms and Conditions ("Terms"). If you do not agree to these Terms, 
               please do not use our services.
             </p>
             <p className="text-gray-700 dark:text-gray-300">
-              These Terms constitute a legally binding agreement between you and DRON AI ("we," "us," or "our").
+              These Terms constitute a legally binding agreement between you and MySckul AI ("we," "us," or "our").
             </p>
           </section>
 
@@ -57,7 +57,7 @@ export default function TermsAndConditions() {
             
             <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-3">3.1 Eligibility</h3>
             <p className="text-gray-700 dark:text-gray-300">
-              You must be at least 13 years old to use DRON AI. If you are under 18, you must have parental consent to use our services.
+              You must be at least 13 years old to use MySckul. If you are under 18, you must have parental consent to use our services.
             </p>
 
             <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-3 mt-6">3.2 Account Security</h3>
@@ -106,8 +106,8 @@ export default function TermsAndConditions() {
             
             <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-3">5.1 Our Content</h3>
             <p className="text-gray-700 dark:text-gray-300">
-              All content, features, and functionality on DRON AI (including AI algorithms, study materials, test questions, 
-              software, text, graphics, logos, and trademarks) are owned by DRON AI and protected by intellectual property laws.
+              All content, features, and functionality on MySckul (including AI algorithms, study materials, test questions, 
+              software, text, graphics, logos, and trademarks) are owned by MySckul AI and protected by intellectual property laws.
             </p>
 
             <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-3 mt-6">5.2 Your Content</h3>
@@ -169,13 +169,13 @@ export default function TermsAndConditions() {
             
             <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-3">9.1 Service "As Is"</h3>
             <p className="text-gray-700 dark:text-gray-300">
-              DRON AI is provided "AS IS" and "AS AVAILABLE" without warranties of any kind, express or implied. 
+              MySckul is provided "AS IS" and "AS AVAILABLE" without warranties of any kind, express or implied. 
               We do not guarantee uninterrupted, error-free, or secure service.
             </p>
 
             <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-3 mt-6">9.2 Limitation of Liability</h3>
             <p className="text-gray-700 dark:text-gray-300">
-              To the maximum extent permitted by law, DRON AI shall not be liable for any indirect, incidental, 
+              To the maximum extent permitted by law, MySckul AI shall not be liable for any indirect, incidental, 
               special, consequential, or punitive damages, including loss of profits, data, or opportunities, 
               arising from your use of our services.
             </p>
@@ -187,7 +187,7 @@ export default function TermsAndConditions() {
           <section className="mb-8">
             <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">10. Indemnification</h2>
             <p className="text-gray-700 dark:text-gray-300">
-              You agree to indemnify and hold DRON AI harmless from any claims, damages, losses, or expenses 
+              You agree to indemnify and hold MySckul AI harmless from any claims, damages, losses, or expenses 
               (including legal fees) arising from your use of our services, violation of these Terms, or 
               infringement of any third-party rights.
             </p>
@@ -246,7 +246,7 @@ export default function TermsAndConditions() {
                 <div className="flex items-center gap-3">
                   <MapPin className="w-5 h-5 text-blue-600 dark:text-blue-400" />
                   <span className="text-gray-700 dark:text-gray-300">
-                    DRON AI<br />
+                    MySckul AI<br />
                     Near Laksmi Hospital<br />
                     Kaggadasapur, Bangalore - 560093<br />
                     Karnataka, India

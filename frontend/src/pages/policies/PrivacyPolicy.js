@@ -28,12 +28,12 @@ export default function PrivacyPolicy() {
           <section className="mb-8">
             <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">1. Introduction</h2>
             <p className="text-gray-700 dark:text-gray-300">
-              Welcome to DRON AI ("we," "our," or "us"). We are committed to protecting your personal information and your right to privacy. 
+              Welcome to MySckul AI ("we," "our," or "us"). We are committed to protecting your personal information and your right to privacy. 
               This Privacy Policy explains how we collect, use, disclose, and safeguard your information when you use our AI-powered 
               educational platform and services.
             </p>
             <p className="text-gray-700 dark:text-gray-300">
-              By using DRON AI, you agree to the collection and use of information 
+              By using MySckul, you agree to the collection and use of information 
               in accordance with this policy.
             </p>
           </section>
@@ -151,7 +151,7 @@ export default function PrivacyPolicy() {
           <section className="mb-8">
             <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">9. Children's Privacy</h2>
             <p className="text-gray-700 dark:text-gray-300">
-              DRON AI is designed for students aged 13 and above. We do not knowingly collect information from children under 13. 
+              MySckul is designed for students aged 13 and above. We do not knowingly collect information from children under 13. 
               If you believe we have inadvertently collected such information, please contact us immediately for deletion.
             </p>
           </section>
@@ -192,7 +192,7 @@ export default function PrivacyPolicy() {
                 <div className="flex items-center gap-3">
                   <MapPin className="w-5 h-5 text-blue-600 dark:text-blue-400" />
                   <span className="text-gray-700 dark:text-gray-300">
-                    DRON AI<br />
+                    MySckul AI<br />
                     Near Laksmi Hospital<br />
                     Kaggadasapur, Bangalore - 560093<br />
                     Karnataka, India
