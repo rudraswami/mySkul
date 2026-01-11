@@ -221,6 +221,89 @@ def create_app() -> FastAPI:
     # STARTUP EVENT
     # =============================================================================
 
+    async def safe_ensure_index(
+        collection,
+        index_spec,
+        index_name: str,
+        unique: bool = False,
+        background: bool = True
+    ) -> bool:
+        """
+        Production-grade index creation - IDEMPOTENT and SAFE.
+        
+        This function:
+        1. Checks if index already exists by name (no-op if exists)
+        2. Attempts to create only if missing
+        3. Handles DuplicateKeyError gracefully (duplicate data exists)
+        4. Never fails - returns success/failure status
+        
+        Args:
+            collection: MongoDB collection
+            index_spec: Index specification (field name or list of tuples)
+            index_name: Explicit index name (required for idempotency)
+            unique: Whether index should be unique
+            background: Whether to create in background
+            
+        Returns:
+            True if index exists or was created, False if skipped due to data issues
+        """
+        from pymongo.errors import DuplicateKeyError, OperationFailure
+        
+        collection_name = collection.name
+        
+        try:
+            # Step 1: Check if index already exists by name
+            existing_indexes = await collection.list_indexes().to_list(length=None)
+            existing_names = {idx.get("name") for idx in existing_indexes}
+            
+            if index_name in existing_names:
+                logger.debug(f"Index '{index_name}' already exists on {collection_name}")
+                return True
+            
+            # Step 2: Attempt to create index
+            await collection.create_index(
+                index_spec,
+                name=index_name,
+                unique=unique,
+                background=background
+            )
+            logger.info(f"✅ Created index '{index_name}' on {collection_name}")
+            return True
+            
+        except DuplicateKeyError as e:
+            # Unique index creation failed due to duplicate data
+            logger.warning(
+                f"⚠️ SKIPPED index '{index_name}' on {collection_name}: "
+                f"Duplicate data exists. Unique constraint cannot be enforced until duplicates are resolved. "
+                f"The application will continue normally. "
+                f"Action required: Clean duplicate user_id values in {collection_name} collection."
+            )
+            return False
+            
+        except OperationFailure as e:
+            error_msg = str(e)
+            if "IndexOptionsConflict" in error_msg or "already exists" in error_msg.lower():
+                # Index exists with different options - treat as success
+                logger.debug(f"Index '{index_name}' already exists on {collection_name} (options may differ)")
+                return True
+            elif "E11000" in error_msg or "duplicate key" in error_msg.lower():
+                # Duplicate key error wrapped in OperationFailure
+                logger.warning(
+                    f"⚠️ SKIPPED index '{index_name}' on {collection_name}: "
+                    f"Duplicate data prevents unique index creation. "
+                    f"Application will continue. Clean duplicates to enable index."
+                )
+                return False
+            else:
+                # Unknown operation failure - log but don't crash
+                logger.warning(f"⚠️ Index '{index_name}' creation issue on {collection_name}: {error_msg}")
+                return False
+                
+        except Exception as e:
+            # Catch-all for unexpected errors - log but NEVER fail startup
+            logger.warning(f"⚠️ Unexpected error creating index '{index_name}' on {collection_name}: {e}")
+            return False
+
     @app.on_event("startup")
     async def startup_event():
         """Initialize database and services on startup"""
@@ -230,31 +313,46 @@ def create_app() -> FastAPI:
         db = await init_database()
         
         # ================================================================
-        # CRITICAL: Ensure essential indexes exist (fast, idempotent)
+        # CRITICAL: Ensure essential indexes exist (IDEMPOTENT, SAFE)
         # This prevents slow queries that cause timeouts
+        # Strategy: Check-then-create, never fail startup
         # ================================================================
-        try:
-            logger.info("🔍 Checking essential database indexes...")
-            
-            # User profile index (critical for memory queries)
-            await db.user_learning_profile.create_index(
-                "user_id", 
-                unique=True, 
-                background=True,
-                name="idx_profile_user"
+        logger.info("🔍 Initializing essential database indexes...")
+        
+        index_results = []
+        
+        # Index 1: User learning profile (critical for memory queries)
+        result = await safe_ensure_index(
+            collection=db.user_learning_profile,
+            index_spec="user_id",
+            index_name="idx_profile_user",
+            unique=True,
+            background=True
+        )
+        index_results.append(("user_learning_profile.idx_profile_user", result))
+        
+        # Index 2: Chat messages (critical for conversation context)
+        result = await safe_ensure_index(
+            collection=db.chat_messages,
+            index_spec=[("session_id", 1), ("user_id", 1), ("timestamp", -1)],
+            index_name="idx_messages_session_user_time",
+            unique=False,
+            background=True
+        )
+        index_results.append(("chat_messages.idx_messages_session_user_time", result))
+        
+        # Summary logging
+        successful = sum(1 for _, r in index_results if r)
+        total = len(index_results)
+        
+        if successful == total:
+            logger.info(f"✅ All {total} essential indexes verified/created")
+        else:
+            skipped = total - successful
+            logger.warning(
+                f"⚠️ Index initialization: {successful}/{total} indexes ready, "
+                f"{skipped} skipped due to data issues (see warnings above)"
             )
-            
-            # Chat messages index (critical for conversation context)
-            await db.chat_messages.create_index(
-                [("session_id", 1), ("user_id", 1), ("timestamp", -1)],
-                background=True,
-                name="idx_messages_session_user_time"
-            )
-            
-            logger.info("✅ Essential indexes verified")
-        except Exception as e:
-            # Don't fail startup, just warn
-            logger.warning(f"⚠️ Index check failed (may already exist): {e}")
 
         # Initialize services and inject dependencies
         logger.info("Initializing services...")
