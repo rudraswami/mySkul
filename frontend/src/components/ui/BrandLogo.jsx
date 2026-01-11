@@ -269,7 +269,7 @@ export const BrandLoadingScreen = ({ message = 'Loading...' }) => (
         animate={{ opacity: 1 }}
         transition={{ delay: 0.2 }}
       >
-        <h2 className="text-lg font-semibold text-white mb-1">DRON AI</h2>
+        <h2 className="text-lg font-semibold text-white mb-1">MySckul</h2>
         <p className="text-sm text-slate-400">{message}</p>
       </motion.div>
     </div>

@@ -131,7 +131,7 @@ export default function LoginScreen() {
               <Brain className="h-8 w-8 text-white" />
             </div>
             <h2 className="text-3xl font-bold text-white mb-2">
-              {showSignup ? 'Create Account' : 'Sign in to DRON AI'}
+              {showSignup ? 'Create Account' : 'Sign in to MySckul'}
             </h2>
             <p className="text-slate-400">
               {showSignup ? 'Join thousands of students learning smarter' : 'Start your intelligent learning journey'}
@@ -202,7 +202,7 @@ export default function LoginScreen() {
 
               <div className="mt-6 pt-6 border-t border-slate-700/50">
                 <p className="text-xs text-slate-500 text-center leading-relaxed">
-                  By continuing, you agree to DRON AI's Terms of Service and Privacy Policy.
+                  By continuing, you agree to MySckul's Terms of Service and Privacy Policy.
                 </p>
               </div>
             </div>
@@ -257,7 +257,7 @@ export default function LoginScreen() {
 
               <div className="mt-6 pt-6 border-t border-slate-700/50">
                 <p className="text-xs text-slate-500 text-center">
-                  By continuing, you agree to DRON AI's Terms of Service and Privacy Policy.
+                  By continuing, you agree to MySckul's Terms of Service and Privacy Policy.
                 </p>
               </div>
             </div>
@@ -385,7 +385,7 @@ export default function LoginScreen() {
 
               <div className="mt-6 pt-6 border-t border-slate-700/50">
                 <p className="text-xs text-slate-500 text-center">
-                  By signing up, you agree to DRON AI's Terms of Service and Privacy Policy.
+                  By signing up, you agree to MySckul's Terms of Service and Privacy Policy.
                 </p>
               </div>
             </div>

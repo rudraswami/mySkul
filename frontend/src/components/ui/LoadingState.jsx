@@ -212,7 +212,7 @@ export const FullPageLoader = ({ text = 'Loading...' }) => (
       >
         <Brain className="w-8 h-8 text-white" />
       </motion.div>
-      <h2 className="text-lg font-semibold text-white mb-1">DRON AI</h2>
+      <h2 className="text-lg font-semibold text-white mb-1">MySckul</h2>
       <p className="text-sm text-slate-400">
         {text}
       </p>

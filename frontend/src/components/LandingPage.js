@@ -48,7 +48,7 @@ const Navbar = () => {
             </div>
           </div>
           <span className="text-xl font-bold tracking-tight text-white">
-            DRON <span className="text-violet-400">AI</span>
+            My<span className="text-violet-400">Sckul</span>
           </span>
         </Link>
 
@@ -254,7 +254,7 @@ const Footer = () => {
                 </div>
               </div>
               <span className="text-2xl font-bold text-white">
-                DRON <span className="text-violet-400">AI</span>
+                My<span className="text-violet-400">Sckul</span>
               </span>
             </Link>
             <p className="text-gray-400 text-sm mb-6 leading-relaxed">
@@ -387,7 +387,7 @@ const Footer = () => {
         {/* Bottom Section */}
         <div className="border-t border-white/10 pt-8 flex flex-col md:flex-row items-center justify-between gap-4">
           <div className="flex items-center gap-2 text-sm text-gray-500">
-            <span>© 2025 DRON AI</span>
+            <span>© 2025 MySckul</span>
             <span className="hidden md:inline">•</span>
             <span className="flex items-center gap-1.5">
               Made with <Heart className="h-3.5 w-3.5 text-red-500 fill-current animate-pulse" /> for India

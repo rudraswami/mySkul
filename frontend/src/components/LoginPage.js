@@ -43,7 +43,7 @@ export default function LoginPage() {
         <div className="max-w-md text-white">
           <div className="flex items-center mb-8">
             <Brain className="h-12 w-12 mr-4" />
-            <h1 className="text-4xl font-bold">DRON AI</h1>
+            <h1 className="text-4xl font-bold">MySckul</h1>
           </div>
           
           <p className="text-xl mb-4 text-blue-100 font-medium">
@@ -82,7 +82,7 @@ export default function LoginPage() {
 
           <div className="mt-12 p-4 bg-blue-500/30 rounded-lg border border-blue-400/30">
             <p className="text-sm text-blue-100">
-              "DRON AI's verified notes and hallucination-free AI helped me crack JEE at 10% of coaching center costs. The personalized approach made all the difference!"
+              "MySckul's verified notes and hallucination-free AI helped me crack JEE at 10% of coaching center costs. The personalized approach made all the difference!"
             </p>
             <p className="text-xs mt-2 font-medium text-blue-200">- Priya S., IIT Delhi (2024)</p>
           </div>

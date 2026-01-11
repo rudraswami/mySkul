@@ -1,6 +1,6 @@
 {
-  "name": "DRON AI - Your AI Study Partner",
-  "short_name": "DRON AI",
+  "name": "MySckul - Your AI Study Partner",
+  "short_name": "MySckul",
   "description": "AI-powered learning companion for JEE, NEET & CBSE with personalized explanations and exam preparation",
   "version": "1.0.0",
   "start_url": "/auto-notes",
@@ -139,7 +139,7 @@
   
   "protocol_handlers": [
     {
-      "protocol": "web+dronai",
+      "protocol": "web+mysckul",
       "url": "/tutor?action=%s"
     }
   ],
@@ -166,7 +166,7 @@
   },
   
   "scope": "/",
-  "id": "dron-ai-study-partner",
+  "id": "mysckul-study-partner",
   "launch_handler": {
     "client_mode": "navigate-existing"
   }

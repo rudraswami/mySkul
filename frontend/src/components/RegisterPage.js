@@ -77,7 +77,7 @@ export default function RegisterPage() {
               <Brain className="h-10 w-10 text-blue-600" />
             </div>
             <CardTitle className="text-2xl font-bold text-gray-900">
-              Join DRON AI
+              Join MySckul
             </CardTitle>
             <p className="text-gray-600 mt-2 max-w-md mx-auto">
               Get verified, hallucination-free AI mentoring at a fraction of coaching costs
@@ -243,7 +243,7 @@ export default function RegisterPage() {
               <div className="bg-blue-50 p-4 rounded-lg">
                 <div className="flex items-center">
                   <GraduationCap className="h-5 w-5 text-blue-600 mr-2" />
-                  <span className="text-sm font-medium text-blue-800">Why DRON AI?</span>
+                  <span className="text-sm font-medium text-blue-800">Why MySckul?</span>
                 </div>
                 <ul className="text-sm text-blue-700 mt-2 space-y-1">
                   <li>• Personalized AI tutoring available 24/7</li>
