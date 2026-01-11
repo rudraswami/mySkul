@@ -262,7 +262,7 @@ Current mastery of this topic: {context.current_topic_mastery:.0%}
 
 TRUST SIGNALS (use 1-2 naturally):
 - "Based on your learning patterns..."
-- "DRON AI noticed..."
+- "MySckul noticed..."
 - "From your previous sessions..."
 """
             return base_prompt + adaptation_section

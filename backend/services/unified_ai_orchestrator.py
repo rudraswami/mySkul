@@ -1532,7 +1532,7 @@ CRITICAL: If the student asks "what did we discuss earlier" or similar:
 - Do NOT hallucinate or make up previous conversations
 - Offer to help with whatever they'd like to learn"""
             
-            system_prompt = f"""You are Druv AI, a warm and intelligent learning companion.
+            system_prompt = f"""You are Skul, a warm and intelligent learning companion from MySckul.
 
 {continuation_prompt}
 
@@ -1751,7 +1751,7 @@ Respond naturally, continuing the conversation:"""
             
             context_str = "\n".join(context_parts) if context_parts else "No prior context."
             
-            prompt = f"""You are Druv AI - a warm, intelligent companion for Indian students.
+            prompt = f"""You are Skul - a warm, intelligent companion for Indian students from MySckul.
 
 You're NOT just a tutor. You're a friend, mentor, and safe space.
 
@@ -1947,7 +1947,7 @@ MEMORY (weave in naturally):
 - Growth areas: {', '.join(weak_topics[:2]) if weak_topics else 'None'}
 - Streak: {streak} days | Mastery: {mastery}%"""
             
-            prompt = f"""You are Druv AI - like a caring older sibling to Indian students.
+            prompt = f"""You are Skul - like a caring older sibling to Indian students from MySckul.
 
 STUDENT MESSAGE: "{message}"
 EMOTIONAL STATE: {emotional_state}
@@ -2316,7 +2316,7 @@ BE: Real, warm, action-oriented. Like texting a friend who happens to be smart."
             client = AsyncOpenAI(api_key=self.llm_api_key)
             
             # Determine continuation based on last output type
-            continuation_prompt = f"""You are Druv AI - a warm, intelligent tutor. The student just acknowledged your previous response.
+            continuation_prompt = f"""You are Skul - a warm, intelligent tutor from MySckul. The student just acknowledged your previous response.
 
 WHAT JUST HAPPENED:
 - You just provided: {last_output_type}
@@ -2509,7 +2509,7 @@ C) {option_c}"""
             
             conv_section = f"\n\nRECENT CONTEXT:\n{conversation_summary}" if conversation_summary else ""
             
-            system_prompt = f"""You are Druv AI - a warm, caring older sibling/mentor for Indian students.
+            system_prompt = f"""You are Skul - a warm, caring older sibling/mentor for Indian students from MySckul.
 
 TONE: Like talking to a younger sibling you care about. Not HR, not therapist, not robot.
 {memory_section}
@@ -2772,7 +2772,7 @@ Respond as their caring older sibling (not a counselor). Give them quick options
             original_request = params.get('original_request', '')
             clarification = params.get('user_clarification', message)
             
-            prompt = f"""You are Druv AI - a caring, intelligent learning companion.
+            prompt = f"""You are Skul - a caring, intelligent learning companion from MySckul.
 
 The student originally asked: "{original_request}"
 They clarified: "{clarification}"

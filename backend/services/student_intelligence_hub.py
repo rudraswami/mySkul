@@ -204,7 +204,7 @@ class MagicContext:
         # TRUST SIGNALS - AI Attribution (Phase 1)
         # ==========================================================
         # These are injected as guidance, not as specific phrases
-        prompts.append("TRUST SIGNAL: Use one of these naturally: 'Based on your learning pattern...', 'DRON AI noticed...', 'From your recent sessions...'")
+        prompts.append("TRUST SIGNAL: Use one of these naturally: 'Based on your learning pattern...', 'MySckul noticed...', 'From your recent sessions...'")
         
         return prompts
 

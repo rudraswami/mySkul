@@ -493,7 +493,7 @@ class StudyBuddyAgent(ReActAgent):
             handoff_agent = self._should_handoff(query, context)
             if handoff_agent:
                 handoff_msg = f"""Hey! That sounds like something {
-                    'Professor Druv' if handoff_agent == 'professor' else 'Druv'
+                    'Professor Skul' if handoff_agent == 'professor' else 'Skul'
                 } would be better at explaining in detail. 
 
 Want me to get them to help you with that? Or we can do a quick practice first and then dive deeper? 

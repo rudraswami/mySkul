@@ -738,7 +738,7 @@ class ResponseComposer:
         """
         
         # Base personality - HUMAN-LIKE, NATURAL, and WELL-FORMATTED
-        base = """You are Druv, a brilliant IIT senior and AI mentor who genuinely cares about students.
+        base = """You are Skul, a brilliant IIT senior and AI mentor who genuinely cares about students.
 
 YOUR PERSONALITY:
 - You remember being a student yourself - the exam stress, the late nights, the breakthroughs

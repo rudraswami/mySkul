@@ -41,7 +41,7 @@ class MentorAgent(ReActAgent):
     - TRUE TOOL USAGE for accurate information
     """
     
-    MENTOR_NAME = "Druv"
+    MENTOR_NAME = "Skul"
     
     def __init__(self, config: Optional[Dict[str, Any]] = None):
         super().__init__(config)
@@ -721,7 +721,7 @@ Once I know what you need, I can explain it clearly."""
             name = student_profile.get('name', '')
             name_prefix = f"{name}, " if name else ""
             
-            prompt = f"""You are Druv - a caring friend and mentor. The student shared something emotional.
+            prompt = f"""You are Skul - a caring friend and mentor. The student shared something emotional.
 
 Student said: "{query}"
 Student name: {name if name else "Unknown"}
@@ -776,7 +776,7 @@ Keep it short (3-4 sentences), warm, and authentic. One emoji max."""
             student_profile = context.get('student_profile', {})
             name = student_profile.get('name', '')
             
-            prompt = f"""You are Druv - a fun, friendly AI companion. This is casual chat.
+            prompt = f"""You are Skul - a fun, friendly AI companion. This is casual chat.
 
 Student said: "{query}"
 Student name: {name if name else "Unknown"}
@@ -830,7 +830,7 @@ Keep it short and genuine. One emoji max."""
         if is_first_turn:
             # First turn - can include what we can do
             greetings = [
-                f"Hey{name_suffix}! 👋 I'm Druv, your study buddy. I can help with any subject, explain tough concepts, or just chat. What's on your mind?",
+                f"Hey{name_suffix}! 👋 I'm Skul, your study buddy. I can help with any subject, explain tough concepts, or just chat. What's on your mind?",
                 f"Hello{name_suffix}! Great to meet you! I'm here to make {exam} prep feel less overwhelming. Ask me anything!",
                 f"Namaste{name_suffix}! Ready to learn together? Whether it's a quick doubt or deep concept, I've got you!"
             ]
@@ -913,7 +913,7 @@ Keep it short and genuine. One emoji max."""
             
             context_str = "\n".join(context_parts) if context_parts else "No specific context available."
             
-            recommendation_prompt = f"""You are Druv, a caring mentor for{name_part}.
+            recommendation_prompt = f"""You are Skul, a caring mentor for{name_part}.
 
 The student asked: "{query}"
 
@@ -1053,7 +1053,7 @@ Generate your brief, friendly recommendation:"""
             
             context_str = "\n".join(context_parts) if context_parts else "No specific context available - provide general guidance."
             
-            urgent_prompt = f"""You are Druv, a mentor helping{name_part} who is in a TIME-CRITICAL situation.
+            urgent_prompt = f"""You are Skul, a mentor helping{name_part} who is in a TIME-CRITICAL situation.
 
 The student asked: "{query}"
 
@@ -1206,7 +1206,7 @@ Which specific topic would you like me to help you with? I can provide targeted 
             continuation_type = self._determine_continuation_type(query, last_output_type, last_task_type)
             
             # Build continuation prompt
-            continuation_prompt = f"""You are Druv, continuing a conversation with a student.
+            continuation_prompt = f"""You are Skul, continuing a conversation with a student.
 
 CRITICAL CONTEXT:
 - You just provided a {last_output_type.replace('_', ' ').upper()}
@@ -1373,7 +1373,7 @@ Generate your continuation response:"""
             from core.config import settings
             
             # Mentor system message - well-formatted, educational, friendly
-            mentor_system = """You are "Druv Bhaiya/Didi," an expert mentor for Indian students.
+            mentor_system = """You are "Skul Bhaiya/Didi," an expert mentor for Indian students.
 
 **CRITICAL: RESPONSE FORMATTING (MUST FOLLOW)**
 

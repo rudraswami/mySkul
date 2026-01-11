@@ -157,7 +157,7 @@ class SemanticIntentClassifier:
     It uses the LLM to actually UNDERSTAND what the student means.
     """
     
-    CLASSIFICATION_PROMPT = """You are a semantic analyzer for Druv AI - an intelligent learning companion. Analyze the student's message and classify their intent.
+    CLASSIFICATION_PROMPT = """You are a semantic analyzer for MySckul - an intelligent learning companion. Analyze the student's message and classify their intent.
 
 STUDENT MESSAGE: "{message}"
 

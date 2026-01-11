@@ -887,7 +887,7 @@ class NotificationService:
                     {action_button}
                     <br><br>
                     <p style="color: #64748b; font-size: 12px;">
-                        You're receiving this because you have notifications enabled on Druv AI.
+                        You're receiving this because you have notifications enabled on MySckul.
                     </p>
                 </div>
             </div>
