@@ -77,7 +77,7 @@ export function StudentTestimonials() {
                     </span>
                 </h2>
                 <p className="text-white/70 text-base sm:text-lg lg:text-xl max-w-3xl mx-auto px-2 sm:px-0">
-                    Hear from students who are exploring DRON AI during our early access phase
+                    Hear from students who are exploring MySckul during our early access phase
                 </p>
             </motion.div>
 

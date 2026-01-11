@@ -39,7 +39,7 @@ export default function TermsAndConditions() {
 
           <section className="mb-8">
             <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">2. Services Provided</h2>
-            <p className="text-gray-700 dark:text-gray-300 mb-3">DRON AI offers the following digital educational services:</p>
+            <p className="text-gray-700 dark:text-gray-300 mb-3">MySckul offers the following digital educational services:</p>
             <ul className="list-disc pl-6 text-gray-700 dark:text-gray-300 space-y-2">
               <li><strong>AI Tutor:</strong> Personalized AI-powered tutoring for various subjects and exam preparations (JEE, NEET, UPSC, etc.)</li>
               <li><strong>Mock Tests:</strong> Practice tests with AI-generated questions and performance analytics</li>

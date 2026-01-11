@@ -151,7 +151,7 @@ const BrandLogo = ({
   const TextLogo = () => (
     <div className="flex flex-col">
       <h1 className={`font-bold tracking-tight text-white ${config.text}`}>
-        DRON <span className="text-violet-400">AI</span>
+        My<span className="text-violet-400">Sckul</span>
       </h1>
       {showTagline && (
         <span className="text-[11px] text-slate-500 font-medium">

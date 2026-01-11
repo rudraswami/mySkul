@@ -54,7 +54,7 @@ const SMARTBOARD_ENABLED = false;
 // ============================================
 const ClassroomHeader = ({ 
   onMenuClick, 
-  title = 'DRON AI',
+  title = 'MySckul',
   rightActions,
   isBoardOpen,
   onToggleBoard,
@@ -87,7 +87,7 @@ const ClassroomHeader = ({
           <SathiPersonaBadge size="md" status={aiStatus} />
           <div>
             <h1 className="text-base font-semibold text-white">{title}</h1>
-            <p className="text-xs text-slate-400 hidden sm:block">DRON AI • Learning Workspace</p>
+            <p className="text-xs text-slate-400 hidden sm:block">MySckul • Learning Workspace</p>
           </div>
           {/* AI Status Indicator */}
           <div className="hidden sm:flex items-center gap-1.5 ml-3 px-2.5 py-1 bg-slate-800/50 rounded-full border border-slate-700/50">
@@ -195,7 +195,7 @@ export default function ClassroomLayout({
   isLoadingHistory = false,
   visualArtifact = null,
   onVisualFullscreen,
-  headerTitle = 'DRON AI',
+  headerTitle = 'MySckul',
   headerRightActions,
   hasStartedChat = true, // Controls whether to show split layout or full-width welcome
   welcomeScreen = null, // Optional custom welcome screen component

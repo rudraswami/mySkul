@@ -241,7 +241,7 @@ function AppContent() {
                         <BookOpen className="h-4 w-4 text-white absolute -bottom-0.5 -right-0.5" strokeWidth={2.5} />
                       </div>
                       <h1 className="text-lg font-semibold text-gray-900 dark:text-white tracking-tight">
-                        DRON <span className="text-violet-500">AI</span>
+                        My<span className="text-violet-500">Sckul</span>
                       </h1>
                     </div>
                     <div className="w-10" /> {/* Spacer for centering */}

@@ -185,7 +185,7 @@ const PremiumDashboard = () => {
         topic: rec.topic || rec.title || 'Recommended Focus',
         duration: rec.duration || 45,
         xpReward: 120,
-        reason: rec.reason || 'DRON AI detected this needs attention.',
+        reason: rec.reason || 'MySckul detected this needs attention.',
         source: 'ai'
       };
     }
@@ -571,7 +571,7 @@ const PremiumDashboard = () => {
                 <div className="w-12 h-12 rounded-full bg-violet-500/10 flex items-center justify-center mx-auto mb-4">
                   <Brain className="w-6 h-6 text-violet-400" />
                 </div>
-                <h3 className="text-lg font-medium text-white mb-2">Welcome to DRON AI</h3>
+                <h3 className="text-lg font-medium text-white mb-2">Welcome to MySckul</h3>
                 <p className="text-slate-400 text-sm mb-4">
                   I'm your AI learning companion. I'm here to help you understand anything, 
                   at your pace, without judgment. Ask me anything—there are no dumb questions.
@@ -592,7 +592,7 @@ const PremiumDashboard = () => {
 
         {/* ============ FOOTER - Minimal ============ */}
         <footer className="flex items-center justify-center py-8">
-          <span className="text-xs text-slate-600">DRON AI • Your Learning Companion</span>
+          <span className="text-xs text-slate-600">MySckul • Your Learning Companion</span>
         </footer>
       </div>
     </div>

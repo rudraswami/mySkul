@@ -58,7 +58,7 @@ export default function PremiumShowcase() {
         {/* Header */}
         <div className="text-center mb-12 fade-in">
           <h1 className="text-5xl font-bold text-white mb-4">
-            Welcome to <span className="text-violet-400">DRON AI</span>
+            Welcome to <span className="text-violet-400">MySckul</span>
           </h1>
           <p className="text-xl text-white/90 font-light">
             Your AI-powered learning companion for JEE, NEET & UPSC

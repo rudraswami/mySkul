@@ -101,7 +101,7 @@ export function CTASection() {
                                 </h2>
 
                                 <p className="text-white/70 text-base sm:text-lg lg:text-xl mb-6 sm:mb-8 leading-relaxed">
-                                    Join thousands of students who are already learning smarter with DRON AI's
+                                    Join thousands of students who are already learning smarter with MySckul's
                                     revolutionary Dual-Layer AI system.
                                 </p>
 

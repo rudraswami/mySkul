@@ -2202,7 +2202,7 @@ export default function AITutorNeuroSymbolic() {
           }}
           isLoadingHistory={sessionsLoading}
           visualArtifact={visualArtifact}
-          headerTitle="DRON AI"
+          headerTitle="MySckul"
           headerRightActions={headerRightActions}
           hasStartedChat={messages.length > 0}
           isGeneratingVisual={isGeneratingVisual}

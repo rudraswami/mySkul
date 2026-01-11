@@ -24,7 +24,7 @@ export const PLANS_CONFIG = {
     price_quarterly: 0,
     price_yearly: 0,
     tagline: 'Perfect for exploring AI learning',
-    description: 'Try DRON AI risk-free with daily question limits',
+    description: 'Try MySckul risk-free with daily question limits',
     emoji: '🆓',
     color: 'gray',
     features: {

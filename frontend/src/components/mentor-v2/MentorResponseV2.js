@@ -939,7 +939,7 @@ export default function MentorResponseV2({ response, onInteraction, visualSketch
           <button
             onClick={() => {
               // Create WhatsApp share text
-              const shareText = `Check out this amazing AI explanation I got on DRON AI! 🚀\n\n${[
+              const shareText = `Check out this amazing AI explanation I got on MySckul! 🚀\n\n${[
                 default_view.greeting,
                 default_view.metaphor?.text,
                 default_view.main_content?.content?.substring(0, 200) + '...'
