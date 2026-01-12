@@ -44,10 +44,10 @@ const ACTIVE_TAB = {
 // ============================================
 // FEATURE FLAG: SmartBoard Visibility
 // ============================================
-// Due to technical limitations, SmartBoard is temporarily disabled for v1 release.
-// Set to true to re-enable SmartBoard functionality.
-// All SmartBoard code remains intact for future enablement.
-const SMARTBOARD_ENABLED = false;
+// SmartBoard enabled for visual learning experience.
+// The Magic Notebook panel displays AI-generated visuals alongside chat.
+// All visual engines (NETRA v4, MagicNotebook V6) render here.
+const SMARTBOARD_ENABLED = true;
 
 // ============================================
 // ClassroomHeader Component

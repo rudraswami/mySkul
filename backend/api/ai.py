@@ -2376,12 +2376,14 @@ You MUST reference specific content from the image in your response."""
                 # ====================================================================
                 # FEATURE FLAG: Visual Generator
                 # ====================================================================
-                # NETRA v5.0 - Scene-Based Visual Engine (NO AI Images)
-                # Frontend renders SVG scenes using SceneRenderer
+                # Visual Engine Priority:
+                # 1. USE_SCENE_RENDERER (v5.0) - Frontend SVG scene rendering
+                # 2. USE_NETRA_V4 (v4.0) - DALL-E 3 AI image generation
+                # 3. Visual Professor Generator - Dynamic multi-step fallback
                 # ====================================================================
                 VISUAL_GENERATOR_ENABLED = True
-                USE_NETRA_V4 = False  # DISABLED: Old DALL-E image generation
-                USE_SCENE_RENDERER = True  # NEW: Frontend scene-based rendering
+                USE_NETRA_V4 = True  # ENABLED: DALL-E image generation for rich visuals
+                USE_SCENE_RENDERER = False  # Disabled to allow NETRA v4 image generation
                 
                 if not VISUAL_GENERATOR_ENABLED:
                     logger.info("🚫 Visual generator DISABLED")
