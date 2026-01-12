@@ -1,5 +1,5 @@
-# DRON AI - robots.txt
-# https://dronai.co.in
+# MySckul - robots.txt
+# https://mysckul.com
 
 User-agent: *
 
@@ -10,9 +10,9 @@ Allow: /
 Disallow: /api/
 Disallow: /auth/
 
-# Optional: block noisy internal tools (safe)
+# Optional: block internal / non-public tools
 Disallow: /tests
 Disallow: /auto-notes
 
 # Sitemap
-Sitemap: https://dronai.co.in/sitemap.xml
+Sitemap: https://mysckul.com/sitemap.xml
