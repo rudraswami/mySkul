@@ -284,11 +284,21 @@ NEVER:
     async def run(
         self,
         query: str,
-        context: Dict[str, Any]
+        context: Dict[str, Any],
+        quick_mode: bool = False
     ) -> Dict[str, Any]:
         """
         Enhanced run with memory, planning, and verification.
+        
+        Args:
+            query: Student's question
+            context: Context dict
+            quick_mode: If True, use fast single-LLM-call path (Phase 1)
         """
+        # FAST-FIRST: If quick_mode, use parent's fast path
+        if quick_mode:
+            logger.info(f"⚡ AgenticDoubtResolver QUICK MODE: {query[:50]}...")
+            return await self._run_fast(query, context)
         logger.info(f"🧠 AgenticDoubtResolver processing: {query[:50]}...")
         
         # Initialize or get memory for this student (with REAL database persistence)

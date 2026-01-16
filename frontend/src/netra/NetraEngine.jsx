@@ -302,6 +302,35 @@ const NetraEngine = ({
     if (preGeneratedScene) return; // Skip if using pre-generated
     if (!question) return;
     
+    // ================================================================
+    // 🎯 ENTERPRISE-GRADE VISUAL GATING (Cognito OS v1.0)
+    // ================================================================
+    // CRITICAL: Check if visual generation is actually needed
+    // This is the LAST LINE OF DEFENSE before expensive visual generation
+    // Backend must explicitly set visual_needed=true for generation to proceed
+    // ================================================================
+    if (context.visual_needed === false) {
+      console.log('🚫 [NetraEngine] BLOCKED: visual_needed=false (context)', {
+        question: question?.substring(0, 50),
+        intent: context.intent,
+        reason: context.visual_skip_reason || 'not_needed'
+      });
+      return;
+    }
+    
+    // Secondary check: intent-based gating
+    const NO_VISUAL_INTENTS = [
+      'greeting', 'acknowledgment', 'chitchat', 'conversational',
+      'clarification_or_followup', 'simple_fact'
+    ];
+    if (context.intent && NO_VISUAL_INTENTS.includes(context.intent)) {
+      console.log('🚫 [NetraEngine] BLOCKED: intent not visual-worthy', {
+        question: question?.substring(0, 50),
+        intent: context.intent
+      });
+      return;
+    }
+    
     // Prevent duplicate requests
     const questionKey = `${question}_${context.subject || ''}_${context.level || ''}`;
     if (lastQuestionRef.current === questionKey && result) {
@@ -319,6 +348,7 @@ const NetraEngine = ({
         console.log('🔮 [NetraEngine v4.0] GENERATING SCENE-BASED VISUAL');
         console.log('🔮 Question:', question);
         console.log('🔮 Context:', context);
+        console.log('🔮 visual_needed:', context.visual_needed);
         console.log('═══════════════════════════════════════════════════');
         
         const orchestrator = orchestratorRef.current;
@@ -346,7 +376,7 @@ const NetraEngine = ({
     };
 
     generate();
-  }, [question, context.subject, context.level, preGeneratedScene]);
+  }, [question, context.subject, context.level, context.visual_needed, context.intent, preGeneratedScene]);
 
   // Retry handler
   const handleRetry = useCallback(() => {

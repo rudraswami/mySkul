@@ -200,6 +200,11 @@ class SupervisorAgent(BaseAgent):
         """
         Main orchestration method for Supervisor
         
+        SINGLE-FLIGHT ARCHITECTURE:
+        - Selects ONE best agent (no competition)
+        - Executes that agent only
+        - Bounded LLM calls per request
+        
         Args:
             query: Student's question
             context: Context dict with subject, user_id, session_id, etc.
@@ -207,8 +212,14 @@ class SupervisorAgent(BaseAgent):
         Returns:
             Combined multi-agent response
         """
+        import time
+        start_time = time.time()
+        
+        # Get or generate request_id for tracing
+        request_id = context.get('request_id', f"sup_{id(context) % 10000}")
+        
         try:
-            logger.info(f"🤖 Supervisor orchestrating query: {query[:100]}")
+            logger.info(f"[{request_id}] 🤖 Supervisor SINGLE-FLIGHT: {query[:80]}...")
             
             # ================================================================
             # Step 0: COGNITIVE CONTROL LAYER (Meta-Reasoning)
@@ -250,25 +261,25 @@ class SupervisorAgent(BaseAgent):
             intent = self._detect_intent(query, context, semantic_analysis)
             logger.info(f"🎯 Detected intent: {intent} | semantic_available: {semantic_analysis is not None}")
             
-            # 🆕 Step 1.5: Use Agent Negotiation for TRUE multi-agent collaboration
-            # Enable by default for complex educational queries (safe change)
-            # Explicit flags can still disable it if needed
-            explicit_flag = context.get('use_agent_negotiation') or context.get('enable_agent_negotiation')
+            # =================================================================
+            # 🚨 FIX v2.0: AGENT NEGOTIATION DISABLED BY DEFAULT
+            # Agent negotiation causes 75-90s latency (3 agents × 25s each)
+            # Single-flight mode achieves <10s latency with same quality
+            # Only enable if EXPLICITLY requested (not by default)
+            # =================================================================
+            explicit_enable = context.get('use_agent_negotiation') is True or context.get('enable_agent_negotiation') is True
             
-            # ALL educational intents use negotiation (expanded from limited list)
-            negotiation_intents = [
-                'concept', 'comparison', 'derivation', 'application', 
-                'explanation', 'problem', 'analysis', 'doubt', 'question',
-                'help', 'understand', 'learn', 'study', 'practice'
-            ]
+            # DISABLED: Agent negotiation intents (kept for reference but not used)
+            # negotiation_intents = ['concept', 'comparison', 'derivation', ...]
             
-            # Enable negotiation by default for complex queries (if negotiator available)
-            # Explicit False flag can disable it
+            # FIX v2.0: Only use negotiation if EXPLICITLY enabled
+            # Default is FALSE - single-flight mode is the new default
             use_negotiation = (
-                (explicit_flag is not False) and  # Not explicitly disabled
-                self.agent_negotiator is not None and  # Negotiator available
-                intent in negotiation_intents  # Complex educational intent
+                explicit_enable and  # MUST be explicitly True (not just truthy)
+                self.agent_negotiator is not None  # Negotiator available
             )
+            
+            logger.info(f"🎯 [ROUTING] use_negotiation={use_negotiation} (explicit_enable={explicit_enable})")
             
             # Attempt negotiation if enabled
             if use_negotiation:
@@ -309,10 +320,10 @@ class SupervisorAgent(BaseAgent):
             # Step 2: Determine which agents to activate (if not using negotiation)
             if not use_negotiation or 'mentor' not in locals().get('agent_responses', {}):
                 agents_to_run = self._select_agents(intent, context, semantic_analysis)
-                logger.info(f"👥 Activating agents: {', '.join(agents_to_run)}")
+                logger.info(f"[{request_id}] 🎯 SINGLE-FLIGHT: Selected agent = {agents_to_run[0] if agents_to_run else 'none'}")
                 
-                # Step 3: Run agents in parallel (non-blocking)
-                agent_responses = await self._run_agents_parallel(
+                # Step 3: Execute SINGLE agent (no parallel competition)
+                agent_responses = await self._run_single_agent(
                     query=query,
                     context=context,
                     agents=agents_to_run
@@ -446,11 +457,13 @@ class SupervisorAgent(BaseAgent):
                 logger.warning(f"⚠️ Motivation enhancement failed (non-critical): {motivation_error}")
                 # Continue without motivation - not critical
             
-            logger.info("✅ Supervisor orchestration complete")
+            elapsed = time.time() - start_time
+            logger.info(f"[{request_id}] ✅ Supervisor complete in {elapsed:.2f}s (single-flight)")
             return combined_response
             
         except Exception as e:
-            logger.error(f"❌ Supervisor orchestration failed: {e}", exc_info=True)
+            elapsed = time.time() - start_time
+            logger.error(f"[{request_id}] ❌ Supervisor failed after {elapsed:.2f}s: {e}", exc_info=True)
             return {
                 'success': False,
                 'error': f'Supervisor failed: {str(e)}',
@@ -563,265 +576,279 @@ class SupervisorAgent(BaseAgent):
         """
         Select which agents to activate based on intent.
         
-        PHASE 2 FIX: Uses semantic agent selection.
-        When semantic analysis is available, agents are selected based on:
-        1. Semantic intent + emotional signals
-        2. Agent capability matching
-        3. Response expectation (conversational vs structured)
+        SINGLE-FLIGHT ARCHITECTURE (v2.0):
+        Now selects ONE primary agent to prevent parallel LLM storms.
+        Visual agent is handled separately (non-LLM).
         
-        NOT based on keyword-to-agent mapping.
+        FIX v1.0: ROUTING DECISION AS SINGLE SOURCE OF TRUTH
+        If context contains 'agents_to_activate' from RoutingDecision,
+        use those instead of doing internal selection.
         
         Returns:
-            List of agent names to run
+            List with SINGLE agent name (for backward compatibility)
+        """
+        # =================================================================
+        # FIX v1.0: CHECK ROUTING DECISION FIRST (Single Source of Truth)
+        # =================================================================
+        agents_from_routing = context.get('agents_to_activate', [])
+        if agents_from_routing:
+            # Validate agents exist, fallback to first valid one
+            valid_agents = ['mentor', 'professor', 'visualise', 'doubt_resolver', 
+                          'exam_coach', 'study_buddy', 'weak_area_detective', 'parent_report']
+            for agent in agents_from_routing:
+                if agent in valid_agents:
+                    logger.info(f"🎯 [ROUTING→AGENT] Using routing decision: {agent}")
+                    return [agent]
+            # If no valid agent in routing list, fall through to internal selection
+            logger.warning(f"⚠️ [ROUTING] No valid agent in {agents_from_routing}, using internal selection")
+        
+        # Get single best agent using strategy selection
+        best_agent = self._select_best_agent(intent, context, semantic_analysis)
+        
+        # Return as list for backward compatibility with existing code
+        return [best_agent]
+    
+    def _select_best_agent(
+        self,
+        intent: str,
+        context: Dict[str, Any],
+        semantic_analysis: Optional[Dict[str, Any]] = None
+    ) -> str:
+        """
+        SINGLE-FLIGHT: Select the ONE best agent for this query.
+        
+        Strategy Selection (not competition):
+        - Analyze query characteristics
+        - Pick the single most appropriate agent
+        - No parallel execution = bounded LLM calls
+        
+        Returns:
+            Single agent name string
         """
         # ================================================================
-        # PHASE 2: SEMANTIC AGENT SELECTION
+        # STRATEGY 1: SEMANTIC SELECTION (High confidence)
         # ================================================================
         if semantic_analysis and semantic_analysis.get('confidence', 0) >= 0.5:
-            return self._select_agents_semantic(semantic_analysis, context)
+            return self._select_best_agent_semantic(semantic_analysis, context)
         
         # ================================================================
-        # LEGACY FALLBACK: Intent-based selection
+        # STRATEGY 2: INTENT-BASED SELECTION (Fallback)
         # ================================================================
-        logger.debug("📋 Using legacy intent-based agent selection")
+        logger.debug(f"📋 Single-flight agent selection for intent: {intent}")
         
-        # For greetings, ONLY run Mentor
-        if intent == 'greeting':
-            return ['mentor']
+        query = context.get('query', '').lower() if context else ''
         
-        # DOUBT INTENT - Use specialized DoubtResolver
-        if intent == 'doubt':
-            agents = ['doubt_resolver']
-            if context.get('request_visual', True):
-                agents.append('visualise')
-            return agents
+        # GREETING/ACKNOWLEDGMENT → Mentor (emotional intelligence)
+        if intent in ['greeting', 'acknowledgment', 'chitchat']:
+            logger.info("🎯 Selected: MentorAgent (greeting/social)")
+            return 'mentor'
         
-        # Default: Mentor + Professor for educational queries
-        agents = ['mentor']
-        if intent not in ['greeting', 'acknowledgment']:
-            agents.append('professor')
+        # DOUBT/CONFUSION → DoubtResolver (specialized)
+        if intent in ['doubt', 'confusion', 'clarification']:
+            logger.info("🎯 Selected: DoubtResolver (confusion handling)")
+            return 'doubt_resolver'
         
-        # Visual for substantive educational queries
-        if context.get('request_visual', True) and intent in ['concept', 'derivation', 'application']:
-            agents.append('visualise')
+        # DERIVATION/PROOF → Professor (formal reasoning)
+        if intent in ['derivation', 'proof', 'calculation']:
+            logger.info("🎯 Selected: ProfessorAgent (formal reasoning)")
+            return 'professor'
         
-        return agents
+        # EXAM STRATEGY → ExamCoach
+        if intent == 'exam_strategy' or any(w in query for w in ['exam', 'jee', 'neet', 'tips', 'strategy', 'revision']):
+            logger.info("🎯 Selected: ExamCoachAgent (exam preparation)")
+            return 'exam_coach'
+        
+        # ================================================================
+        # SPECIALIZED AGENTS (Now Active!)
+        # ================================================================
+        
+        # WEAK AREA / KNOWLEDGE GAP → WeakAreaDetective
+        weak_area_signals = ['weak', 'struggle', 'difficult', 'hard time', 'gap', 'improve', 'failing', 'poor at', 'need help with']
+        if intent == 'weak_area_analysis' or any(w in query for w in weak_area_signals):
+            logger.info("🎯 Selected: WeakAreaDetectiveAgent (knowledge gap analysis)")
+            return 'weak_area_detective'
+        
+        # STUDY BUDDY / COLLABORATIVE → StudyBuddy
+        study_buddy_signals = ['study together', 'quiz me', 'test me', 'practice with', 'flashcard', 'revise together', 'help me study', 'study buddy']
+        if intent == 'study_buddy' or any(w in query for w in study_buddy_signals):
+            logger.info("🎯 Selected: StudyBuddyAgent (collaborative learning)")
+            return 'study_buddy'
+        
+        # PARENT REPORT → ParentReport
+        parent_signals = ['parent', 'guardian', 'report', 'progress report', 'performance summary', 'tell my parents', 'for my mom', 'for my dad']
+        if intent == 'parent_report' or any(w in query for w in parent_signals):
+            logger.info("🎯 Selected: ParentReportAgent (guardian communication)")
+            return 'parent_report'
+        
+        # DEFAULT → Mentor (best for explanations + emotional support)
+        logger.info("🎯 Selected: MentorAgent (default educational)")
+        return 'mentor'
     
-    def _select_agents_semantic(
+    def _select_best_agent_semantic(
         self,
         semantic_analysis: Dict[str, Any],
         context: Dict[str, Any]
-    ) -> List[str]:
+    ) -> str:
         """
-        PHASE 2: Semantic-based agent selection.
+        SINGLE-FLIGHT: Semantic-based single agent selection.
         
-        Agents are selected based on:
-        1. What the student NEEDS (emotional support, explanation, practice)
-        2. How the response should be DELIVERED (structured, conversational)
-        3. Student's emotional state
-        
-        NOT based on keyword matching.
+        Picks ONE agent based on what the student needs most.
+        Now includes ALL 9 agents for comprehensive coverage.
         """
-        agents = []
-        
         intent = semantic_analysis.get('intent', 'general')
         emotional_tone = semantic_analysis.get('emotional_tone', 'neutral')
         emotional_intensity = semantic_analysis.get('emotional_intensity', 0)
         response_expectation = semantic_analysis.get('response_expectation', 'conversational_advice')
         needs_empathy = semantic_analysis.get('needs_empathy', False)
-        needs_encouragement = semantic_analysis.get('needs_encouragement', False)
+        query = context.get('query', '').lower() if context else ''
+        
+        # HIGH EMOTIONAL INTENSITY → Mentor (empathy first)
+        if emotional_intensity > 0.5 or needs_empathy:
+            logger.info(f"🎯 Selected: MentorAgent (emotional support needed, intensity={emotional_intensity})")
+            return 'mentor'
+        
+        # CONFUSION/CLARIFICATION → DoubtResolver
+        if intent in ['clarification', 'confusion'] or emotional_tone == 'confused':
+            logger.info(f"🎯 Selected: DoubtResolver (confusion detected)")
+            return 'doubt_resolver'
+        
+        # STRUCTURED DELIVERABLE → Professor
+        if response_expectation in ['structured_deliverable', 'detailed_explanation']:
+            logger.info(f"🎯 Selected: ProfessorAgent (structured response needed)")
+            return 'professor'
+        
+        # EXAM-RELATED
+        if 'exam' in intent or 'practice' in intent:
+            logger.info(f"🎯 Selected: ExamCoachAgent (exam/practice)")
+            return 'exam_coach'
         
         # ================================================================
-        # AGENT CAPABILITY MATCHING (Semantic, not keyword)
+        # SPECIALIZED AGENTS (Now Active!)
         # ================================================================
         
-        # MENTOR: Emotional support, metaphors, encouragement
-        # Required for: emotional states, confusion, or when empathy needed
-        mentor_relevant = any([
-            needs_empathy,
-            needs_encouragement,
-            emotional_intensity > 0.4,
-            emotional_tone in ['anxious', 'frustrated', 'confused', 'bored'],
-            intent in ['emotional_support', 'motivation', 'confusion', 'celebration'],
-            response_expectation == 'emotional_acknowledgment',
-        ])
+        # WEAK AREA / KNOWLEDGE GAP → WeakAreaDetective
+        if intent in ['analysis', 'assessment'] or 'weak' in query or 'struggle' in query:
+            logger.info(f"🎯 Selected: WeakAreaDetectiveAgent (knowledge gap)")
+            return 'weak_area_detective'
         
-        # PROFESSOR: Formal explanations, derivations, proofs
-        # Required for: structured deliverables, deep explanations
-        professor_relevant = any([
-            response_expectation in ['structured_deliverable', 'detailed_explanation'],
-            intent in ['question', 'explanation', 'practice'],
-            semantic_analysis.get('topic_mentioned'),  # Has a specific topic
-        ])
+        # COLLABORATIVE/STUDY BUDDY → StudyBuddy
+        if intent == 'practice' or 'quiz' in query or 'study together' in query:
+            logger.info(f"🎯 Selected: StudyBuddyAgent (collaborative)")
+            return 'study_buddy'
         
-        # DOUBT_RESOLVER: Confusion, clarification, stuck
-        # Required for: explicit confusion or clarification requests
-        doubt_relevant = any([
-            intent in ['clarification', 'confusion'],
-            emotional_tone == 'confused',
-            semantic_analysis.get('needs_clarification', False),
-        ])
+        # PARENT/GUARDIAN → ParentReport
+        if 'parent' in query or 'report' in query or 'guardian' in query:
+            logger.info(f"🎯 Selected: ParentReportAgent (guardian communication)")
+            return 'parent_report'
         
-        # ================================================================
-        # BUILD AGENT LIST (Order matters - mentor first for tone)
-        # ================================================================
-        
-        # Mentor always runs for emotional intelligence
-        if mentor_relevant or True:  # Always include mentor for tone
-            agents.append('mentor')
-        
-        # Doubt resolver for confusion
-        if doubt_relevant:
-            agents.insert(0, 'doubt_resolver')  # Primary for doubt
-        
-        # Professor for substantive content
-        if professor_relevant and not doubt_relevant:
-            agents.append('professor')
-        
-        # Visual for educational queries
-        if context.get('request_visual', True):
-            if intent in ['question', 'explanation', 'practice'] or response_expectation == 'detailed_explanation':
-                agents.append('visualise')
-        
-        # Ensure at least mentor
-        if not agents:
-            agents = ['mentor']
-        
-        logger.info(f"🧠 SEMANTIC agent selection: {agents} (intent={intent}, tone={emotional_tone})")
-        return agents
+        # DEFAULT → Mentor (versatile, handles most cases well)
+        logger.info(f"🎯 Selected: MentorAgent (default, intent={intent})")
+        return 'mentor'
     
-    async def _run_agents_parallel(
+    async def _run_single_agent(
         self,
         query: str,
         context: Dict[str, Any],
         agents: List[str]
     ) -> Dict[str, Any]:
         """
-        Run selected agents in parallel for faster response
+        SINGLE-FLIGHT EXECUTION: Run ONE agent only.
+        
+        This is the core of the Single-Flight Cognitive Orchestrator:
+        - Takes the first (best) agent from the list
+        - Executes ONLY that agent
+        - No parallel execution = bounded LLM calls
+        - No agent competition = predictable latency
+        
+        FIX v1.0: Pass tools_to_enable from routing decision to agent context
         
         Returns:
-            Dict of agent responses
+            Dict with single agent response
         """
-        tasks = {}
-        
-        # Helper to check if agent should participate (agent autonomy)
-        def agent_should_run(agent, name):
-            if hasattr(agent, 'should_abstain'):
-                should_abstain, reason = agent.should_abstain(query, context)
-                if should_abstain:
-                    logger.info(f"   🚫 {name} self-abstained: {reason}")
-                    return False
-            return True
-        
-        # Create tasks for each agent (with self-abstain check)
-        if 'mentor' in agents and agent_should_run(self.mentor, 'Mentor'):
-            logger.info("   Routing to Mentor agent...")
-            tasks['mentor'] = self.mentor.process(query, context)
-        
-        if 'professor' in agents and agent_should_run(self.professor, 'Professor'):
-            logger.info("   Routing to Professor agent...")
-            tasks['professor'] = self.professor.process(query, context)
-        
-        if 'visualise' in agents and agent_should_run(self.visualise, 'Visualise'):
-            logger.info("   Routing to Visualise agent...")
-            tasks['visualise'] = self.visualise.process(query, context)
-        
-        # NEW: DoubtResolver agent for doubt/confusion queries
-        if 'doubt_resolver' in agents and agent_should_run(self.doubt_resolver, 'DoubtResolver'):
-            logger.info("   🎯 Routing to DoubtResolver agent...")
-            tasks['doubt_resolver'] = self.doubt_resolver.process(query, context)
-        
-        # NEW: ExamCoach agent for exam strategy queries
-        if 'exam_coach' in agents and agent_should_run(self.exam_coach, 'ExamCoach'):
-            logger.info("   🏆 Routing to ExamCoach agent...")
-            tasks['exam_coach'] = self.exam_coach.process(query, context)
-        
-        # WeakAreaDetective agent for performance analysis
-        if 'weak_area_detective' in agents and agent_should_run(self.weak_area_detective, 'WeakAreaDetective'):
-            logger.info("   🔍 Routing to WeakAreaDetective agent...")
-            tasks['weak_area_detective'] = self.weak_area_detective.process(query, context)
-        
-        # StudyBuddy agent for peer learning
-        if 'study_buddy' in agents and agent_should_run(self.study_buddy, 'StudyBuddy'):
-            logger.info("   🤝 Routing to StudyBuddy agent...")
-            tasks['study_buddy'] = self.study_buddy.process(query, context)
-        
-        # NEW: ParentReport agent for guardian communication
-        if 'parent_report' in agents and agent_should_run(self.parent_report, 'ParentReport'):
-            logger.info("   👨‍👩‍👧 Routing to ParentReport agent...")
-            tasks['parent_report'] = self.parent_report.process(query, context)
-        
-        # ================================================================
-        # SMART PARALLEL EXECUTION with Early Termination
-        # - Run agents in parallel (for speed)
-        # - If primary agent finishes with high confidence, don't wait for others
-        # - Reduces LLM pressure when one agent is sufficient
-        # ================================================================
-        if len(tasks) == 0:
+        if not agents:
+            logger.warning("⚠️ No agents selected, returning empty")
             return {}
         
-        # Determine primary agent (first in list is usually most relevant)
-        primary_agent = list(tasks.keys())[0]
+        # Get the SINGLE selected agent (first in list is best)
+        selected_agent_name = agents[0]
         
-        # Create wrapped tasks that include agent name
-        async def run_agent(name: str, coro):
-            try:
-                result = await coro
-                return (name, result)
-            except Exception as e:
-                return (name, {'agent': name, 'success': False, 'error': str(e)})
+        # =================================================================
+        # FIX v1.0: LOG Requested vs Allowed tools (Structured Logging)
+        # =================================================================
+        tools_requested = context.get('tools_to_enable', [])
+        requires_web_search = context.get('requires_web_search', False)
+        logger.info(f"🎯 SINGLE-FLIGHT: Executing {selected_agent_name} | "
+                   f"tools_allowed={tools_requested} | requires_web_search={requires_web_search}")
         
-        wrapped_tasks = [run_agent(name, coro) for name, coro in tasks.items()]
+        # Map agent name to agent instance
+        agent_map = {
+            'mentor': self.mentor,
+            'professor': self.professor,
+            'visualise': self.visualise,
+            'doubt_resolver': self.doubt_resolver,
+            'exam_coach': self.exam_coach,
+            'weak_area_detective': self.weak_area_detective,
+            'study_buddy': self.study_buddy,
+            'parent_report': self.parent_report,
+        }
         
-        agent_responses = {}
-        pending = set(asyncio.create_task(t) for t in wrapped_tasks)
+        agent = agent_map.get(selected_agent_name)
+        if not agent:
+            logger.error(f"❌ Unknown agent: {selected_agent_name}")
+            return {}
         
-        # Wait for results with early termination option
-        # If primary agent finishes with high confidence, use that immediately
-        EARLY_TERMINATION_CONFIDENCE = 0.85
-        MAX_WAIT_FOR_OTHERS = 5.0  # Wait max 5s for other agents after primary finishes
+        # =================================================================
+        # FIX v1.0: Inject allowed tools into ReAct agents
+        # ReAct agents (doubt_resolver) use tool_registry - we filter it
+        # =================================================================
+        if hasattr(agent, 'tool_registry') and agent.tool_registry and tools_requested:
+            # Store original tools for logging
+            original_tools = agent.tool_registry.get_tool_names()
+            logger.info(f"🔧 [TOOL REGISTRY] Agent has tools: {original_tools}")
+            # Pass the allowed tools list in context for agent to use
+            context['_routing_allowed_tools'] = tools_requested
         
-        primary_finished = False
-        primary_result = None
-        
-        while pending:
-            done, pending = await asyncio.wait(pending, return_when=asyncio.FIRST_COMPLETED)
+        # Execute the single agent
+        try:
+            result = await agent.process(query, context)
             
-            for task in done:
-                try:
-                    name, result = task.result()
-                    agent_responses[name] = result
-                    
-                    # Check if this is the primary agent with high confidence
-                    if name == primary_agent:
-                        primary_finished = True
-                        primary_result = result
-                        confidence = result.get('confidence', 0) if isinstance(result, dict) else 0
-                        
-                        if confidence >= EARLY_TERMINATION_CONFIDENCE and len(pending) > 0:
-                            logger.info(f"🚀 Primary agent {name} finished with high confidence ({confidence:.2f}), early termination")
-                            # Give other agents a short window to finish
-                            if pending:
-                                try:
-                                    remaining_done, still_pending = await asyncio.wait(
-                                        pending, timeout=MAX_WAIT_FOR_OTHERS, return_when=asyncio.ALL_COMPLETED
-                                    )
-                                    for t in remaining_done:
-                                        try:
-                                            n, r = t.result()
-                                            agent_responses[n] = r
-                                        except Exception:
-                                            pass
-                                    # Cancel still pending
-                                    for t in still_pending:
-                                        t.cancel()
-                                    pending = set()
-                                except Exception:
-                                    pass
-                except Exception as e:
-                    logger.error(f"❌ Agent task failed: {e}")
-        
-        return agent_responses
+            # 📊 STRUCTURED LOGGING: Tools executed by agent
+            tools_executed = result.get('tools_used', []) if isinstance(result, dict) else []
+            logger.info(f"✅ {selected_agent_name} completed | tools_executed={tools_executed}")
+            
+            return {selected_agent_name: result}
+        except Exception as e:
+            logger.error(f"❌ {selected_agent_name} failed: {e}")
+            return {
+                selected_agent_name: {
+                    'agent': selected_agent_name,
+                    'success': False,
+                    'error': str(e),
+                    'content': self._generate_agent_fallback(query, context)
+                }
+            }
+    
+    def _generate_agent_fallback(self, query: str, context: Dict[str, Any]) -> str:
+        """Generate fallback response when agent fails."""
+        subject = context.get('subject', 'this topic')
+        return f"""I'm working on your question about {subject}.
+
+Let me help you with the key points:
+- Take your time to understand the concept
+- Break down complex problems into smaller parts
+- Practice with examples
+
+Would you like me to try explaining this differently?"""
+    
+    # Keep backward compatibility alias
+    async def _run_agents_parallel(
+        self,
+        query: str,
+        context: Dict[str, Any],
+        agents: List[str]
+    ) -> Dict[str, Any]:
+        """Backward compatibility wrapper - now executes single agent."""
+        return await self._run_single_agent(query, context, agents)
     
     def _validate_responses(
         self,

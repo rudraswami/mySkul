@@ -1038,7 +1038,9 @@ Only add what genuinely helps. Quality over quantity."""
             })
             
             if existing_message:
-                logger.warning(f"Duplicate message detected for session {session_id}, skipping insertion")
+                # 🔥 FIX: Changed from warning to info - this is expected behavior when
+                # streaming and non-streaming paths both try to save the same message
+                logger.info(f"📝 Message already exists for session {session_id}, reusing existing")
                 return existing_message.get('message_id', message_id)
             
             # CRITICAL FIX: Store the COMPLETE AI response for history restoration
@@ -1493,21 +1495,36 @@ You're making great progress! Keep up the excellent work and stay curious. Learn
                     region=student_profile['region']
                 )
                 
-                # Save greeting message to database
+                # Save greeting message to database (with dedup check)
                 message_id = str(uuid.uuid4())
-                message_doc = {
-                    'message_id': message_id,
-                    'session_id': session_id,
-                    'user_id': user_id,
-                    'user_message': message,
-                    'ai_response': greeting_response,
-                    'response_type': 'mentor_greeting',
-                    'intent': 'greeting',
-                    'timestamp': datetime.now(timezone.utc).isoformat(),
-                    'generation_time_seconds': 0.1
-                }
                 
-                await self.db.chat_messages.insert_one(message_doc)
+                # 🔥 FIX: Dedup check for greetings too
+                existing_msg = await self.db.chat_messages.find_one({
+                    'session_id': session_id,
+                    'user_message': message,
+                    'timestamp': {
+                        '$gte': (datetime.now(timezone.utc) - timedelta(seconds=30)).isoformat()
+                    }
+                })
+                
+                if existing_msg:
+                    logger.info(f"📝 Greeting already saved (dedup), reusing message_id: {existing_msg.get('message_id')}")
+                    message_id = existing_msg.get('message_id', message_id)
+                else:
+                    message_doc = {
+                        'message_id': message_id,
+                        'session_id': session_id,
+                        'user_id': user_id,
+                        'user_message': message,
+                        'ai_response': greeting_response,
+                        'response_type': 'mentor_greeting',
+                        'intent': 'greeting',
+                        'timestamp': datetime.now(timezone.utc).isoformat(),
+                        'generation_time_seconds': 0.1
+                    }
+                    
+                    await self.db.chat_messages.insert_one(message_doc)
+                    logger.info(f"💾 Greeting saved: {message_id}")
                 
                 # Update session
                 await self.db.chat_sessions.update_one(
@@ -1662,14 +1679,16 @@ You're making great progress! Keep up the excellent work and stay curious. Learn
                 language=student_language  # Respect student language preference
             )
             
+            # PERFORMANCE FIX: Use gpt-4o-mini for faster responses (3-5s vs 30-60s)
+            # gpt-4o is slower and more expensive, not needed for most educational content
             neuro_chat = LlmChat(
                 api_key=self.emergent_llm_key,
                 session_id=f"mentor_v2_{user_id}_{session_id}",
                 system_message=optimized_prompt
-            ).with_model("openai", "gpt-4o").with_params(
+            ).with_model("openai", "gpt-4o-mini").with_params(
                 temperature=0.8,
                 top_p=0.9,
-                max_tokens=2000,  # Reduced from 2500
+                max_tokens=1500,  # Reduced for faster response
                 presence_penalty=0.2,
                 frequency_penalty=0.1,
                 response_format={"type": "json_object"}
@@ -1813,23 +1832,38 @@ You're making great progress! Keep up the excellent work and stay curious. Learn
                 hero_visual_preview = hero_visual_url if isinstance(hero_visual_url, str) else str(hero_visual_url)
                 logger.info(f"✅ Fallback response created with visual: {hero_visual_preview[:100]}")
             
-            # Step 7: Save to database
+            # Step 7: Save to database (with dedup check to prevent duplicates)
             message_id = str(uuid.uuid4())
-            message_doc = {
-                'message_id': message_id,
-                'session_id': session_id,
-                'user_id': user_id,
-                'user_message': message,
-                'ai_response': response_dict,
-                'response_type': 'mentor_v2_progressive',
-                'question_type': question_type,
-                'student_profile': student_profile,
-                'timestamp': datetime.now(timezone.utc).isoformat(),
-                'generation_time_seconds': generation_time
-            }
             
-            await self.db.chat_messages.insert_one(message_doc)
-            logger.info(f"💾 Message saved: {message_id}")
+            # 🔥 FIX: Dedup check before save - prevents "Duplicate message detected" when
+            # streaming and non-streaming paths both call this function
+            existing_msg = await self.db.chat_messages.find_one({
+                'session_id': session_id,
+                'user_message': message,
+                'timestamp': {
+                    '$gte': (datetime.now(timezone.utc) - timedelta(seconds=30)).isoformat()
+                }
+            })
+            
+            if existing_msg:
+                logger.info(f"📝 Message already saved (dedup), reusing message_id: {existing_msg.get('message_id')}")
+                message_id = existing_msg.get('message_id', message_id)
+            else:
+                message_doc = {
+                    'message_id': message_id,
+                    'session_id': session_id,
+                    'user_id': user_id,
+                    'user_message': message,
+                    'ai_response': response_dict,
+                    'response_type': 'mentor_v2_progressive',
+                    'question_type': question_type,
+                    'student_profile': student_profile,
+                    'timestamp': datetime.now(timezone.utc).isoformat(),
+                    'generation_time_seconds': generation_time
+                }
+                
+                await self.db.chat_messages.insert_one(message_doc)
+                logger.info(f"💾 Message saved: {message_id}")
             
             # Step 8: Update session last_updated
             await self.db.chat_sessions.update_one(

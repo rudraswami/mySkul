@@ -77,6 +77,7 @@ class MentorAgent(ReActAgent):
             "fact_checker",      # Verify facts before stating
             "calculator",        # Math calculations
             "study_planner",     # Generate study plans
+            "web_search",        # 🌐 Search trusted educational websites
         ]
     
     def _get_domain_confidence_boost(self, subject: str, query: str) -> float:
@@ -946,9 +947,10 @@ Generate your brief, friendly recommendation:"""
                     system_message="You are a friendly mentor giving quick, helpful advice. Be brief and conversational."
                 )
             else:
-                # Fallback to OpenAI
-                from openai import AsyncOpenAI
-                client = AsyncOpenAI()
+                # Fallback to OpenAI - use singleton client for connection reuse
+                from services.llm_compat import get_openai_client
+                import os
+                client = get_openai_client(os.getenv("OPENAI_API_KEY", ""))
                 
                 completion = await client.chat.completions.create(
                     model="gpt-4o-mini",
@@ -1106,9 +1108,10 @@ Generate your urgent assistance response:"""
                     system_message="You are a supportive mentor helping a student under time pressure. Be structured, actionable, and confidence-building."
                 )
             else:
-                # Fallback to OpenAI
-                from openai import AsyncOpenAI
-                client = AsyncOpenAI()
+                # Fallback to OpenAI - use singleton client for connection reuse
+                from services.llm_compat import get_openai_client
+                import os
+                client = get_openai_client(os.getenv("OPENAI_API_KEY", ""))
                 
                 completion = await client.chat.completions.create(
                     model="gpt-4o-mini",
@@ -1253,8 +1256,10 @@ Generate your continuation response:"""
                     system_message="You are continuing an existing conversation. Reference the previous context."
                 )
             else:
-                from openai import AsyncOpenAI
-                client = AsyncOpenAI()
+                # Use singleton client for connection reuse
+                from services.llm_compat import get_openai_client
+                import os
+                client = get_openai_client(os.getenv("OPENAI_API_KEY", ""))
                 
                 completion = await client.chat.completions.create(
                     model="gpt-4o-mini",

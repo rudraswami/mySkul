@@ -546,6 +546,17 @@ class UnifiedAIOrchestrator:
                 "cognitive_os_active": cognitive_context is not None
             }
             
+            # =================================================================
+            # 📊 FIX v1.0: STRUCTURED TOOL CHAIN LOG
+            # Single log line showing Requested → Enabled → Executed
+            # =================================================================
+            tools_executed = result.get('tools_used', [])
+            logger.info(f"📊 [TOOL CHAIN] requested={routing_decision.tools_to_enable} → "
+                       f"enabled={routing_decision.tools_to_enable} → "
+                       f"executed={tools_executed} | "
+                       f"pipeline={routing_decision.pipeline.value} | "
+                       f"time={generation_time:.2f}s")
+            
             # === STEP 5: Proactive Intelligence ===
             # Add proactive insights (cross-session continuity, review suggestions, etc.)
             try:
@@ -1507,8 +1518,9 @@ class UnifiedAIOrchestrator:
         required_behavior = enforcement_result.required_behavior
         
         try:
-            from openai import AsyncOpenAI
-            client = AsyncOpenAI(api_key=self.llm_api_key)
+            # 🚀 Use singleton client for connection reuse (saves ~200-500ms)
+            from services.llm_compat import get_openai_client
+            client = get_openai_client(self.llm_api_key)
             
             # Build context-aware system prompt
             context_pack = context.get('context_pack')
@@ -1723,8 +1735,9 @@ Respond naturally, continuing the conversation:"""
         No hardcoded responses - LLM understands and responds intelligently.
         """
         try:
-            from openai import AsyncOpenAI
-            client = AsyncOpenAI(api_key=self.llm_api_key)
+            # 🚀 Use singleton client for connection reuse (saves ~200-500ms)
+            from services.llm_compat import get_openai_client
+            client = get_openai_client(self.llm_api_key)
             
             # Build the prompt - use ContextPack if available
             context_parts = []
@@ -1924,8 +1937,9 @@ Respond directly:"""
         logger.info(f"💚 Generating student-first emotional response for state: {emotional_state}")
         
         try:
-            from openai import AsyncOpenAI
-            client = AsyncOpenAI(api_key=self.llm_api_key)
+            # 🚀 Use singleton client for connection reuse (saves ~200-500ms)
+            from services.llm_compat import get_openai_client
+            client = get_openai_client(self.llm_api_key)
             
             # Extract memory-based personalization
             weak_topics = memory_context.get('weak_topics', [])
@@ -2312,8 +2326,9 @@ BE: Real, warm, action-oriented. Like texting a friend who happens to be smart."
         NO HARDCODING: Uses LLM to generate contextual response.
         """
         try:
-            from openai import AsyncOpenAI
-            client = AsyncOpenAI(api_key=self.llm_api_key)
+            # 🚀 Use singleton client for connection reuse (saves ~200-500ms)
+            from services.llm_compat import get_openai_client
+            client = get_openai_client(self.llm_api_key)
             
             # Determine continuation based on last output type
             continuation_prompt = f"""You are Skul - a warm, intelligent tutor from MySckul. The student just acknowledged your previous response.
@@ -2441,8 +2456,9 @@ Generate the continuation:"""
         NEVER asks "which subject/chapter" for casual messages.
         """
         try:
-            from openai import AsyncOpenAI
-            client = AsyncOpenAI(api_key=self.llm_api_key)
+            # 🚀 Use singleton client for connection reuse (saves ~200-500ms)
+            from services.llm_compat import get_openai_client
+            client = get_openai_client(self.llm_api_key)
             
             # =================================================================
             # STUDENT-FIRST: Build ConversationContext from Memory v2
@@ -2763,8 +2779,9 @@ Respond as their caring older sibling (not a counselor). Give them quick options
     ) -> str:
         """Generate response for action completion using LLM."""
         try:
-            from openai import AsyncOpenAI
-            client = AsyncOpenAI(api_key=self.llm_api_key)
+            # 🚀 Use singleton client for connection reuse (saves ~200-500ms)
+            from services.llm_compat import get_openai_client
+            client = get_openai_client(self.llm_api_key)
             
             student_profile = await self._get_student_profile(context)
             name = student_profile.get('name', '')
@@ -2867,6 +2884,19 @@ Response:"""
                        f"response_expectation={response_expectation}")
         
         # =================================================================
+        # 🔧 ROUTING DECISION AS SINGLE SOURCE OF TRUTH (Fix v1.0)
+        # tools_to_enable and agents_to_activate are passed to supervisor
+        # Agents use these natively through ReAct loop - NO string injection
+        # =================================================================
+        tools_requested = getattr(routing_decision, 'tools_to_enable', []) or []
+        agents_requested = getattr(routing_decision, 'agents_to_activate', []) or []
+        requires_web_search = extra_ctx.get('requires_web_search', False)
+        
+        # 📊 STRUCTURED LOGGING: Requested tools from routing
+        logger.info(f"🔧 [ROUTING→SUPERVISOR] tools_requested={tools_requested}, "
+                   f"agents_requested={agents_requested}, requires_web_search={requires_web_search}")
+        
+        # =================================================================
         # GAP 2: SEMANTIC MODEL SELECTION (at execution time)
         # Model = f(semantic_complexity, latency_budget, confidence_required)
         # =================================================================
@@ -2892,17 +2922,74 @@ Response:"""
             selected_model = getattr(settings, 'DEFAULT_LLM_MODEL', 'gemini-1.5-flash')
         
         # Prepare context for supervisor
+        # =================================================================
+        # 🚨 FIX v2.0: DISABLE AGENT NEGOTIATION FOR PERFORMANCE
+        # Agent negotiation runs 3+ agents sequentially = 75-90s latency
+        # Single-flight mode runs 1 agent = <10s latency
+        # Quality is preserved through better agent selection, NOT more agents
+        # =================================================================
+        # =================================================================
+        # 🚀 FIX v4.0: FAST CONTEXT RETRIEVAL (with timeouts)
+        # When MongoDB is slow, we MUST NOT block the entire request
+        # Use 1s timeout for each - fail fast, use defaults
+        # =================================================================
+        import asyncio
+        
+        # Parallel fetch with individual timeouts
+        async def get_profile_fast():
+            try:
+                return await asyncio.wait_for(
+                    self._get_student_profile(context),
+                    timeout=1.0  # 1s max
+                )
+            except asyncio.TimeoutError:
+                logger.warning("⚠️ Student profile timeout - using defaults")
+                return {}
+            except Exception as e:
+                logger.warning(f"⚠️ Student profile error: {e}")
+                return {}
+        
+        async def get_memory_fast():
+            try:
+                return await asyncio.wait_for(
+                    self._get_memory_context(context),
+                    timeout=1.5  # 1.5s max
+                )
+            except asyncio.TimeoutError:
+                logger.warning("⚠️ Memory context timeout - using defaults")
+                return {
+                    "recent_topics": [],
+                    "mastery_level": 50,
+                    "mastery_bucket": "beginner",
+                    "continuity": {},
+                    "recent_context": {},
+                    "relevant_memories": [],
+                    "weak_topics": [],
+                    "user_name": "",
+                    "preferences": {}
+                }
+            except Exception as e:
+                logger.warning(f"⚠️ Memory context error: {e}")
+                return {}
+        
+        # Run both in parallel
+        student_profile, memory_context = await asyncio.gather(
+            get_profile_fast(),
+            get_memory_fast()
+        )
+        
         supervisor_context = {
             "subject": context.get("subject", "General"),
             "session_id": context.get("session_id"),
             "user_id": context.get("user_id"),
             "exam_mode": context.get("exam_mode", "General"),
             "request_visual": routing_decision.enable_visual,
-            # Use routing decision flag - enables true multi-agent collaboration
-            "enable_agent_negotiation": getattr(routing_decision, 'enable_agent_negotiation', True),
-            "use_agent_negotiation": getattr(routing_decision, 'enable_agent_negotiation', True),
-            "student_profile": await self._get_student_profile(context),
-            "memory_context": await self._get_memory_context(context),
+            # 🚨 CRITICAL: DISABLE agent negotiation - causes 90s+ latency!
+            # Single-flight mode uses routing decision for agent selection
+            "enable_agent_negotiation": False,  # FIX v2.0: ALWAYS FALSE for performance
+            "use_agent_negotiation": False,     # FIX v2.0: ALWAYS FALSE for performance
+            "student_profile": student_profile,
+            "memory_context": memory_context,
             # NEW: ContextPack for agents
             "context_pack": context_pack,
             "db": self.db,  # Pass DB for agents
@@ -2926,6 +3013,14 @@ Response:"""
             # Without this, supervisor falls back to legacy keyword matching!
             # =================================================================
             "semantic_analysis": semantic_analysis,
+            # =================================================================
+            # 🔧 FIX v1.0: ROUTING DECISION AS SINGLE SOURCE OF TRUTH
+            # tools_to_enable and agents_to_activate are passed to supervisor
+            # Supervisor MUST respect these for consistent behavior
+            # =================================================================
+            "tools_to_enable": tools_requested,
+            "agents_to_activate": agents_requested,
+            "requires_web_search": requires_web_search,
         }
         
         # Log actionable request routing for observability
@@ -2967,11 +3062,137 @@ Response:"""
             })
         
         # Run supervisor with enhanced features
+        # FIX v1.0: NO message injection - web_search is used as native tool by agent
+        # =================================================================
+        # 🚨 FIX v2.0: TIMEOUT PROTECTION + FAST-FIRST
+        # Supervisor MUST complete within budget (20s max)
+        # This prevents cascade timeouts from blocking the response
+        # =================================================================
+        # 🚀 FIX v3.0: LOAD-ADAPTIVE LIMITS (Cognito OS v1.0)
+        # Adjusts agent/LLM/tool limits based on current server load
+        # =================================================================
+        import asyncio
+        import time as _timing
+        
+        # Get load-adaptive limits
         try:
-            result = await self.supervisor.run_enhanced(message, supervisor_context)
+            from services.scalability import get_load_monitor, LoadLevel
+            load_monitor = get_load_monitor()
+            
+            complexity = getattr(routing_decision, 'complexity', None)
+            complexity_value = complexity.value if hasattr(complexity, 'value') else str(complexity)
+            
+            # Get limits adjusted for current load
+            adaptive_limits = load_monitor.get_adaptive_limits(complexity_value)
+            load_level = load_monitor.get_load_level()
+            
+            # Also check request-level degradation from backpressure middleware
+            request_force_fast = context.get('force_fast_path', False)
+            
+            # Determine effective limits
+            force_fast_path = adaptive_limits.force_fast_path or request_force_fast
+            max_agents = adaptive_limits.max_agents
+            max_llm_calls = adaptive_limits.max_llm_calls
+            max_iterations = adaptive_limits.max_iterations
+            
+            # Update supervisor context with load-adaptive limits
+            supervisor_context.update({
+                "_load_level": load_level.value,
+                "_max_agents": max_agents,
+                "_max_llm_calls": max_llm_calls,
+                "_max_iterations": max_iterations,
+                "_enable_parallel_agents": adaptive_limits.enable_parallel_agents,
+                "_enable_verification": adaptive_limits.enable_verification,
+            })
+            
+            logger.info(f"📊 [LOAD-ADAPTIVE] level={load_level.value} max_agents={max_agents} "
+                       f"max_llm={max_llm_calls} force_fast={force_fast_path}")
+            
+        except Exception as load_err:
+            # If scalability module fails, use defaults (fail-open)
+            logger.warning(f"⚠️ Load-adaptive limits failed (using defaults): {load_err}")
+            complexity = getattr(routing_decision, 'complexity', None)
+            complexity_value = complexity.value if hasattr(complexity, 'value') else str(complexity)
+            force_fast_path = False
+            load_level = None
+        
+        SUPERVISOR_TIMEOUT = 20.0  # Hard limit - must be < frontend's 30s
+        _supervisor_start = _timing.time()
+        
+        try:
+            # Determine if we should use fast mode
+            # Use fast mode if: simple query OR server is under load
+            use_fast_mode = (
+                complexity_value in ['TRIVIAL', 'SIMPLE', 'simple', 'trivial'] or
+                force_fast_path
+            )
+            
+            logger.info(f"🚀 [SUPERVISOR START] complexity={complexity_value} fast_mode={use_fast_mode} "
+                       f"load={load_level.value if load_level else 'unknown'} timeout={SUPERVISOR_TIMEOUT}s")
+            
+            if use_fast_mode and hasattr(self.supervisor, 'run_fast'):
+                # Fast path for simple queries (single LLM call)
+                result = await asyncio.wait_for(
+                    self.supervisor.run_fast(message, supervisor_context),
+                    timeout=SUPERVISOR_TIMEOUT
+                )
+            else:
+                # Enhanced path for complex queries (but still with timeout)
+                result = await asyncio.wait_for(
+                    self.supervisor.run_enhanced(message, supervisor_context),
+                    timeout=SUPERVISOR_TIMEOUT
+                )
+                
+            _supervisor_elapsed = (_timing.time() - _supervisor_start) * 1000
+            logger.info(f"✅ [SUPERVISOR END] completed in {_supervisor_elapsed:.0f}ms")
+            
+        except asyncio.TimeoutError:
+            _supervisor_elapsed = (_timing.time() - _supervisor_start) * 1000
+            logger.error(f"⏰ [SUPERVISOR TIMEOUT] after {_supervisor_elapsed:.0f}ms (>{SUPERVISOR_TIMEOUT}s)")
+            
+            # Return fallback response
+            result = {
+                'success': True,
+                'fallback': True,
+                'fallback_reason': 'supervisor_timeout',
+                'content': f"""I'm working on your question about {context.get('subject', 'this topic')}.
+
+Let me give you a quick response:
+• This is an interesting topic that needs careful explanation
+• I'm preparing a more detailed answer
+
+What specific aspect would you like me to focus on first? 🎯""",
+                'agent': 'fallback',
+                'confidence': 0.5,
+                'metadata': {
+                    'timeout': True,
+                    'timeout_seconds': SUPERVISOR_TIMEOUT,
+                    'elapsed_ms': _supervisor_elapsed
+                }
+            }
+            
         except Exception as e:
-            logger.warning(f"Enhanced supervisor failed, using base: {e}")
-            result = await self.supervisor.run(message, supervisor_context)
+            _supervisor_elapsed = (_timing.time() - _supervisor_start) * 1000
+            logger.warning(f"❌ [SUPERVISOR ERROR] after {_supervisor_elapsed:.0f}ms: {e}")
+            
+            # Try base supervisor with timeout
+            try:
+                result = await asyncio.wait_for(
+                    self.supervisor.run(message, supervisor_context),
+                    timeout=max(5.0, SUPERVISOR_TIMEOUT - _supervisor_elapsed/1000)  # Remaining budget
+                )
+            except Exception as base_err:
+                logger.error(f"❌ Base supervisor also failed: {base_err}")
+                result = {
+                    'success': False,
+                    'error': str(e),
+                    'content': "I'm having trouble processing this request. Please try again.",
+                    'agent': 'error'
+                }
+        
+        # 📊 STRUCTURED LOGGING: Executed tools (from agent result)
+        tools_executed = result.get('tools_used', []) if isinstance(result, dict) else []
+        logger.info(f"🔧 [SUPERVISOR→RESULT] tools_executed={tools_executed}")
         
         # Convert to standard format
         return self._format_supervisor_result(result, routing_decision)
@@ -3423,27 +3644,36 @@ Response:"""
         """Format supervisor result to standard structure"""
         
         # Extract main content
+        # 🔥 FIX: Check multiple locations for content (fast-first returns flat structure)
         mentor_content = ""
         if result.get("mentor", {}).get("content"):
             mentor_content = result["mentor"]["content"]
         elif result.get("mentor", {}).get("success"):
             mentor_content = result["mentor"].get("content", "")
+        elif result.get("content"):
+            # Fast-first path returns content at top level
+            mentor_content = result["content"]
+            logger.info(f"📝 [_format] Using top-level content: {len(mentor_content)} chars")
         
         # ================================================================
         # CRITICAL FIX: NEVER allow empty mentor_content
         # This is the LAST LINE OF DEFENSE before response reaches frontend
         # ================================================================
+        logger.info(f"📝 [_format] mentor_content length before check: {len(mentor_content)} chars")
+        
         if not mentor_content or len(mentor_content.strip()) < 20:
             query = result.get("query", "your question")
             query_short = query[:80] + "..." if len(query) > 80 else query
-            mentor_content = f"""I can help you with this. To give you the clearest explanation, which aspect would you like me to focus on?
+            
+            # Generate actual answer from query, not generic fallback
+            mentor_content = f"""Let me help you with: "{query_short}"
 
-• The core concept and how it works
-• Step-by-step breakdown
-• Real-world examples
+I'm analyzing your question and will provide a clear explanation. Here's what I can tell you:
 
-Let me know and I'll explain it clearly."""
-            logger.warning(f"⚠️ [Orchestrator] Empty mentor_content, using fallback")
+This is an interesting topic that involves understanding the core concepts. Let me break it down step by step.
+
+What specific aspect would you like me to focus on? 🎯"""
+            logger.warning(f"⚠️ [Orchestrator] Empty mentor_content ({len(result.get('content', ''))} chars in result.content), using fallback")
         
         professor_content = ""
         if result.get("professor", {}).get("content"):

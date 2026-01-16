@@ -68,7 +68,7 @@ class ProfessorAgent(ReActAgent):
         exam_mode = context.get('exam_mode', 'General')
         is_exam_mode = exam_mode.upper() in ['JEE', 'NEET', 'UPSC', 'GATE', 'CAT']
         
-        tools = ['execute_code', 'calculator']
+        tools = ['execute_code', 'calculator', 'web_search', 'knowledge_search']
         
         if is_exam_mode:
             # Register exam_strategy tool on-demand

@@ -906,10 +906,52 @@ export default function SmartBoard({
     currentTopic
   );
   
-  // Show NETRA if we have a visual artifact OR if NETRA can generate from question
-  const shouldShowNetra = hasVisual || (isConversationActive && canNetraGenerate && !isLoading);
+  // ================================================================
+  // 🎯 ENTERPRISE-GRADE VISUAL GATING (Cognito OS v1.0)
+  // ================================================================
+  // CRITICAL: Only generate visuals when backend EXPLICITLY says visual_needed=true
+  // This prevents unnecessary visual generation for greetings, simple facts, etc.
+  //
+  // Defense in Depth:
+  // 1. Backend sets visual_needed based on semantic intent
+  // 2. Frontend checks visual_needed === true (NOT !== false)
+  // 3. Intent-based fallback gating for edge cases
+  // ================================================================
   
-  // Debug logging for visual flow
+  // PRIMARY GATE: Backend must explicitly say visual is needed
+  const backendSaysVisualNeeded = artifact?.visual_needed === true;
+  const visualSkipReason = artifact?.visual_skip_reason;
+  
+  // SECONDARY GATE: Intent-based fallback (defense in depth)
+  // These intents should NEVER trigger visual generation
+  const NO_VISUAL_INTENTS = [
+    'greeting', 'acknowledgment', 'chitchat', 'conversational',
+    'clarification_or_followup', 'simple_fact', 'meta_question',
+    'off_topic', 'feedback'
+  ];
+  const artifactIntent = artifact?.intent || '';
+  const intentBlocksVisual = NO_VISUAL_INTENTS.includes(artifactIntent);
+  
+  // Combined decision: visual needed AND intent allows it
+  const backendSaysNoVisual = !backendSaysVisualNeeded || intentBlocksVisual;
+  
+  // Log visual gating decision
+  if (backendSaysNoVisual && (artifact?.originalQuestion || userQuestion)) {
+    console.log(`🚫 [SmartBoard] Visual BLOCKED: visual_needed=${artifact?.visual_needed}, intent=${artifactIntent}, reason=${visualSkipReason || 'not_needed'}`);
+  }
+  
+  // Show NETRA if:
+  // 1. We have an explicit visual artifact (svg, blueprint, etc.) OR
+  // 2. NETRA can generate AND backend says visual IS needed AND conversation active
+  const shouldShowNetra = hasVisual || (
+    isConversationActive && 
+    canNetraGenerate && 
+    !isLoading && 
+    backendSaysVisualNeeded &&  // MUST be explicitly true
+    !intentBlocksVisual         // Intent must allow visuals
+  );
+  
+  // Debug logging for visual flow (production-grade observability)
   React.useEffect(() => {
     // Calculate the actual question that will be passed to NETRA
     const netraQuestion = 
@@ -920,7 +962,7 @@ export default function SmartBoard({
       'explain the concept';
       
     console.log('═══════════════════════════════════════════════════');
-    console.log('🎨 [SmartBoard] VISUAL STATE DEBUG');
+    console.log('🎨 [SmartBoard] VISUAL GATING DEBUG (Cognito OS v1.0)');
     console.log('═══════════════════════════════════════════════════');
     console.log('🎨 hasVisual:', hasVisual);
     console.log('🎨 shouldShowNetra:', shouldShowNetra);
@@ -931,9 +973,15 @@ export default function SmartBoard({
     console.log('🎨 currentTopic:', currentTopic);
     console.log('🎨 artifact?.originalQuestion:', artifact?.originalQuestion);
     console.log('🎨 artifact?.concept:', artifact?.concept);
-    console.log('🎨 → NETRA will receive question:', netraQuestion);
+    console.log('🎯 GATING: visual_needed:', artifact?.visual_needed);
+    console.log('🎯 GATING: visual_skip_reason:', artifact?.visual_skip_reason);
+    console.log('🎯 GATING: intent:', artifactIntent);
+    console.log('🎯 GATING: backendSaysVisualNeeded:', backendSaysVisualNeeded);
+    console.log('🎯 GATING: intentBlocksVisual:', intentBlocksVisual);
+    console.log('🎯 DECISION: backendSaysNoVisual:', backendSaysNoVisual);
+    console.log('🎨 → NETRA will render:', shouldShowNetra ? netraQuestion : 'BLOCKED');
     console.log('═══════════════════════════════════════════════════');
-  }, [hasVisual, shouldShowNetra, canNetraGenerate, isConversationActive, isLoading, userQuestion, currentTopic, artifact]);
+  }, [hasVisual, shouldShowNetra, canNetraGenerate, isConversationActive, isLoading, userQuestion, currentTopic, artifact, backendSaysNoVisual, backendSaysVisualNeeded, intentBlocksVisual, artifactIntent]);
   
   // Handle loading timeout - show fallback after 5 seconds
   useEffect(() => {
@@ -1128,6 +1176,9 @@ export default function SmartBoard({
                             level: 'high_school',
                             intent: artifact.scene_data.intent,
                             topic: artifact.scene_data.topic,
+                            // 🎯 Pass visual gating flags for defense in depth
+                            visual_needed: artifact?.visual_needed,
+                            visual_skip_reason: artifact?.visual_skip_reason,
                           }}
                           width={580}
                           height={450}
@@ -1171,6 +1222,10 @@ export default function SmartBoard({
                       context={{
                         subject: artifact?.subject || subject || 'physics',
                         level: 'high_school',
+                        // 🎯 Pass visual gating flags for defense in depth
+                        visual_needed: artifact?.visual_needed,
+                        intent: artifact?.intent,
+                        visual_skip_reason: artifact?.visual_skip_reason,
                       }}
                       width={580}
                       height={450}

@@ -78,26 +78,31 @@ class StreamingAIService:
                         yield chunk
                     return
             
-            # Step 3: Start parallel tasks
-            # Task A: Stream text from LLM
-            # Task B: Generate AI visual (async with 8s timeout)
-            
-            text_task = asyncio.create_task(
-                self._stream_llm_text(user_id, session_id, message, subject, exam_mode, student_profile)
-            )
+            # Step 3: Start visual task (background) + stream text directly
+            # 🔥 FIX: _stream_llm_text is async generator - iterate directly, NOT create_task
             
             visual_task = asyncio.create_task(
                 self._generate_ai_visual_async(message, student_profile, timeout=8)
             )
             
-            # Stream text chunks as they arrive
+            # Stream text chunks directly from async generator
             text_complete = False
-            async for text_chunk in self._yield_from_task(text_task):
+            chunk_count = 0
+            final_response_data = None  # 🔥 FIX: Initialize final_response_data
+            
+            async for text_chunk in self._stream_llm_text(user_id, session_id, message, subject, exam_mode, student_profile):
                 if text_chunk:
+                    chunk_count += 1
                     yield self._format_sse_event('text_chunk', text_chunk)
-                    if text_chunk.get('complete'):
+                    
+                    # 🔥 FIX: Capture final response data from complete event
+                    if text_chunk.get('type') == 'complete' or text_chunk.get('complete'):
                         text_complete = True
+                        final_response_data = text_chunk.get('data', {})
                         break
+            
+            import logging
+            logging.getLogger(__name__).info(f"📡 [Streaming] Sent {chunk_count} chunks, complete={text_complete}")
             
             # Check if AI visual completed
             try:
@@ -116,20 +121,43 @@ class StreamingAIService:
                     'message': 'Using SVG template fallback'
                 })
             
-            # Step 4: Send completion event
+            # Step 4: Send completion event with FULL response data
             total_time = time.time() - start_time
-            yield self._format_sse_event('complete', {
+            
+            # 🔥 DEBUG: Log what we're sending in complete event
+            import logging
+            _debug_logger = logging.getLogger(__name__)
+            _debug_logger.info(f"🔍 [DEBUG] Streaming complete - total_time: {total_time:.2f}s, text_complete: {text_complete}")
+            _debug_logger.info(f"🔍 [DEBUG] final_response_data keys: {list(final_response_data.keys()) if final_response_data else 'None'}")
+            if final_response_data and final_response_data.get('default_view'):
+                mc = final_response_data.get('default_view', {}).get('main_content', {})
+                if isinstance(mc, dict):
+                    preview = mc.get('content', '')[:100]
+                else:
+                    preview = str(mc)[:100]
+                _debug_logger.info(f"🔍 [DEBUG] main_content preview: {preview}")
+            
+            complete_event = {
                 'success': True,
                 'total_time': total_time,
-                'text_complete': text_complete
-            })
+                'text_complete': text_complete,
+                # CRITICAL: Include full response data for frontend
+                'data': final_response_data
+            }
+            
+            # Include visual flags from final response
+            if final_response_data:
+                complete_event['visual_needed'] = final_response_data.get('visual_needed', True)
+                complete_event['intent'] = final_response_data.get('intent', 'conceptual')
+            
+            yield self._format_sse_event('complete', complete_event)
             
             # Step 5: Cache the response for future use
-            if self.cache_service and text_complete and text_task:
+            # 🔥 FIX: Use final_response_data instead of text_task (we now use direct iteration)
+            if self.cache_service and text_complete and final_response_data:
                 try:
-                    result = await text_task
                     await self.cache_service.set(cache_key, {
-                        'text': result,
+                        'text': final_response_data,
                         'timestamp': time.time()
                     }, ttl=3600)  # 1 hour TTL
                 except Exception as cache_err:
@@ -148,15 +176,34 @@ class StreamingAIService:
             # Re-raise to let FastAPI handle cleanup
             raise
                 
+        except GeneratorExit:
+            # 🔥 FIX h11 ERROR: Generator closed by client disconnect
+            # This happens when client aborts the request mid-stream
+            # CRITICAL: Do NOT try to yield anything - connection is already closed
+            import logging
+            logging.getLogger(__name__).info("📡 [Streaming] Generator exit - client disconnected")
+            if text_task and not text_task.done():
+                text_task.cancel()
+            if visual_task and not visual_task.done():
+                visual_task.cancel()
+            # Don't re-raise - just exit silently
+            return
+                
         except Exception as e:
             # Only yield error if connection is still open
+            import logging
+            logger = logging.getLogger(__name__)
+            logger.error(f"❌ [Streaming] Error: {e}")
+            
             try:
                 yield self._format_sse_event('error', {
                     'error': str(e),
                     'fallback_emoji': '🤔'
                 })
-            except (asyncio.CancelledError, GeneratorExit):
-                # Connection closed while yielding error - ignore
+            except (asyncio.CancelledError, GeneratorExit, Exception) as yield_err:
+                # 🔥 FIX h11 ERROR: Connection closed while yielding error
+                # Don't try to send anything more - connection is dead
+                logger.debug(f"📡 [Streaming] Cannot send error (connection closed): {yield_err}")
                 pass
     
     def _get_visual_fallback_tier_1(self, metaphor_category: str, region: str) -> Dict[str, str]:
@@ -217,6 +264,15 @@ class StreamingAIService:
             # In production, use LLM native streaming
             full_response = response.get('response', {})
             
+            # 🔥 DEBUG: Log what we're sending to frontend
+            import logging
+            logger = logging.getLogger(__name__)
+            main_content_preview = full_response.get('default_view', {}).get('main_content', {})
+            if isinstance(main_content_preview, dict):
+                main_content_preview = main_content_preview.get('content', '')[:100]
+            logger.info(f"🔍 [DEBUG] _stream_llm_text - full_response keys: {list(full_response.keys())}")
+            logger.info(f"🔍 [DEBUG] _stream_llm_text - main_content preview: {main_content_preview}")
+            
             # CRITICAL: Extract clean text content for streaming
             # Frontend expects 'text_chunk' with 'content' as string
             main_content = ''
@@ -237,6 +293,10 @@ class StreamingAIService:
             # Sanitize the content before streaming
             main_content = self._sanitize_streaming_content(main_content)
             
+            import logging
+            logger = logging.getLogger(__name__)
+            logger.info(f"📝 [_stream_llm_text] main_content length: {len(main_content)} chars")
+            
             # Stream the clean text content
             if main_content:
                 # Split into chunks for progressive display
@@ -251,9 +311,15 @@ class StreamingAIService:
                     await asyncio.sleep(0.05)  # Small delay between chunks
             
             # Send complete event with full response data
+            # 🎯 CRITICAL: Include visual_needed flag for SmartBoard gating
+            visual_needed = full_response.get('visual_needed', True)  # Default true for educational content
+            intent = full_response.get('intent', 'conceptual')
+            
             yield {
                 'type': 'complete',
                 'data': full_response,
+                'visual_needed': visual_needed,
+                'intent': intent,
                 'complete': True
             }
             

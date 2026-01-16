@@ -224,8 +224,8 @@ async def call_concept_parser_llm(question: str, subject: str = None) -> Dict[st
     try:
         logger.info(f"🔮 [NETRA] Calling LLM for concept parsing: {question[:50]}...")
         
-        # Use configured model (gpt-4.1-mini by default)
-        model = settings.BASE_MODEL or "gpt-4.1-mini"
+        # Use configured model (gpt-4o-mini by default - fast and reliable)
+        model = settings.BASE_MODEL or "gpt-4o-mini"
         
         response = await call_llm(
             prompt=prompt,
@@ -268,16 +268,25 @@ async def parse_concept(request: ParseConceptRequest):
     🔮 Parse a student question into a visual concept graph using LLM
     
     This is the core intelligence of NETRA - understanding what to visualize.
+    
+    PERFORMANCE: Hard 5s timeout to prevent frontend hanging
     """
+    import asyncio
     start_time = datetime.now()
     
-    logger.info(f"🔮 [NETRA] Parsing concept: {request.question}")
+    # Hard SLA: 5 seconds max for visual parsing
+    NETRA_PARSE_TIMEOUT = 5.0
+    
+    logger.info(f"🔮 [NETRA] Parsing concept (timeout={NETRA_PARSE_TIMEOUT}s): {request.question[:60]}")
     
     try:
-        # Call LLM to parse concept
-        parsed = await call_concept_parser_llm(
-            question=request.question,
-            subject=request.subject
+        # Call LLM to parse concept WITH TIMEOUT
+        parsed = await asyncio.wait_for(
+            call_concept_parser_llm(
+                question=request.question,
+                subject=request.subject
+            ),
+            timeout=NETRA_PARSE_TIMEOUT
         )
         
         # Build response
@@ -327,11 +336,50 @@ async def parse_concept(request: ParseConceptRequest):
         
         return response
         
+    except asyncio.TimeoutError:
+        # TIMEOUT: Return fast fallback instead of hanging
+        elapsed_ms = int((datetime.now() - start_time).total_seconds() * 1000)
+        logger.warning(f"⏰ [NETRA] Parse timeout (>{NETRA_PARSE_TIMEOUT}s) - returning fallback")
+        return ConceptGraphResponse(
+            success=True,  # Still success - just simplified
+            domain=request.subject or "general",
+            topic=request.question[:50],
+            entities=[Entity(id="main_concept", type="concept", label=request.question[:40])],
+            relationships=[],
+            constraints=[],
+            visual_hints=VisualHint(
+                layout_strategy="simple",
+                emphasis=["main_concept"],
+                style="sketch",
+                annotations=[]
+            ),
+            title=request.question[:50],
+            summary="Quick visualization generated",
+            generation_time_ms=elapsed_ms
+        )
     except HTTPException:
         raise
     except Exception as e:
         logger.error(f"❌ [NETRA] Concept parsing failed: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        # Graceful fallback - return minimal valid response instead of 500
+        elapsed_ms = int((datetime.now() - start_time).total_seconds() * 1000)
+        return ConceptGraphResponse(
+            success=False,
+            domain="general",
+            topic=request.question[:50],
+            entities=[Entity(id="concept", type="concept", label=request.question[:30])],
+            relationships=[],
+            constraints=[],
+            visual_hints=VisualHint(
+                layout_strategy="simple",
+                emphasis=[],
+                style="sketch",
+                annotations=[]
+            ),
+            title=request.question[:50],
+            summary=f"Visual generation unavailable: {str(e)[:50]}",
+            generation_time_ms=elapsed_ms
+        )
 
 
 @router.get("/health")

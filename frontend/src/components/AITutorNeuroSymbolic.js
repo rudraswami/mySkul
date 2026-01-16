@@ -525,6 +525,80 @@ export default function AITutorNeuroSymbolic() {
       }
     }
   };
+  
+  // ================================================================
+  // 🚀 FAST-FIRST: Poll for Phase 2 Deep Refinement
+  // ================================================================
+  const pollForRefinement = async (requestId, messageId, retries = 0) => {
+    const maxRetries = 20; // 20 seconds max (1s intervals)
+    
+    if (retries >= maxRetries) {
+      console.log('⏰ Refinement polling timeout');
+      return;
+    }
+    
+    try {
+      const token = localStorage.getItem('dhruv_ai_token');
+      const response = await fetch(`${BACKEND_URL}/api/ai/refinement/${requestId}`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+      
+      if (response.ok) {
+        const data = await response.json();
+        
+        if (data.refinement_ready && data.refined_content) {
+          console.log('🧠 Phase 2 refinement ready!');
+          
+          // Update the message with refined content
+          setMessages(prev => {
+            return prev.map(msg => {
+              if (msg.id === messageId || msg.message_id === messageId) {
+                // Merge refined content into existing message
+                const currentContent = msg.content || {};
+                return {
+                  ...msg,
+                  content: {
+                    ...currentContent,
+                    default_view: {
+                      ...currentContent.default_view,
+                      main_content: {
+                        ...currentContent.default_view?.main_content,
+                        content: data.refined_content
+                      }
+                    }
+                  },
+                  metadata: {
+                    ...msg.metadata,
+                    phase: 2,
+                    refined: true
+                  }
+                };
+              }
+              return msg;
+            });
+          });
+          
+          // Optional: Show toast notification
+          console.log('✅ Response enhanced with deeper explanation');
+          
+        } else if (data.status === 'pending') {
+          // Continue polling
+          setTimeout(() => pollForRefinement(requestId, messageId, retries + 1), 1000);
+        }
+        // 'not_found', 'expired', 'error' - stop polling silently
+      }
+    } catch (error) {
+      console.error('Refinement polling error:', error);
+      // Retry on network error
+      if (retries < maxRetries - 5) {
+        setTimeout(() => pollForRefinement(requestId, messageId, retries + 1), 2000);
+      }
+    }
+  };
+  
   const [inputMessage, setInputMessageRaw] = useState('');
   
   // 🛡️ GUARD: Ref to track if input was cleared by explicit user send
@@ -539,27 +613,11 @@ export default function AITutorNeuroSymbolic() {
   
   const setInputMessage = useCallback((newValue) => {
     const prevValue = lastUserInputRef.current;
-    const timestamp = new Date().toISOString().substring(11, 23);
     
-    // If clearing input and it wasn't from a user send, log warning
+    // PRODUCTION-SAFE: Only log unexpected clears (no stack trace - too expensive)
+    // This prevents React infinite update loops from expensive Error() creation
     if (newValue === '' && prevValue.length > 0 && !inputClearedByUserRef.current) {
-      console.warn('⚠️ INPUT CLEAR DETECTED (not from send):', {
-        timestamp,
-        prevValue: prevValue.substring(0, 50),
-        newValue: '(empty)',
-        wasLoading: loadingRef.current,
-        stack: new Error().stack?.split('\n').slice(1, 5).join('\n')
-      });
-    }
-    
-    // Log ANY change to input (not just clears) - helps trace the issue
-    // Only log if value actually changes to reduce noise
-    if (newValue !== prevValue) {
-      console.log(`📝 INPUT CHANGE [${timestamp}]:`, {
-        from: prevValue.length > 20 ? prevValue.substring(0, 20) + '...' : prevValue || '(empty)',
-        to: newValue.length > 20 ? newValue.substring(0, 20) + '...' : newValue || '(empty)',
-        intentional: inputClearedByUserRef.current
-      });
+      console.warn('⚠️ INPUT CLEAR (unexpected):', prevValue.substring(0, 30));
     }
     
     // Reset the flag after any clear
@@ -567,7 +625,7 @@ export default function AITutorNeuroSymbolic() {
       inputClearedByUserRef.current = false;
     }
     
-    // Track for next comparison
+    // Track for next comparison (only non-empty values)
     if (newValue !== '') {
       lastUserInputRef.current = newValue;
     }
@@ -1353,11 +1411,18 @@ export default function AITutorNeuroSymbolic() {
           }
           
           // Finalize with complete response
+          // 🔥 DEBUG: Log what we received from streaming
+          console.log('🔍 [DEBUG] Streaming complete - finalResponse:', !!finalResponse, 'accumulatedText length:', accumulatedText.length);
           if (finalResponse) {
+            console.log('🔍 [DEBUG] finalResponse keys:', Object.keys(finalResponse || {}));
+            console.log('🔍 [DEBUG] finalResponse.default_view?.main_content:', finalResponse?.default_view?.main_content);
+            
             data = { response: finalResponse, detected_subject: finalResponse.detected_subject };
             streamingHandledFlag = true; // Mark as handled
             // Update final message with COGNITO-OS transparency data
             const normalizedFinal = normalizeAIContent(finalResponse);
+            
+            console.log('🔍 [DEBUG] normalizedFinal main_content:', normalizedFinal?.default_view?.main_content?.content?.substring?.(0, 100));
             setMessages(prev => prev.map(msg => 
               msg.message_id === streamingMsgId 
                 ? {
@@ -1381,6 +1446,9 @@ export default function AITutorNeuroSymbolic() {
             ));
           } else if (accumulatedText.length > 0) {
             // Fallback - use accumulated text
+            console.log('🔍 [DEBUG] Using accumulatedText fallback, length:', accumulatedText.length);
+            console.log('🔍 [DEBUG] accumulatedText preview:', accumulatedText.substring(0, 100));
+            
             // CRITICAL FIX: Properly structure the content with accumulated text
             const fallbackContent = {
               default_view: { 
@@ -1419,6 +1487,12 @@ export default function AITutorNeuroSymbolic() {
             }
             return; // Exit early - don't fall back to regular endpoint
           }
+          // 🔥 DEBUG: Log full error details
+          console.error('🔥 [DEBUG] Streaming error details:', {
+            name: streamError.name,
+            message: streamError.message,
+            stack: streamError.stack?.substring?.(0, 300)
+          });
           console.warn('⚠️ Streaming failed, falling back to regular endpoint:', streamError);
           // Remove streaming message
           setMessages(prev => prev.filter(msg => msg.message_id !== streamingMsgId));
@@ -1426,8 +1500,12 @@ export default function AITutorNeuroSymbolic() {
         }
       }
       
+      // 🔥 DEBUG: Log streaming result before fallback check
+      console.log('🔍 [DEBUG] After streaming block - data:', !!data, 'streamingHandledFlag:', streamingHandledFlag);
+      
       // Fallback to non-streaming endpoint if streaming failed or disabled
       if (!data) {
+        console.log('🔍 [DEBUG] No data from streaming, calling non-streaming endpoint');
         // Check if aborted before making fallback request
         if (apiAbortControllerRef.current?.signal?.aborted) {
           setLoading(false);
@@ -1533,6 +1611,17 @@ export default function AITutorNeuroSymbolic() {
 
         setMessages(prev => [...prev, aiMsg]);
         
+        // 🚀 FAST-FIRST: Check for Phase 2 refinement availability
+        // If backend indicates refinement is pending, start polling
+        const metadata = data.response?.metadata || normalizedResponse?.metadata || {};
+        if (metadata.refinement_pending && metadata.refinement_request_id) {
+          console.log('🧠 Phase 2 refinement pending, starting poll...');
+          // Small delay to let backend start processing
+          setTimeout(() => {
+            pollForRefinement(metadata.refinement_request_id, aiMsg.id || aiMsg.message_id || `msg_${Date.now()}`);
+          }, 2000);
+        }
+        
         // 🏫 Extract visual artifact for SmartBoard (Digital Classroom)
         // Check ALL possible visual formats from backend
         // PRIORITY: NETRA v4 (teaching_visual) FIRST, then others
@@ -1585,6 +1674,13 @@ export default function AITutorNeuroSymbolic() {
             width: visualData.width || null,
             height: visualData.height || null,
             teaching: visualData.teaching || null,
+            // 🎯 VISUAL INTENT: Backend tells us if visual is needed
+            // CRITICAL: Default to FALSE (not true) - only show visual when backend explicitly says so
+            // This prevents unnecessary visual generation for greetings, simple facts, etc.
+            visual_needed: data.response?.visual_needed === true,
+            visual_skip_reason: data.response?.visual_skip_reason || null,
+            // Pass intent for SmartBoard gating
+            intent: data.response?.intent || null,
           };
           
           // Debug logging
@@ -1609,8 +1705,23 @@ export default function AITutorNeuroSymbolic() {
             hasWhiteboardVisual: !!aiMsg.whiteboard_visual,
             hasBlueprint: !!data.response?.blueprint,
             responseKeys: Object.keys(data.response || {}),
-            normalizedKeys: Object.keys(normalizedResponse || {})
+            normalizedKeys: Object.keys(normalizedResponse || {}),
+            visual_needed: data.response?.visual_needed,
+            visual_skip_reason: data.response?.visual_skip_reason
           });
+          
+          // 🎯 Even without visual data, pass visual_needed flag to SmartBoard
+          // This tells SmartBoard whether to generate visuals from the question
+          // CRITICAL: Default to FALSE - only generate when backend explicitly says visual_needed=true
+          setVisualArtifact(prev => ({
+            ...prev,
+            originalQuestion: messageToSend,
+            concept: data.detected_subject || 'Concept',
+            subject: data.detected_subject || 'General',
+            visual_needed: data.response?.visual_needed === true,
+            visual_skip_reason: data.response?.visual_skip_reason || null,
+            intent: data.response?.intent || null,
+          }));
           
           // No visual in response - let SmartBoard timeout handle fallback
           // Don't stop loading yet - pollForVisual may still return a visual
@@ -2006,10 +2117,18 @@ export default function AITutorNeuroSymbolic() {
           if (aiPayload) {
             const aid = msg.message_id || `ai_${Date.now()}_${crypto.randomUUID()}`;
             if (!ids.has(aid)) {
+              // 🔥 DEBUG: Log what we're loading from DB
+              console.log('🔍 [DEBUG] Loading from DB - message_id:', aid);
+              console.log('🔍 [DEBUG] aiPayload keys:', Object.keys(aiPayload || {}));
+              console.log('🔍 [DEBUG] aiPayload.default_view?.main_content:', aiPayload?.default_view?.main_content);
+              
               // CRITICAL: Normalize AI content to ensure it's always a proper object
+              const normalizedContent = normalizeAIContent(aiPayload);
+              console.log('🔍 [DEBUG] normalizedContent preview:', normalizedContent?.default_view?.main_content?.content?.substring?.(0, 100));
+              
               parsed.push({ 
                 type: 'ai', 
-                content: normalizeAIContent(aiPayload), 
+                content: normalizedContent, 
                 timestamp: msg.timestamp || new Date().toISOString(), 
                 message_id: aid,
                 // Preserve user_question for context (helps with history display)

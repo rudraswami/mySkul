@@ -520,7 +520,9 @@ class MemoryService:
             return await self._create_default_student_profile(user_id)
             
         except asyncio.TimeoutError:
-            logger.warning(f"⚡ Student profile query timed out (>0.5s) - check database indexes!")
+            # Non-blocking: Return default profile and continue
+            # To fix: Create index with: db.user_learning_profile.createIndex({user_id: 1})
+            logger.warning(f"⚡ Student profile timeout (>0.5s) - returning defaults. Run: db.user_learning_profile.createIndex({{user_id: 1}})")
             return self._default_profile(user_id)
         except Exception as e:
             logger.error(f"❌ Failed to get student profile: {e}")

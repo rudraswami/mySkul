@@ -236,7 +236,8 @@ def create_tool_registry(include_default: bool = True, include_action_tools: boo
                 KnowledgeSearchTool,
                 CodeExecutorTool,
                 FactCheckerTool,
-                FormulaLookupTool
+                FormulaLookupTool,
+                WebSearchTool  # 🌐 Educational web search
             )
             
             registry.register_many([
@@ -244,7 +245,8 @@ def create_tool_registry(include_default: bool = True, include_action_tools: boo
                 KnowledgeSearchTool(),
                 CodeExecutorTool(),
                 FactCheckerTool(),
-                FormulaLookupTool()
+                FormulaLookupTool(),
+                WebSearchTool()  # 🌐 DuckDuckGo educational search
             ])
             
         except ImportError as e:

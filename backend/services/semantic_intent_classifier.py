@@ -243,6 +243,9 @@ These fields determine HOW MUCH to respond - matching response scope to question
     - "Plan my exam prep" → "long_term"
     - "What should I do now?" → "immediate"
     - "What should I study?" → "unspecified"
+    - "What are the latest Nobel winners?" → "today" (implies current information)
+    - "Who won the match just now?" → "immediate" (implies real-time)
+    - "Current updates on election" → "today"
 
 15. "delivery_mode": How should the response be formatted?
     - "conversational": Like a friend talking, natural sentences

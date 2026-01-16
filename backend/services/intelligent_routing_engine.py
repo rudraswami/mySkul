@@ -1133,7 +1133,7 @@ class IntelligentRoutingEngine:
                 enable_verification=enable_verification,
                 enable_visual=enable_visual,
                 max_iterations=5,
-                timeout_seconds=30.0,
+                timeout_seconds=25.0,  # FIX v1.0: Capped at 25s (must be < frontend's 30s)
                 use_knowledge_graph=output_type == "problem_solution",
                 use_memory=True,
                 priority_factors={'action_fulfillment': 1.0, 'structured_output': 0.9},
@@ -1183,7 +1183,7 @@ class IntelligentRoutingEngine:
                 enable_verification=enable_verification,
                 enable_visual=enable_visual,
                 max_iterations=5,
-                timeout_seconds=30.0,
+                timeout_seconds=25.0,  # FIX v1.0: Capped at 25s (must be < frontend's 30s)
                 use_knowledge_graph=output_type == "problem_solution",
                 use_memory=True,
                 priority_factors={'action_fulfillment': 1.0, 'structured_output': 0.9},
@@ -1766,6 +1766,196 @@ class IntelligentRoutingEngine:
         else:
             return QueryComplexity.DEEP_REASONING
     
+    def _requires_web_search(
+        self,
+        query: str,
+        semantic_analysis: 'SemanticAnalysis' = None
+    ) -> tuple:
+        """
+        🌐 SEMANTIC WEB SEARCH DECISION (LLM-driven, NOT keyword-driven)
+        
+        Determines if web search is required based on semantic analysis output.
+        Uses LLM-classified fields: temporal_scope, urgency_level, and intent.
+        
+        Returns:
+            (requires_web_search: bool, reason: str)
+        """
+        if not semantic_analysis:
+            return (False, "No semantic analysis available")
+        
+        # Extract LLM-determined semantic fields
+        temporal_scope = getattr(semantic_analysis, 'temporal_scope', 'unspecified')
+        urgency_level = getattr(semantic_analysis, 'urgency_level', 'medium')
+        intent = getattr(semantic_analysis, 'intent', None)
+        reasoning = getattr(semantic_analysis, 'reasoning', '')
+        topic_mentioned = getattr(semantic_analysis, 'topic_mentioned', '')
+        
+        # =================================================================
+        # SEMANTIC DECISION LOGIC (based on LLM classification, not keywords)
+        # =================================================================
+        
+        # Rule 1: Immediate/today temporal scope suggests current events
+        if temporal_scope in ['immediate', 'today']:
+            return (True, f"Temporal scope is '{temporal_scope}' - requires current information")
+        
+        # Rule 2: High urgency with recent time reference
+        if urgency_level == 'high' and temporal_scope != 'long_term':
+            return (True, f"High urgency query with temporal scope '{temporal_scope}'")
+        
+        # Rule 3: LLM reasoning indicates current events/real-time need
+        # (LLM often includes reasoning like "asking about recent", "current winners")
+        current_event_indicators = [
+            'current', 'recent', 'latest', 'winner', 'news', 
+            'today', 'this year', 'announced', 'happening',
+            'yesterday', 'tomorrow', 'tonight', 'update'
+        ]
+        reasoning_lower = reasoning.lower()
+        if not reasoning_lower and topic_mentioned: # Fallback to topic if reasoning empty
+             reasoning_lower = topic_mentioned.lower()
+             
+        for indicator in current_event_indicators:
+            if indicator in reasoning_lower or indicator in query.lower():
+                return (True, f"Indicator '{indicator}' found in reasoning/query - requires current information")
+        
+        # Rule 4: Topic mentioned is a current affairs category
+        if topic_mentioned:
+            topic_lower = topic_mentioned.lower()
+            current_topics = ['nobel prize', 'election', 'sports', 'news', 'weather', 'stock', 'current affairs']
+            for topic in current_topics:
+                if topic in topic_lower:
+                    return (True, f"Topic '{topic_mentioned}' is a current affairs category")
+        
+        # Default: No web search needed
+        return (False, "Static educational content - no web search required")
+    
+    def _should_enable_visual(
+        self,
+        query: str,
+        subject: str,
+        semantic_analysis: 'SemanticAnalysis' = None,
+        student_context: Dict[str, Any] = None
+    ) -> tuple:
+        """
+        🎨 INTELLIGENT VISUAL DECISION (v1.0)
+        
+        Determines if visual generation is appropriate for this query.
+        Visuals are expensive - only generate when truly helpful.
+        
+        INDIAN STUDENT CONTEXT:
+        - JEE/NEET students need diagrams for: physics circuits, chemistry structures,
+          biology processes, math graphs
+        - NOT needed for: definitions, history, current affairs, simple facts
+        
+        Returns:
+            (enable_visual: bool, reason: str)
+        """
+        query_lower = query.lower()
+        subject_lower = subject.lower() if subject else 'general'
+        student_context = student_context or {}
+        
+        # =================================================================
+        # RULE 1: EXPLICIT VISUAL REQUEST (User explicitly asks)
+        # =================================================================
+        explicit_visual_keywords = [
+            'diagram', 'draw', 'visualize', 'visualise', 'show me', 'illustrate',
+            'graph', 'plot', 'chart', 'picture', 'figure', 'sketch', 'image',
+            'flowchart', 'mind map', 'circuit diagram', 'ray diagram',
+            'free body diagram', 'fbd', 'structure', 'orbital diagram'
+        ]
+        
+        for keyword in explicit_visual_keywords:
+            if keyword in query_lower:
+                return (True, f"Explicit visual request: '{keyword}'")
+        
+        # =================================================================
+        # RULE 2: TOPIC SUITABILITY (Only for visual-appropriate topics)
+        # =================================================================
+        
+        # Physics topics that benefit from diagrams
+        physics_visual_topics = [
+            'circuit', 'ray', 'optics', 'lens', 'mirror', 'reflection', 'refraction',
+            'projectile', 'motion', 'force', 'fbd', 'free body', 'vector',
+            'wave', 'oscillation', 'pendulum', 'electric field', 'magnetic field',
+            'electromagnetic', 'current', 'resistance', 'capacitor', 'inductor'
+        ]
+        
+        # Chemistry topics that benefit from diagrams
+        chemistry_visual_topics = [
+            'structure', 'molecular', 'orbital', 'hybridization', 'bond', 'geometry',
+            'vsepr', 'lewis', 'resonance', 'isomer', 'organic', 'mechanism',
+            'reaction', 'cycle', 'periodic', 'atomic structure', 'electron configuration'
+        ]
+        
+        # Biology topics that benefit from diagrams
+        biology_visual_topics = [
+            'cell', 'mitosis', 'meiosis', 'photosynthesis', 'respiration', 'cycle',
+            'krebs', 'calvin', 'dna', 'rna', 'protein', 'enzyme', 'digestion',
+            'nervous system', 'heart', 'kidney', 'plant structure', 'flower',
+            'reproduction', 'anatomy', 'tissue', 'organ'
+        ]
+        
+        # Math topics that benefit from graphs
+        math_visual_topics = [
+            'graph', 'function', 'curve', 'parabola', 'hyperbola', 'ellipse',
+            'coordinate', 'geometry', 'triangle', 'circle', 'quadrilateral',
+            'slope', 'tangent', 'normal', 'area under', 'integration', 'derivative'
+        ]
+        
+        # Check if query contains visual-appropriate topic
+        visual_topics = []
+        if subject_lower in ['physics', 'phy']:
+            visual_topics = physics_visual_topics
+        elif subject_lower in ['chemistry', 'chem']:
+            visual_topics = chemistry_visual_topics
+        elif subject_lower in ['biology', 'bio']:
+            visual_topics = biology_visual_topics
+        elif subject_lower in ['mathematics', 'math', 'maths']:
+            visual_topics = math_visual_topics
+        else:
+            # For general/unknown subject, check all
+            visual_topics = physics_visual_topics + chemistry_visual_topics + biology_visual_topics + math_visual_topics
+        
+        for topic in visual_topics:
+            if topic in query_lower:
+                return (True, f"Visual-appropriate topic: '{topic}' in {subject}")
+        
+        # =================================================================
+        # RULE 3: STUDENT IS VISUAL LEARNER (from profile)
+        # Only enable if topic is somewhat visual AND student prefers visuals
+        # =================================================================
+        is_visual_learner = student_context.get('visual_learner', False)
+        
+        # Even for visual learners, don't generate visuals for:
+        non_visual_query_patterns = [
+            'what is', 'define', 'who', 'when', 'where', 'list', 'name',
+            'formula', 'equation', 'derivation', 'prove', 'why',
+            'difference between', 'compare', 'history', 'discovery',
+            'tell me', 'explain in words', 'summary', 'revision'
+        ]
+        
+        for pattern in non_visual_query_patterns:
+            if pattern in query_lower:
+                # Even visual learners don't need diagrams for these
+                return (False, f"Non-visual query pattern: '{pattern}'")
+        
+        # If student is visual learner and query doesn't match non-visual patterns
+        if is_visual_learner and subject_lower in ['physics', 'chemistry', 'biology', 'mathematics', 'math', 'maths']:
+            return (True, "Visual learner + STEM subject")
+        
+        # =================================================================
+        # RULE 4: SEMANTIC ANALYSIS (if available)
+        # =================================================================
+        if semantic_analysis:
+            # Check if semantic analysis suggests visual need
+            reasoning = getattr(semantic_analysis, 'reasoning', '').lower()
+            if any(kw in reasoning for kw in ['diagram', 'visual', 'illustration', 'graph']):
+                return (True, "Semantic analysis suggests visual")
+        
+        # =================================================================
+        # DEFAULT: NO VISUAL (save resources)
+        # =================================================================
+        return (False, "No visual indicators detected - text-only response")
+    
     def _select_pipeline(
         self,
         query: str,
@@ -1777,93 +1967,164 @@ class IntelligentRoutingEngine:
         """Select the appropriate pipeline based on complexity"""
 
         query_lower = query.lower()
-        subject = context.get('subject', 'General').lower()
+        subject = context.get('subject', 'General')
+        subject_lower = subject.lower()
         
         # Include semantic analysis in extra_context if available
         extra_ctx = {'semantic_analysis': semantic_analysis.to_dict()} if semantic_analysis else None
         
+        # =================================================================
+        # 🌐 SEMANTIC WEB SEARCH DECISION
+        # Computed using LLM analysis, not keyword matching
+        # =================================================================
+        requires_web_search, web_search_reason = self._requires_web_search(query, semantic_analysis)
+        
+        # =================================================================
+        # 🎨 INTELLIGENT VISUAL DECISION (v1.0)
+        # Only enable visuals when truly helpful - not for every query
+        # =================================================================
+        enable_visual, visual_reason = self._should_enable_visual(
+            query=query,
+            subject=subject,
+            semantic_analysis=semantic_analysis,
+            student_context=student_context
+        )
+        
+        # Helper to build tools list with optional web_search
+        def build_tools_list(base_tools: list) -> list:
+            if requires_web_search:
+                # Append web_search if not already present (no duplicates)
+                if 'web_search' not in base_tools:
+                    return base_tools + ['web_search']
+            return base_tools
+        
+        # Helper to build agents list with optional visualise
+        def build_agents_list(base_agents: list) -> list:
+            if enable_visual and 'visualise' not in base_agents:
+                return base_agents + ['visualise']
+            return base_agents
+        
+        # Log the routing decision with tool contract
+        logger.info(f"[ROUTING] requires_web_search={requires_web_search} reason=\"{web_search_reason}\"")
+        logger.info(f"[ROUTING] enable_visual={enable_visual} reason=\"{visual_reason}\"")
+        
         # === SIMPLE QUERIES ===
         # Factual lookups, definitions - multi-agent but minimal negotiation
         if complexity == QueryComplexity.SIMPLE:
+            tools = build_tools_list(['knowledge_search'])
+            agents = build_agents_list(['mentor', 'professor'])
+            logger.info(f"[ROUTING] tools_to_enable={tools} agents={agents}")
             return RoutingDecision(
                 pipeline=RecommendedPipeline.MULTI_AGENT,
                 complexity=complexity,
                 confidence=0.8,
                 reasoning="Simple query - multi-agent with light verification",
-                agents_to_activate=['mentor', 'professor'],
-                tools_to_enable=['knowledge_search'],
+                agents_to_activate=agents,
+                tools_to_enable=tools,
                 enable_verification=True,
-                enable_visual=student_context.get('visual_learner', False),
+                enable_visual=enable_visual,  # FIX v1.0: Intelligent visual decision
                 max_iterations=3,
                 timeout_seconds=15.0,
                 use_knowledge_graph=True,
                 use_memory=True,
                 priority_factors={'speed': 0.6, 'depth': 0.4},
-                enable_agent_negotiation=False  # Skip for speed on simple
+                enable_agent_negotiation=False,  # Skip for speed on simple
+                extra_context={
+                    **(extra_ctx or {}),
+                    'requires_web_search': requires_web_search,
+                    'web_search_reason': web_search_reason
+                }
             )
         
         # === MODERATE QUERIES ===
         # Standard explanations - full multi-agent WITH NEGOTIATION
         # THIS IS THE KEY CHANGE: Enable negotiation for moderate queries
         elif complexity == QueryComplexity.MODERATE:
+            tools = build_tools_list(['knowledge_search', 'formula_lookup', 'fact_checker'])
+            agents = build_agents_list(['mentor', 'professor'])  # FIX v1.0: visualise only when needed
+            logger.info(f"[ROUTING] tools_to_enable={tools} agents={agents}")
             return RoutingDecision(
                 pipeline=RecommendedPipeline.MULTI_AGENT,
                 complexity=complexity,
                 confidence=0.85,
                 reasoning="Moderate complexity - multi-agent with negotiation for quality",
-                agents_to_activate=['mentor', 'professor', 'visualise'],
-                tools_to_enable=['knowledge_search', 'formula_lookup', 'fact_checker'],
+                agents_to_activate=agents,
+                tools_to_enable=tools,
                 enable_verification=True,
-                enable_visual=True,
+                enable_visual=enable_visual,  # FIX v1.0: Intelligent visual decision
                 max_iterations=5,
                 timeout_seconds=25.0,
                 use_knowledge_graph=True,
                 use_memory=True,
                 priority_factors={'speed': 0.4, 'depth': 0.6},
-                enable_agent_negotiation=True  # NEW: Enable negotiation
+                enable_agent_negotiation=True,  # NEW: Enable negotiation
+                extra_context={
+                    **(extra_ctx or {}),
+                    'requires_web_search': requires_web_search,
+                    'web_search_reason': web_search_reason,
+                    'visual_reason': visual_reason  # FIX v1.0: Track why visual was/wasn't enabled
+                }
             )
         
         # === COMPLEX QUERIES ===
         # Multi-step problems - hybrid reasoning with full negotiation
         elif complexity == QueryComplexity.COMPLEX:
-            visual_keywords = ['diagram', 'draw', 'visualize', 'show', 'graph', 'plot']
-            needs_visual_sync = any(kw in query_lower for kw in visual_keywords)
-            
+            # FIX v1.0: Use intelligent visual decision instead of hardcoding
+            # The _should_enable_visual already checks for explicit visual keywords
+            needs_visual_sync = enable_visual  # Use the intelligent decision
+            tools = build_tools_list(['knowledge_search', 'formula_lookup', 'calculator', 'fact_checker', 'code_executor'])
+            agents = build_agents_list(['mentor', 'professor', 'doubt_resolver'])  # FIX v1.0: visualise only when needed
+            logger.info(f"[ROUTING] tools_to_enable={tools} agents={agents}")
             return RoutingDecision(
                 pipeline=RecommendedPipeline.VISUAL_SYNC if needs_visual_sync else RecommendedPipeline.HYBRID_REASONING,
                 complexity=complexity,
                 confidence=0.9,
                 reasoning="Complex query - hybrid reasoning with full agent negotiation",
-                agents_to_activate=['mentor', 'professor', 'visualise', 'doubt_resolver'],
-                tools_to_enable=['knowledge_search', 'formula_lookup', 'calculator', 'fact_checker', 'code_executor'],
+                agents_to_activate=agents,
+                tools_to_enable=tools,
                 enable_verification=True,
-                enable_visual=True,
-                max_iterations=8,
-                timeout_seconds=35.0,
+                enable_visual=enable_visual,  # FIX v1.0: Intelligent visual decision
+                max_iterations=7,  # FIX v1.0: Reduced from 8
+                timeout_seconds=25.0,  # FIX v1.0: Capped at 25s (must be < frontend's 30s)
                 use_knowledge_graph=True,
                 use_memory=True,
                 priority_factors={'speed': 0.2, 'depth': 0.8},
-                enable_agent_negotiation=True  # Full negotiation
+                enable_agent_negotiation=True,  # Full negotiation
+                extra_context={
+                    **(extra_ctx or {}),
+                    'requires_web_search': requires_web_search,
+                    'web_search_reason': web_search_reason,
+                    'visual_reason': visual_reason  # FIX v1.0: Track why visual was/wasn't enabled
+                }
             )
         
         # === DEEP REASONING ===
         # Proofs, derivations, analysis - full ReAct with negotiation
         else:  # DEEP_REASONING
+            tools = build_tools_list(['knowledge_search', 'formula_lookup', 'calculator', 'fact_checker', 'code_executor'])
+            agents = build_agents_list(['mentor', 'professor', 'doubt_resolver', 'exam_coach'])  # FIX v1.0: visualise only when needed
+            logger.info(f"[ROUTING] tools_to_enable={tools} agents={agents}")
             return RoutingDecision(
                 pipeline=RecommendedPipeline.REACT_AGENTIC,
                 complexity=complexity,
                 confidence=0.95,
                 reasoning="Deep reasoning - full ReAct with agent negotiation and verification",
-                agents_to_activate=['mentor', 'professor', 'visualise', 'doubt_resolver', 'exam_coach'],
-                tools_to_enable=['knowledge_search', 'formula_lookup', 'calculator', 'fact_checker', 'code_executor'],
+                agents_to_activate=agents,
+                tools_to_enable=tools,
                 enable_verification=True,
-                enable_visual=True,
-                max_iterations=12,
-                timeout_seconds=45.0,
+                enable_visual=enable_visual,  # FIX v1.0: Intelligent visual decision
+                max_iterations=10,  # FIX v1.0: Reduced from 12
+                timeout_seconds=25.0,  # FIX v1.0: Capped at 25s (must be < frontend's 30s)
                 use_knowledge_graph=True,
                 use_memory=True,
                 priority_factors={'speed': 0.1, 'depth': 0.9},
-                enable_agent_negotiation=True  # Full negotiation
+                enable_agent_negotiation=True,  # Full negotiation
+                extra_context={
+                    **(extra_ctx or {}),
+                    'requires_web_search': requires_web_search,
+                    'web_search_reason': web_search_reason,
+                    'visual_reason': visual_reason  # FIX v1.0: Track why visual was/wasn't enabled
+                }
             )
     
     def _resolve_continuation_topic(
@@ -1892,6 +2153,15 @@ class IntelligentRoutingEngine:
         query_stripped = query.strip()
         words = query_stripped.split()
         word_count = len(words)
+        
+        # ================================================================
+        # RULE 0: WEB SEARCH PRIORITY
+        # If the query requires web search (current events), it CANNOT be 
+        # a continuation of a previous static topic.
+        # ================================================================
+        requires_web_search, ws_reason = self._requires_web_search(query, semantic_analysis)
+        if requires_web_search:
+             return {'is_continuation': False, 'topic': None, 'reason': f'web_search_required: {ws_reason}'}
         
         # ================================================================
         # RULE 1: Check if message is short enough to be a continuation

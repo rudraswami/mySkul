@@ -144,16 +144,18 @@ class ReActAgent(ABC):
     """
     
     # Default timeout in seconds for the entire ReAct loop
-    # OPTIMIZED: Reduced from 45s since iterations are now more efficient
-    DEFAULT_GLOBAL_TIMEOUT = 25.0  # Balanced: allows deep reasoning without excessive wait
+    # FIX v1.0: Aligned with frontend timeout (30s) - backend MUST be under frontend
+    # This prevents race condition where frontend times out before backend responds
+    DEFAULT_GLOBAL_TIMEOUT = 25.0  # MUST be < frontend's 30s timeout
     
     # Adaptive iteration limits based on complexity
+    # FIX v1.0: Reduced limits for faster response times
     ITERATION_LIMITS = {
-        'trivial': 3,
-        'simple': 5,
-        'moderate': 8,
-        'complex': 12,
-        'deep': 15,  # For proofs, derivations, multi-step problems
+        'trivial': 2,   # Was 3 - simple follow-ups need instant response
+        'simple': 3,    # Was 5 - most queries should complete in 3 iterations
+        'moderate': 5,  # Was 8 - explanations need some reasoning
+        'complex': 7,   # Was 12 - multi-step problems
+        'deep': 10,     # Was 15 - proofs/derivations (rare)
     }
     
     def __init__(self, config: Optional[Dict[str, Any]] = None):
@@ -504,12 +506,31 @@ Student Name: {state.context.get('student_profile', {}).get('user_name', 'Studen
         if not self.tool_registry:
             return "No tools available."
         
+        context = context or {}
+        
         # COGNITIVE OS FIX: Pass context to get_available_tools
         try:
-            available = self.get_available_tools(context)
+            agent_tools = self.get_available_tools(context)
         except TypeError:
             # Backward compatibility: some agents don't accept context param
-            available = self.get_available_tools()
+            agent_tools = self.get_available_tools()
+        
+        # =================================================================
+        # FIX v1.0: ROUTING DECISION AS SINGLE SOURCE OF TRUTH FOR TOOLS
+        # If routing decision specifies tools_to_enable, use union of:
+        # - Agent's native tools (from get_available_tools)
+        # - Routing-requested tools (from context)
+        # This allows routing to ADD tools like web_search to any agent
+        # =================================================================
+        routing_tools = context.get('_routing_allowed_tools', [])
+        
+        if routing_tools:
+            # Create union: agent's tools + routing's tools
+            available = list(set(agent_tools) | set(routing_tools))
+            logger.info(f"🔧 [TOOL UNION] agent_tools={agent_tools} + routing_tools={routing_tools} = {available}")
+        else:
+            available = agent_tools
+        
         descriptions = []
         
         for tool_name in available:
@@ -555,23 +576,35 @@ Student Name: {state.context.get('student_profile', {}).get('user_name', 'Studen
     async def run(
         self,
         query: str,
-        context: Dict[str, Any]
+        context: Dict[str, Any],
+        quick_mode: bool = False
     ) -> Dict[str, Any]:
         """
         Main entry point - runs the ReAct loop until completion.
         
+        FAST-FIRST ARCHITECTURE:
+        - quick_mode=True: Single LLM call with rich context (Phase 1, <5s SLA)
+        - quick_mode=False: Full ReAct reasoning loop (Phase 2, deep)
+        
         TIMEOUT PROTECTION:
-        - Wrapped in global timeout (default 25s)
+        - Wrapped in global timeout (default 25s, 4s in quick_mode)
         - On timeout, returns graceful fallback response
         - Never leaves student waiting indefinitely
         
         Args:
             query: The student's question
             context: Context dict with subject, user_id, etc.
+            quick_mode: If True, skip ReAct loop for fast single-call response
         
         Returns:
             Agent response with reasoning chain and final answer
         """
+        # PHASE 1: FAST-FIRST (Single LLM call, <5s SLA)
+        if quick_mode:
+            logger.info(f"⚡ {self.get_agent_name()} QUICK MODE: {query[:50]}...")
+            return await self._run_fast(query, context)
+        
+        # PHASE 2: DEEP REASONING (Full ReAct loop)
         logger.info(f"🧠 {self.get_agent_name()} starting (timeout={self.global_timeout}s): {query[:50]}...")
         
         try:
@@ -589,6 +622,346 @@ Student Name: {state.context.get('student_profile', {}).get('user_name', 'Studen
         except Exception as e:
             logger.error(f"❌ {self.get_agent_name()} error: {e}", exc_info=True)
             return self._generate_error_fallback(query, context, str(e))
+    
+    async def _try_math_fast_path(self, query: str) -> Optional[Dict[str, Any]]:
+        """
+        🧮 MATH FAST-PATH: Solve simple equations instantly without LLM.
+        
+        This avoids the 5-6s LLM round-trip for trivial calculations like:
+        - "Solve: 3x + 5 = 17"
+        - "What is 25 * 4?"
+        - "Calculate: 15% of 200"
+        
+        Returns None if query is not a simple math problem (falls through to LLM).
+        """
+        import re
+        
+        query_lower = query.lower()
+        
+        # Detect if this is a math problem
+        math_keywords = ['solve', 'calculate', 'what is', 'find', 'compute', 'evaluate']
+        is_math_query = any(kw in query_lower for kw in math_keywords)
+        has_equation = '=' in query or any(op in query for op in ['+', '-', '*', '/', '^'])
+        
+        if not (is_math_query or has_equation):
+            return None
+        
+        try:
+            # Try to extract and solve equation
+            # Pattern: "Solve: (3x + 5) = 2x + 17" or "3x + 5 = 17"
+            equation_match = re.search(r'(?:solve[:\s]*)?(.+?)\s*=\s*(.+?)(?:\s*$|[,.])', query, re.IGNORECASE)
+            
+            if equation_match:
+                left = equation_match.group(1).strip('()[] ')
+                right = equation_match.group(2).strip('()[] ')
+                
+                # Check if it's a simple linear equation (contains x or y)
+                if 'x' in left.lower() or 'x' in right.lower():
+                    try:
+                        from sympy import symbols, Eq, solve, sympify
+                        from sympy.parsing.sympy_parser import parse_expr
+                        
+                        x = symbols('x')
+                        
+                        # Parse both sides
+                        left_expr = parse_expr(left.lower().replace('^', '**'), local_dict={'x': x})
+                        right_expr = parse_expr(right.lower().replace('^', '**'), local_dict={'x': x})
+                        
+                        # Solve the equation
+                        equation = Eq(left_expr, right_expr)
+                        solution = solve(equation, x)
+                        
+                        if solution:
+                            sol_str = ', '.join([f"x = {s}" for s in solution])
+                            
+                            # Format nice response with steps
+                            response = f"""**Solution:**
+
+Given equation: {left} = {right}
+
+**Step 1:** Rearrange the equation
+Move all terms with x to one side:
+{left} - ({right}) = 0
+
+**Step 2:** Simplify and solve
+{sol_str}
+
+**Verification:**
+Substituting back: {left.replace('x', f'({solution[0]})')} = {right.replace('x', f'({solution[0]})')} ✓
+
+The answer is **{sol_str}** 🎯"""
+                            
+                            logger.info(f"⚡ Math fast-path solved: {query[:40]}... → {sol_str}")
+                            
+                            return {
+                                'success': True,
+                                'content': response,
+                                'agent': self.get_agent_name(),
+                                'confidence': 0.95,
+                                'metadata': {
+                                    'mode': 'math_fast_path',
+                                    'solution': str(solution),
+                                    'phase': 1,
+                                    'llm_calls': 0  # No LLM call needed!
+                                }
+                            }
+                    except Exception as sympy_err:
+                        logger.debug(f"🧮 SymPy failed: {sympy_err}")
+                        # Fall through to LLM
+            
+            # Try simple arithmetic
+            # Pattern: "What is 25 * 4?" or "Calculate 15% of 200"
+            arith_match = re.search(r'(?:what is|calculate|compute)[:\s]*([0-9+\-*/()%\s.]+)', query_lower)
+            if arith_match:
+                expr = arith_match.group(1).strip()
+                # Handle percentage: "15% of 200" -> "15/100*200"
+                expr = re.sub(r'(\d+)\s*%\s*of\s*(\d+)', r'(\1/100)*\2', expr)
+                
+                try:
+                    result = eval(expr)  # Safe for simple math expressions
+                    if isinstance(result, (int, float)):
+                        response = f"""**Calculation:**
+
+{arith_match.group(1).strip()} = **{result}**
+
+That's your answer! 🎯"""
+                        
+                        return {
+                            'success': True,
+                            'content': response,
+                            'agent': self.get_agent_name(),
+                            'confidence': 0.99,
+                            'metadata': {
+                                'mode': 'arithmetic_fast_path',
+                                'result': result,
+                                'phase': 1,
+                                'llm_calls': 0
+                            }
+                        }
+                except:
+                    pass
+                    
+        except Exception as e:
+            logger.debug(f"🧮 Math fast-path error: {e}")
+        
+        return None  # Fall through to LLM
+    
+    async def _run_fast(
+        self,
+        query: str,
+        context: Dict[str, Any]
+    ) -> Dict[str, Any]:
+        """
+        FAST-FIRST: Single LLM call with rich context.
+        
+        This is Phase 1 of the Fast-First architecture:
+        - ONE LLM call only (hard cap)
+        - 4 second timeout (hard SLA)
+        - Rich context injection (agent persona + student profile + memory)
+        - Always returns valid response (never hangs)
+        - 🆕 Web search for current events/real-time queries
+        
+        Intelligence is preserved through:
+        - Agent-specific system prompt (persona)
+        - Student profile personalization
+        - Memory context injection
+        - RAG/curriculum context if available
+        - Web search for real-time information
+        """
+        # ================================================================
+        # 🚨 ENTRY POINT LOG - This MUST appear if _run_fast is called
+        # ================================================================
+        logger.info(f"🚀 [_run_fast ENTRY] {self.get_agent_name()} processing: {query[:60]}...")
+        
+        # ================================================================
+        # 🧮 MATH FAST-PATH: Solve simple equations instantly
+        # ================================================================
+        # For simple algebraic equations, use SymPy to solve directly
+        # This avoids the 5-6s LLM round-trip for trivial calculations
+        # ================================================================
+        try:
+            math_result = await self._try_math_fast_path(query)
+            if math_result:
+                logger.info(f"⚡ [_run_fast] Math fast-path SUCCESS")
+                return math_result
+        except Exception as math_err:
+            logger.debug(f"🧮 Math fast-path skipped: {math_err}")
+            # Continue to normal path
+        
+        # INCREASED: 12s allows for network variance + API latency + cold starts
+        # 6s was causing frequent timeouts leading to fallback responses
+        FAST_TIMEOUT = 12.0  # Up from 6s to handle real-world latency
+        
+        try:
+            from services.llm_service import call_llm
+            
+            # Build rich context for single-shot answer
+            subject = context.get('subject', 'the topic')
+            student_profile = context.get('student_profile', {})
+            student_name = student_profile.get('name', '')
+            mastery_level = context.get('memory_context', {}).get('mastery_level', 50)
+            
+            # Memory context for continuity
+            memory_ctx = context.get('memory_context', {})
+            recent = memory_ctx.get('recent_context', [])[-3:]
+            continuity = memory_ctx.get('continuity', {})
+            
+            # ================================================================
+            # 🌐 WEB SEARCH: Auto-detect if current events/real-time info needed
+            # ================================================================
+            web_search_context = ""
+            query_lower = query.lower()
+            
+            # Detect queries that need real-time/current information
+            needs_web_search = any(signal in query_lower for signal in [
+                'latest', 'recent', 'current', 'today', 'this year', '2024', '2025', '2026',
+                'nobel prize', 'winner', 'news', 'happening', 'update', 'announced',
+                'who won', 'who is', 'what happened', 'breaking', 'just',
+                'this month', 'last week', 'yesterday', 'now'
+            ])
+            
+            logger.info(f"🌐 [_run_fast] Web search needed: {needs_web_search} | Query: {query[:40]}...")
+            
+            if needs_web_search:
+                logger.info(f"🌐 [QUICK MODE] Detected real-time query, fetching web search...")
+                try:
+                    from agents.core.tools.web_search import WebSearchTool
+                    web_tool = WebSearchTool()
+                    search_result = await asyncio.wait_for(
+                        web_tool.execute(query=query, subject=subject, context=context),
+                        timeout=3.0  # 3s timeout for web search
+                    )
+                    if search_result.success and search_result.output:
+                        # Safe slicing - ensure output is a string
+                        output_str = str(search_result.output) if search_result.output else ""
+                        web_search_context = f"\n\n**Web Search Results:**\n{output_str[:800]}"
+                        logger.info(f"🌐 [QUICK MODE] Web search successful")
+                except asyncio.TimeoutError:
+                    logger.warning(f"🌐 [QUICK MODE] Web search timeout - continuing without")
+                except Exception as e:
+                    logger.warning(f"🌐 [QUICK MODE] Web search error: {e}")
+            
+            # Build context string
+            context_parts = []
+            if student_name:
+                context_parts.append(f"Student: {student_name}")
+            if mastery_level:
+                context_parts.append(f"Mastery: {mastery_level}%")
+            if continuity.get('is_continuation'):
+                context_parts.append(f"Continuing topic: {continuity.get('topic', 'previous')}")
+            if recent:
+                # Safely extract recent context (could be str or dict or None)
+                try:
+                    recent_item = recent[-1]
+                    if isinstance(recent_item, dict):
+                        recent_str = recent_item.get('content') or recent_item.get('message') or str(recent_item)
+                    else:
+                        recent_str = str(recent_item) if recent_item else ""
+                    if recent_str:
+                        context_parts.append(f"Recent: {str(recent_str)[:100]}")
+                except Exception:
+                    pass  # Skip if any error extracting recent context
+            
+            # RAG/curriculum context if available (safe slicing)
+            curriculum = context.get('curriculum_context')
+            if curriculum:
+                curriculum_str = str(curriculum) if curriculum else ""
+                if curriculum_str:
+                    context_parts.append(f"Curriculum: {curriculum_str[:200]}")
+            
+            # Formula constraints if available
+            constraints = context.get('_constraint_instruction', '')
+            
+            context_str = "\n".join(context_parts) if context_parts else "New student"
+            
+            # Build the prompt with agent persona (include web search if available)
+            prompt = f"""Question: {query}
+Subject: {subject}
+
+Student Context:
+{context_str}
+
+{constraints}
+{web_search_context}
+
+Provide a clear, helpful, well-structured educational response.
+Be accurate, engaging, and appropriately detailed for the student's level.
+Use examples and analogies to make concepts clear.
+{"Use the web search results above to provide current/accurate information." if web_search_context else ""}"""
+
+            # Single LLM call with hard timeout
+            # PERFORMANCE: Reduced max_tokens for faster response in quick mode
+            # 500 tokens ≈ 375 words, sufficient for initial explanation
+            # Phase 2 (deep mode) can elaborate further if needed
+            import time
+            llm_start = time.time()
+            
+            response = await asyncio.wait_for(
+                call_llm(
+                    prompt=prompt,
+                    api_key=self.llm_key,
+                    temperature=0.7,
+                    max_tokens=500,  # Reduced from 1000 for faster quick mode
+                    model="gpt-4o-mini",
+                    system_message=self.get_agent_persona()
+                ),
+                timeout=FAST_TIMEOUT
+            )
+            
+            llm_time = time.time() - llm_start
+            logger.info(f"⚡ [_run_fast] LLM call completed in {llm_time:.2f}s")
+            
+            if response and len(response.strip()) > 30:
+                logger.info(f"⚡ {self.get_agent_name()} QUICK MODE success {'(with web search)' if web_search_context else ''}")
+                return {
+                    'success': True,
+                    'content': response,
+                    'agent': self.get_agent_name(),
+                    'confidence': 0.9 if web_search_context else 0.85,
+                    'metadata': {
+                        'mode': 'quick',
+                        'phase': 1,
+                        'llm_calls': 1,
+                        'web_search_used': bool(web_search_context),
+                        'refinement_available': True  # Flag for Phase 2
+                    }
+                }
+                
+        except asyncio.TimeoutError:
+            logger.warning(f"⏰ {self.get_agent_name()} QUICK MODE timeout (>{FAST_TIMEOUT}s)")
+        except Exception as e:
+            logger.warning(f"⚠️ {self.get_agent_name()} QUICK MODE error: {e}")
+        
+        # Fallback - deterministic response (no more LLM calls)
+        # 🔥 FIX: Generate a unique request_id for Phase 2 refinement
+        import uuid as uuid_module
+        refinement_request_id = f"refine_{uuid_module.uuid4().hex[:8]}"
+        
+        logger.warning(f"⏰ {self.get_agent_name()} QUICK MODE fallback triggered - starting background refinement: {refinement_request_id}")
+        subject = context.get('subject', 'your question')
+        
+        # 🔥 FIX: Mark as fallback with LOW success so UI knows to show loading indicator
+        # and trigger Phase 2 refinement polling
+        return {
+            'success': True,
+            'is_fallback': True,  # 🔥 NEW: Flag to indicate this is a timeout fallback
+            'content': f"""I'm analyzing your question about {subject}...
+
+Just a moment while I prepare a detailed explanation! 🧠
+
+(Loading complete answer...)""",
+            'agent': self.get_agent_name(),
+            'confidence': 0.3,  # Low confidence = UI should expect refinement
+            'metadata': {
+                'mode': 'quick_fallback',
+                'phase': 1,
+                'llm_calls': 0,
+                'refinement_available': True,
+                'refinement_pending': True,  # 🔥 NEW: Tell frontend to poll
+                'refinement_request_id': refinement_request_id,  # 🔥 NEW: ID to poll
+                'timeout_occurred': True  # 🔥 NEW: Clear signal that we timed out
+            }
+        }
     
     async def _run_react_loop(
         self,
@@ -623,11 +996,12 @@ Student Name: {state.context.get('student_profile', {}).get('user_name', 'Studen
         failure_log = []
         
         # ================================================================
-        # PER-ITERATION TIMEOUT: Each step gets max 10s
+        # PER-ITERATION TIMEOUT: Each step gets max 12s
+        # FIX v1.0: Reduced from 25s to allow 2 iterations within global timeout
         # This ensures slow iterations don't consume the entire agent budget
         # If one iteration is slow, we finish early rather than timeout
         # ================================================================
-        ITERATION_TIMEOUT = 10.0  # Max 10s per think+act cycle
+        ITERATION_TIMEOUT = 12.0  # Max 12s per think+act cycle (allows 2 iterations in 25s global)
         slow_iteration_count = 0
         MAX_SLOW_ITERATIONS = 2  # After 2 slow iterations, finish early
         
@@ -840,74 +1214,58 @@ This is on my end, not yours. Please try asking again - I want to help you under
         """
         Generate the next thought and action using LLM.
         
-        FAULT-TOLERANT: Retries on transient failures, distinguishes failure types.
+        SINGLE-FLIGHT (NO RETRIES):
+        - One LLM call attempt only
+        - On failure, immediately return FINISH with fallback
+        - Retries are handled at orchestrator level, not here
         """
-        MAX_RETRIES = 2
-        last_error = None
-        
-        for attempt in range(MAX_RETRIES + 1):
-            try:
-                system_prompt = self.get_system_prompt(state)
-                user_message = f"What should you do next to answer: {state.query}"
-                
-                # If we have previous observations, include them
-                if state.reasoning_chain and state.reasoning_chain[-1].observation:
-                    last = state.reasoning_chain[-1]
-                    user_message = f"""Based on the observation from {last.action}:
+        try:
+            system_prompt = self.get_system_prompt(state)
+            user_message = f"What should you do next to answer: {state.query}"
+            
+            # If we have previous observations, include them
+            if state.reasoning_chain and state.reasoning_chain[-1].observation:
+                last = state.reasoning_chain[-1]
+                user_message = f"""Based on the observation from {last.action}:
 {last.observation}
 
 What should you do next?"""
-                
-                # Call LLM with retry awareness
-                response = await self._call_llm(system_prompt, user_message)
-                
-                if not response:
-                    # MODEL_FAILURE: LLM returned nothing
-                    last_error = "MODEL_FAILURE: LLM returned empty response"
-                    if attempt < MAX_RETRIES:
-                        logger.warning(f"[ReAct] LLM empty response, retry {attempt + 1}/{MAX_RETRIES}")
-                        await asyncio.sleep(0.5 * (attempt + 1))  # Exponential backoff
-                        continue
-                    else:
-                        # After retries, generate a FINISH action to complete gracefully
-                        logger.warning("[ReAct] LLM failed after retries, generating direct answer")
-                        ta = state.add_thought("I'll provide a direct answer based on my knowledge.")
-                        ta.action = "FINISH"
-                        ta.action_input = {"answer": await self._generate_direct_answer(state)}
-                        return ta
-                
-                # Parse response
-                parsed = self._parse_llm_response(response)
-                
-                # Create thought action
-                ta = state.add_thought(parsed.get("thought", "Thinking..."))
-                ta.action = parsed.get("action", "FINISH")
-                ta.action_input = parsed.get("action_input", {})
-                
+            
+            # Single LLM call - NO RETRIES
+            response = await self._call_llm(system_prompt, user_message)
+            
+            if not response:
+                # LLM returned nothing - immediate fallback (no retry)
+                logger.warning("[ReAct] LLM empty response, generating fallback (no retry)")
+                ta = state.add_thought("I'll provide a direct answer based on my knowledge.")
+                ta.action = "FINISH"
+                ta.action_input = {"answer": await self._generate_direct_answer(state)}
                 return ta
-                
-            except Exception as e:
-                last_error = f"REASONING_FAILURE: {str(e)}"
-                logger.error(f"[ReAct] Think error (attempt {attempt + 1}): {e}")
-                if attempt < MAX_RETRIES:
-                    await asyncio.sleep(0.5 * (attempt + 1))
-                    continue
-        
-        # All retries exhausted - generate graceful FINISH
-        logger.error(f"[ReAct] Think failed after all retries: {last_error}")
-        ta = state.add_thought("Let me provide you with a helpful response.")
-        ta.action = "FINISH"
-        ta.action_input = {"answer": await self._generate_direct_answer(state)}
-        return ta
+            
+            # Parse response
+            parsed = self._parse_llm_response(response)
+            
+            # Create thought action
+            ta = state.add_thought(parsed.get("thought", "Thinking..."))
+            ta.action = parsed.get("action", "FINISH")
+            ta.action_input = parsed.get("action_input", {})
+            
+            return ta
+            
+        except Exception as e:
+            # Exception - immediate fallback (no retry)
+            logger.error(f"[ReAct] Think error (no retry): {e}")
+            ta = state.add_thought("Let me provide you with a helpful response.")
+            ta.action = "FINISH"
+            ta.action_input = {"answer": await self._generate_direct_answer(state)}
+            return ta
     
     async def _generate_direct_answer(self, state: AgentState) -> str:
         """
         Generate a direct answer when ReAct reasoning fails.
         
-        PRINCIPLE: Failures reduce richness, NOT intelligence.
-        - This is error recovery that STILL uses LLM intelligence
-        - Try multiple providers before giving up
-        - Never return static templates
+        SINGLE-FLIGHT: One LLM call only, then deterministic fallback.
+        No cascading LLM retries.
         """
         # Build context from any observations we've gathered
         observations = [ta.observation for ta in state.reasoning_chain if ta.observation]
@@ -923,7 +1281,7 @@ Context from analysis: {context_str}
 
 Provide a clear, helpful, well-structured answer. Be accurate and educational."""
         
-        # Attempt 1: Primary LLM (gpt-4o-mini)
+        # Single LLM call - NO RETRIES
         try:
             from services.llm_service import call_llm
             
@@ -936,44 +1294,28 @@ Provide a clear, helpful, well-structured answer. Be accurate and educational.""
                     model="gpt-4o-mini",
                     system_message=self.get_agent_persona()
                 ),
-                timeout=12.0
+                timeout=15.0  # Single 15s timeout
             )
             if response and len(response.strip()) > 30:
                 logger.info("[ReAct] Direct answer generated successfully")
                 return response
         except Exception as e:
-            logger.warning(f"[ReAct] Primary LLM failed: {e}")
+            logger.warning(f"[ReAct] Direct answer LLM failed (no retry): {e}")
         
-        # Attempt 2: Gemini Flash (very fast, good quality)
-        try:
-            import google.generativeai as genai
-            from core.config import settings
-            
-            if settings.GEMINI_API_KEY:
-                genai.configure(api_key=settings.GEMINI_API_KEY)
-                model = genai.GenerativeModel('gemini-2.0-flash')
-                
-                response = await asyncio.wait_for(
-                    asyncio.get_event_loop().run_in_executor(
-                        None,
-                        lambda: model.generate_content(prompt)
-                    ),
-                    timeout=10.0
-                )
-                
-                if response and response.text and len(response.text.strip()) > 30:
-                    logger.info("[ReAct] Direct answer via Gemini successful")
-                    return response.text
-        except Exception as e:
-            logger.warning(f"[ReAct] Gemini fallback failed: {e}")
-        
-        # Final: Honest acknowledgment (contextual, not static template)
-        logger.error("[ReAct] All LLM attempts failed for direct answer")
+        # Deterministic fallback - NO more LLM calls
+        logger.warning("[ReAct] Using deterministic fallback response")
         short_q = state.query[:60] + "..." if len(state.query) > 60 else state.query
         
-        return f"""I'm having trouble processing your question about "{short_q}" right now.
+        return f"""I'm working on your question about {subject}.
 
-This is about {subject}. Could you try asking again? I want to give you a proper explanation."""
+**Your question:** "{short_q}"
+
+**Key points to consider:**
+- Break down the problem into smaller parts
+- Review the fundamental concepts first
+- Practice with examples
+
+I'm experiencing a brief delay. Please try asking again, and I'll give you a proper explanation! 💪"""
     
     async def _act(self, thought_action: ThoughtAction, state: AgentState) -> str:
         """

@@ -3,6 +3,7 @@ Main FastAPI application entry point - Modular Architecture
 Single source of truth for application initialization
 """
 import logging
+import os
 from bson.objectid import ObjectId
 from fastapi import FastAPI
 from fastapi.responses import JSONResponse as FastAPIJSONResponse
@@ -36,6 +37,11 @@ from api import streaming_ai
 # Middleware
 from middleware.csrf import CSRFMiddleware
 from middleware.security_headers import SecurityHeadersMiddleware
+from middleware.backpressure import (
+    BackpressureMiddleware, 
+    set_backpressure_middleware,
+    ENABLE_BACKPRESSURE
+)
 
 # Services for dependency injection
 from services.auth_service import AuthService
@@ -190,6 +196,26 @@ def create_app() -> FastAPI:
     app.add_middleware(RequestIDMiddleware)
     logger.info("   - Request ID tracing enabled")
 
+    # 4.5. Backpressure Middleware (Cognito OS v1.0)
+    # Placed after RequestID so we have request tracing for shed requests
+    if ENABLE_BACKPRESSURE:
+        logger.info("Configuring Backpressure Middleware (Cognito OS v1.0)...")
+        max_requests = int(os.getenv("MAX_CONCURRENT_REQUESTS", "200"))
+        shed_thresh = float(os.getenv("BACKPRESSURE_SHED_THRESHOLD", "0.95"))
+        degrade_thresh = float(os.getenv("BACKPRESSURE_DEGRADE_THRESHOLD", "0.70"))
+        
+        app.add_middleware(
+            BackpressureMiddleware,
+            max_concurrent_requests=max_requests,
+            shed_threshold=shed_thresh,
+            degrade_threshold=degrade_thresh
+        )
+        logger.info(f"   - Max concurrent requests: {max_requests}")
+        logger.info(f"   - Load shedding at {shed_thresh:.0%} capacity")
+        logger.info(f"   - Graceful degradation at {degrade_thresh:.0%} capacity")
+    else:
+        logger.info("Backpressure Middleware DISABLED (ENABLE_BACKPRESSURE=false)")
+
     # 5. CORS Middleware - MUST be LAST (becomes outermost, processes first)
     logger.info("Configuring CORS (LAST - outermost)...")
     cors_origins = settings.CORS_ORIGINS
@@ -340,6 +366,26 @@ def create_app() -> FastAPI:
             background=True
         )
         index_results.append(("chat_messages.idx_messages_session_user_time", result))
+        
+        # Index 3: AI refinements (for Phase 2 polling)
+        result = await safe_ensure_index(
+            collection=db.ai_refinements,
+            index_spec=[("request_id", 1), ("user_id", 1)],
+            index_name="idx_refinements_request_user",
+            unique=False,
+            background=True
+        )
+        index_results.append(("ai_refinements.idx_refinements_request_user", result))
+        
+        # Index 4: Session states (for memory continuity)
+        result = await safe_ensure_index(
+            collection=db.session_states,
+            index_spec=[("user_id", 1), ("session_id", 1)],
+            index_name="idx_session_states_user_session",
+            unique=True,
+            background=True
+        )
+        index_results.append(("session_states.idx_session_states_user_session", result))
         
         # Summary logging
         successful = sum(1 for _, r in index_results if r)
@@ -586,6 +632,41 @@ def create_app() -> FastAPI:
             }
         }
 
+    @app.get("/api/metrics", tags=["System"])
+    async def metrics():
+        """
+        Scalability metrics endpoint for monitoring (Cognito OS v1.0)
+        
+        Returns:
+        - Concurrency limiter stats (LLM, tools, agents)
+        - Circuit breaker states
+        - Load monitor status
+        - Backpressure middleware stats
+        """
+        from datetime import datetime, timezone
+        
+        metrics_data = {
+            "timestamp": datetime.now(timezone.utc).isoformat(),
+            "service": settings.APP_NAME,
+            "version": settings.VERSION,
+        }
+        
+        # Get scalability metrics
+        try:
+            from services.scalability import get_scalability_metrics
+            metrics_data["scalability"] = get_scalability_metrics()
+        except Exception as e:
+            metrics_data["scalability"] = {"error": str(e)}
+        
+        # Get backpressure metrics
+        try:
+            from middleware.backpressure import get_backpressure_metrics
+            metrics_data["backpressure"] = get_backpressure_metrics()
+        except Exception as e:
+            metrics_data["backpressure"] = {"error": str(e)}
+        
+        return metrics_data
+
     @app.get("/", tags=["System"])
     async def root():
         """Root endpoint with API information"""
@@ -594,6 +675,7 @@ def create_app() -> FastAPI:
             "version": settings.VERSION,
             "docs": f"{settings.BACKEND_URL}/docs",
             "health": f"{settings.BACKEND_URL}/api/health",
+            "metrics": f"{settings.BACKEND_URL}/api/metrics",
         }
 
     return app

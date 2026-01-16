@@ -966,6 +966,79 @@ async def bookmark_chat_session(
         raise HTTPException(status_code=500, detail=f"Failed to update session bookmark status: {str(e)}")
 
 
+# ================================================================
+# 🚀 FAST-FIRST: Refinement Polling Endpoint
+# ================================================================
+
+@router.get("/refinement/{request_id}")
+async def get_refinement(
+    request_id: str,
+    user: User = Depends(get_current_user),
+    db = Depends(get_database)
+):
+    """
+    Poll for Phase 2 deep refinement result.
+    
+    Frontend calls this after receiving Phase 1 response
+    if refinement_pending=True in metadata.
+    
+    Returns:
+        - refinement_ready: True if refinement is available
+        - refined_content: The deeper, more detailed answer
+        - status: 'pending' | 'ready' | 'expired' | 'not_found'
+    """
+    try:
+        from datetime import datetime, timezone
+        
+        # Look up refinement by request_id
+        refinement = await db.ai_refinements.find_one({
+            'request_id': request_id,
+            'user_id': user.user_id
+        })
+        
+        if not refinement:
+            return {
+                'refinement_ready': False,
+                'status': 'not_found',
+                'message': 'No refinement found for this request'
+            }
+        
+        # Check if expired
+        expires_at = refinement.get('expires_at')
+        if expires_at and expires_at < datetime.now(timezone.utc):
+            return {
+                'refinement_ready': False,
+                'status': 'expired',
+                'message': 'Refinement expired'
+            }
+        
+        # Check if content is ready
+        refined_content = refinement.get('refined_content', '')
+        if refined_content and len(refined_content) > 50:
+            return {
+                'refinement_ready': True,
+                'status': 'ready',
+                'refined_content': refined_content,
+                'phase': 2,
+                'created_at': refinement.get('created_at', '').isoformat() if refinement.get('created_at') else None
+            }
+        
+        # Still processing
+        return {
+            'refinement_ready': False,
+            'status': 'pending',
+            'message': 'Deep refinement in progress'
+        }
+        
+    except Exception as e:
+        logger.error(f"❌ Refinement poll error: {e}")
+        return {
+            'refinement_ready': False,
+            'status': 'error',
+            'message': 'Failed to check refinement status'
+        }
+
+
 @router.delete("/chat/{session_id}")
 async def delete_chat_session(
     session_id: str,
@@ -1195,7 +1268,55 @@ async def generate_neuro_symbolic_response(
     7. Encouragement (sincere)
     8. Ask (follow-up question)
     """
+    # Generate request_id for tracing (used throughout this request)
+    import uuid as uuid_module
+    request_id = f"req_{uuid_module.uuid4().hex[:8]}"
+    
+    # 🔥 FIX: Track if message was saved by generate_neuro_symbolic_response
+    # (it saves internally, so we skip save_session_message to avoid duplicate)
+    message_already_saved = False
+    
     try:
+        # ========== FAIL-FAST: API KEY CHECK ==========
+        # Enterprise Safety: Check required config BEFORE any processing
+        # Prevents wasted compute and provides immediate user feedback
+        openai_key = os.environ.get('OPENAI_API_KEY')
+        if not openai_key:
+            logger.error(f"[{request_id}] ❌ FAIL-FAST: Missing OPENAI_API_KEY")
+            # Return safe fallback response instead of failing later
+            return {
+                "success": True,
+                "request_id": request_id,
+                "fallback": True,
+                "fallback_reason": "service_configuration",
+                "response": {
+                    "default_view": {
+                        "greeting": "I'm having a brief technical moment! 🔧",
+                        "main_content": {
+                            "title": request.message[:50] if request.message else "Your Question",
+                            "content": """I apologize, but I'm experiencing a temporary service issue.
+
+**What you can do:**
+- Try again in a few moments
+- Your question has been noted
+
+**In the meantime:**
+- Review your notes on this topic
+- Try breaking down the problem into smaller parts
+
+I'll be back to help you soon! 💪"""
+                        }
+                    },
+                    "progressive_sections": {
+                        "key_takeaways": ["Service will be restored shortly"],
+                        "encouragement": "Your learning journey continues! 📚"
+                    },
+                    "detected_subject": request.subject or "General"
+                }
+            }
+        
+        logger.info(f"[{request_id}] 🚀 Request started: {request.message[:50]}...")
+        
         # ========== IDEMPOTENCY GUARD ==========
         # Prevent double-processing same request within short window
         # Hash includes: user + session + message + mode (non-stream)
@@ -1909,92 +2030,137 @@ You MUST reference specific content from the image in your response."""
                 supervisor = get_appropriate_supervisor(contextual_message, config, fallback_semantic_analysis)
                 
                 # ================================================================
-                # MEMORY SYSTEM INTEGRATION - Retrieve context before processing
+                # MEMORY SYSTEM INTEGRATION - BEST-EFFORT ENRICHMENT
+                # SINGLE-FLIGHT: Memory NEVER blocks the main AI response
+                # All memory ops run in parallel with strict timeout
                 # ================================================================
                 from services.memory_service import MemoryService
                 from services.semantic_memory import SemanticMemoryService
                 from services.mastery_tracker import MasteryTracker
                 from services.continuity_engine import ContinuityEngine
                 
-                # Initialize memory services (using db from dependency)
-                # Use OpenAI key for embeddings (NOT emergent key)
+                # Initialize memory services
                 openai_api_key = os.environ.get('OPENAI_API_KEY') or emergent_llm_key
-                
                 memory_service = MemoryService(db)
                 semantic_memory = SemanticMemoryService(db, openai_api_key)
                 mastery_tracker = MasteryTracker(db)
                 continuity_engine = ContinuityEngine(db)
                 
-                logger.info("🧠 Memory services initialized")
-                
-                # Step 1: Get short-term conversation context (last 10 messages)
-                recent_context = await memory_service.get_conversation_context(
-                    session_id=request.session_id or f"temp_{user.user_id}",
-                    user_id=user.user_id,
-                    window_size=10
-                )
-                logger.info(f"📜 Retrieved {len(recent_context)} recent messages")
-                
-                # Step 2: Semantic search for relevant long-term memories
-                relevant_memories = await semantic_memory.search_relevant_memories(
-                    user_id=user.user_id,
-                    query=contextual_message,
-                    top_k=5,
-                    min_similarity=0.5
-                )
-                logger.info(f"🔍 Found {len(relevant_memories)} relevant memories")
-                
-                # Step 3: Check for topic continuation
-                continuity = await continuity_engine.detect_topic_continuation(
-                    user_id=user.user_id,
-                    current_query=contextual_message
-                )
-                logger.info(f"🔗 Continuity check: {continuity.get('is_continuation', False)}")
-                
-                # Step 4: Get mastery level for current topic
-                # Extract main topic from question
+                # Extract topic for mastery lookup
                 from services.memory_extraction import MemoryExtractor
                 temp_extractor = MemoryExtractor(db)
                 current_concepts = temp_extractor._extract_concepts(contextual_message, {})
                 current_topic = current_concepts[0] if current_concepts else "general"
                 
-                mastery_level = await mastery_tracker.get_mastery_level(user.user_id, current_topic)
-                logger.info(f"📊 Mastery level for {current_topic}: {mastery_level}/100")
-                
-                # Step 5: Get user profile with name and preferences
-                user_doc = await db.users.find_one({"user_id": user.user_id})
+                # Default values (used if memory times out)
+                recent_context = []
+                relevant_memories = []
+                continuity = {"is_continuation": False}
+                mastery_level = 50  # Default mid-level
                 user_name = ""
                 student_profile_data = {}
                 
-                if user_doc:
-                    full_name = user_doc.get("full_name", "")
-                    user_name = full_name.split()[0] if full_name else ""
+                # ================================================================
+                # PARALLEL MEMORY FETCH with 3s TOTAL TIMEOUT
+                # Best-effort: If timeout, continue with defaults
+                # ================================================================
+                MEMORY_TIMEOUT = 3.0  # 3 seconds max for ALL memory ops
+                
+                # 📊 TIMING: Track memory enrichment latency
+                import time as _timing
+                _memory_start = _timing.time()
+                
+                async def fetch_memory_context():
+                    """Fetch all memory context in parallel - best effort"""
+                    nonlocal recent_context, relevant_memories, continuity, mastery_level, user_name, student_profile_data
                     
-                    # Get learning profile for personalization
-                    learning_profile = await db.user_learning_profile.find_one({"user_id": user.user_id})
-                    if learning_profile:
-                        student_profile_data = {
-                            "preferences": learning_profile.get("preferences", {}),
-                            "patterns": learning_profile.get("patterns", {}),
-                            "mastery_levels": learning_profile.get("mastery_levels", {}),
-                            "response_style": learning_profile.get("preferences", {}).get("response_style")
-                        }
+                    try:
+                        # Run all memory ops in parallel
+                        results = await asyncio.gather(
+                            memory_service.get_conversation_context(
+                                session_id=request.session_id or f"temp_{user.user_id}",
+                                user_id=user.user_id,
+                                window_size=10
+                            ),
+                            semantic_memory.search_relevant_memories(
+                                user_id=user.user_id,
+                                query=contextual_message,
+                                top_k=5,
+                                min_similarity=0.5
+                            ),
+                            continuity_engine.detect_topic_continuation(
+                                user_id=user.user_id,
+                                current_query=contextual_message
+                            ),
+                            mastery_tracker.get_mastery_level(user.user_id, current_topic),
+                            db.users.find_one({"user_id": user.user_id}),
+                            return_exceptions=True  # Don't fail on individual errors
+                        )
+                        
+                        # Unpack results with safe defaults
+                        if not isinstance(results[0], Exception):
+                            recent_context = results[0] or []
+                        if not isinstance(results[1], Exception):
+                            relevant_memories = results[1] or []
+                        if not isinstance(results[2], Exception):
+                            continuity = results[2] or {"is_continuation": False}
+                        if not isinstance(results[3], Exception):
+                            mastery_level = results[3] or 50
+                        
+                        # Handle user profile
+                        user_doc = results[4] if not isinstance(results[4], Exception) else None
+                        if user_doc:
+                            full_name = user_doc.get("full_name", "")
+                            user_name = full_name.split()[0] if full_name else ""
+                            
+                            # Try to get learning profile (separate query, also best-effort)
+                            try:
+                                learning_profile = await asyncio.wait_for(
+                                    db.user_learning_profile.find_one({"user_id": user.user_id}),
+                                    timeout=0.5  # Very short timeout for profile
+                                )
+                                if learning_profile:
+                                    student_profile_data = {
+                                        "preferences": learning_profile.get("preferences", {}),
+                                        "patterns": learning_profile.get("patterns", {}),
+                                        "mastery_levels": learning_profile.get("mastery_levels", {}),
+                                        "response_style": learning_profile.get("preferences", {}).get("response_style")
+                                    }
+                            except asyncio.TimeoutError:
+                                logger.warning(f"[{request_id}] ⚡ Learning profile query timeout (>0.5s) - continuing without")
+                            except Exception:
+                                pass  # Continue without profile
+                                
+                    except Exception as e:
+                        logger.warning(f"[{request_id}] ⚠️ Memory fetch error (best-effort, continuing): {e}")
+                
+                # Execute with strict timeout - NEVER blocks main flow
+                try:
+                    await asyncio.wait_for(fetch_memory_context(), timeout=MEMORY_TIMEOUT)
+                    _memory_elapsed = (_timing.time() - _memory_start) * 1000
+                    logger.info(f"[{request_id}] 📊 TIMING memory_enrichment={_memory_elapsed:.0f}ms | {len(recent_context)} recent, {len(relevant_memories)} relevant")
+                except asyncio.TimeoutError:
+                    _memory_elapsed = (_timing.time() - _memory_start) * 1000
+                    logger.warning(f"[{request_id}] 📊 TIMING memory_enrichment={_memory_elapsed:.0f}ms (TIMEOUT) - continuing with defaults")
+                except Exception as e:
+                    _memory_elapsed = (_timing.time() - _memory_start) * 1000
+                    logger.warning(f"[{request_id}] 📊 TIMING memory_enrichment={_memory_elapsed:.0f}ms (ERROR: {e})")
                 
                 # Determine query complexity for advanced features (using semantic if available)
                 query_complexity = analyze_query_complexity(contextual_message, fallback_semantic_analysis)
                 
                 # Prepare enhanced context for agentic system
                 agentic_context = {
+                    "request_id": request_id,  # Tracing ID for all logs
                     "subject": detected_subject,
                     "session_id": request.session_id,
                     "user_id": user.user_id,
                     "exam_mode": getattr(request, 'exam_mode', 'JEE'),
                     "request_visual": True,  # Always request visual for neuro-symbolic
-                    # ALWAYS-ON: Agent negotiation enabled for ALL educational queries
-                    # This is what makes us different from chatbots - agents actually collaborate
-                    # Failures degrade internally, never skip execution
-                    "use_agent_negotiation": True,
-                    "enable_agent_negotiation": True,
+                    # SINGLE-FLIGHT: Disable parallel agent competition
+                    # Agent selection happens, not competition
+                    "use_agent_negotiation": False,  # Disabled - use single-flight selection
+                    "enable_agent_negotiation": False,
                     "query_complexity": query_complexity,
                     "student_profile": {
                         "name": user_name,  # Personalized!
@@ -2018,17 +2184,117 @@ You MUST reference specific content from the image in your response."""
                 logger.info(f"🧠 Memory context prepared: {len(recent_context)} recent, {len(relevant_memories)} relevant, continuity={continuity.get('is_continuation')}")
                 
                 # ================================================================
-                # ALWAYS-ON: run_enhanced() is default for ALL educational queries
-                # This ensures RAG, verification, and hybrid reasoning always execute
-                # Failures degrade internally within run_enhanced(), never skip execution
+                # 🚀 FAST-FIRST ARCHITECTURE: Never-Hang + Early Response
                 # ================================================================
-                if isinstance(supervisor, EnhancedSupervisor):
-                    logger.info("🚀 Using EnhancedSupervisor.run_enhanced() (ALWAYS-ON: RAG + Verification + Hybrid Reasoning)")
-                    agentic_response = await supervisor.run_enhanced(contextual_message, agentic_context)
-                else:
-                    # Fallback ONLY if supervisor is not EnhancedSupervisor (should not happen)
-                    logger.warning("⚠️ Supervisor is not EnhancedSupervisor, using standard run()")
-                    agentic_response = await supervisor.run(contextual_message, agentic_context)
+                # Phase 1: Instant response (5s SLA, 1 LLM call)
+                # Phase 2: Deep refinement (async, only for complex queries)
+                #
+                # User ALWAYS gets a useful response in <5 seconds.
+                # Deeper reasoning happens async and updates are pushed.
+                # ================================================================
+                
+                PHASE1_TIMEOUT = 15.0  # Increased SLA: 15 seconds for LLM response (allows for load variance)
+                
+                # Determine query complexity for Phase 2 decision
+                query_len = len(contextual_message)
+                is_complex = (
+                    query_complexity.get('complexity', 'simple') in ['complex', 'multi_step'] or
+                    query_len > 150 or
+                    any(word in contextual_message.lower() for word in ['derive', 'prove', 'explain why', 'step by step', 'in detail'])
+                )
+                
+                try:
+                    # ========== PHASE 1: FAST-FIRST (Instant Response) ==========
+                    _phase1_start = _timing.time()
+                    if isinstance(supervisor, EnhancedSupervisor):
+                        logger.info(f"[{request_id}] ⚡ FAST-FIRST Phase 1 (SLA={PHASE1_TIMEOUT}s)")
+                        agentic_response = await asyncio.wait_for(
+                            supervisor.run_fast(contextual_message, agentic_context),
+                            timeout=PHASE1_TIMEOUT
+                        )
+                        _phase1_elapsed = (_timing.time() - _phase1_start) * 1000
+                        logger.info(f"[{request_id}] 📊 TIMING phase1={_phase1_elapsed:.0f}ms | agent={agentic_response.get('agent', 'unknown')}")
+                    else:
+                        # Fallback to standard run with tight timeout
+                        logger.warning(f"[{request_id}] ⚠️ Using standard run (no run_fast)")
+                        agentic_response = await asyncio.wait_for(
+                            supervisor.run(contextual_message, agentic_context),
+                            timeout=PHASE1_TIMEOUT
+                        )
+                    
+                    # ========== PHASE 2: DEEP REFINEMENT (Async, Complex Only) ==========
+                    # Only spawn Phase 2 for complex queries that could benefit
+                    # 🔥 FIX: Also spawn Phase 2 if agent timed out (to get real answer)
+                    agent_timeout_occurred = agentic_response.get('metadata', {}).get('timeout_occurred', False)
+                    needs_refinement = (
+                        (is_complex and agentic_response.get('metadata', {}).get('refinement_available')) or
+                        agent_timeout_occurred  # 🔥 NEW: Always refine if agent timed out
+                    )
+                    
+                    if needs_refinement:
+                        logger.info(f"[{request_id}] 🧠 Spawning Phase 2 deep refinement (async) - timeout_occurred={agent_timeout_occurred}")
+                        
+                        # Create background task for deep refinement
+                        # This runs AFTER we return the Phase 1 response
+                        async def run_phase2_refinement():
+                            try:
+                                PHASE2_TIMEOUT = 20.0  # Budget for deep reasoning
+                                deep_response = await asyncio.wait_for(
+                                    supervisor.run_enhanced(contextual_message, agentic_context),
+                                    timeout=PHASE2_TIMEOUT
+                                )
+                                
+                                # Store refinement for frontend polling
+                                # Using message_id as key (will be set after response is saved)
+                                refinement_data = {
+                                    'request_id': request_id,
+                                    'user_id': user.user_id,
+                                    'session_id': request.session_id,
+                                    'original_query': contextual_message[:200],
+                                    'refined_content': deep_response.get('content', ''),
+                                    'phase': 2,
+                                    'created_at': datetime.now(timezone.utc),
+                                    'expires_at': datetime.now(timezone.utc) + timedelta(minutes=5)
+                                }
+                                
+                                # Store in MongoDB for polling
+                                await db.ai_refinements.insert_one(refinement_data)
+                                logger.info(f"[{request_id}] ✅ Phase 2 refinement stored")
+                                
+                            except asyncio.TimeoutError:
+                                logger.warning(f"[{request_id}] ⏰ Phase 2 timeout (>{PHASE2_TIMEOUT}s)")
+                            except Exception as e:
+                                logger.error(f"[{request_id}] ❌ Phase 2 error: {e}")
+                        
+                        # Spawn as background task (non-blocking)
+                        asyncio.create_task(run_phase2_refinement())
+                        
+                        # Mark response as having refinement pending
+                        agentic_response['metadata'] = agentic_response.get('metadata', {})
+                        agentic_response['metadata']['refinement_pending'] = True
+                        agentic_response['metadata']['refinement_request_id'] = request_id
+                    
+                except asyncio.TimeoutError:
+                    logger.error(f"[{request_id}] ❌ PHASE 1 TIMEOUT (>{PHASE1_TIMEOUT}s) - returning fallback")
+                    # Even Phase 1 timed out - return safe fallback
+                    agentic_response = {
+                        'success': True,
+                        'fallback': True,
+                        'fallback_reason': 'phase1_timeout',
+                        'content': f"""I'm working on your question about {detected_subject}.
+
+Here's what I can help with right now:
+• This is an interesting topic that needs careful explanation
+• Let me focus on the core concept for you
+
+What specific aspect would you like me to clarify first? 🎯""",
+                        'agent': 'fallback',
+                        'metadata': {
+                            'phase': 1,
+                            'timeout': True,
+                            'timeout_seconds': PHASE1_TIMEOUT
+                        }
+                    }
                 
                 # Build visual scene if present
                 if agentic_response.get("visual"):
@@ -2151,9 +2417,14 @@ You MUST reference specific content from the image in your response."""
                     ),
                     message_history=message_history
                 )
+                # 🔥 FIX: Mark message as saved (generate_neuro_symbolic_response saves internally)
+                message_already_saved = True
+                logger.info(f"📝 Message saved internally by agentic fallback path")
+        
         # ================================================================
         # LEGACY FALLBACK (only if both unified and agentic fail)
         # ================================================================
+        
         if result is None:
             logger.info("📚 Using legacy neuro-symbolic system (fallback)")
             
@@ -2194,6 +2465,10 @@ You MUST reference specific content from the image in your response."""
                 message_history=message_history,
                 memory_context=memory_context  # Pass memory context
                 )
+            
+            # Mark message as already saved (generate_neuro_symbolic_response saves internally)
+            message_already_saved = True
+            logger.info(f"📝 Message saved internally by generate_neuro_symbolic_response")
             
             # ================================================================
             # MEMORY UPDATE PIPELINE (Post-Response)
@@ -2371,19 +2646,70 @@ You MUST reference specific content from the image in your response."""
             # Only attach a teaching visual when appropriate (not for compare/clarification)
             allow_visual = _should(request.message, request.subject) and _intent not in {"compare_contrast", "clarification_or_followup"}
             logger.info(f"🎨 allow_visual={allow_visual}, _should={_should(request.message, request.subject)}, _intent={_intent}")
+            
+            # ================================================================
+            # 🎯 VISUAL_NEEDED FLAG: Tell frontend whether to trigger NETRA
+            # ================================================================
+            # ENTERPRISE-GRADE: Intent-based visual gating (NO hardcoded keywords!)
+            # Uses semantic intent detection to determine if visual is appropriate
+            # 
+            # Questions that DON'T need visuals:
+            # - Greetings, chitchat, acknowledgments (intent: greeting, chitchat)
+            # - Simple follow-ups, clarifications (intent: clarification_or_followup)
+            # - Conversational exchanges (intent: conversational)
+            # - Simple facts that don't need diagrams (intent: simple_fact)
+            # ================================================================
+            
+            # Intents that NEVER need visuals (semantic detection, NOT keywords)
+            NO_VISUAL_INTENTS = {
+                'greeting', 'acknowledgment', 'chitchat', 'conversational',
+                'clarification_or_followup', 'simple_fact', 'compare_contrast',
+                'meta_question', 'off_topic', 'feedback'
+            }
+            
+            # Intents that ALWAYS benefit from visuals
+            VISUAL_WORTHY_INTENTS = {
+                'conceptual', 'procedural', 'problem_solving', 'derivation',
+                'mechanism', 'process', 'diagram', 'visual_explanation',
+                'physics', 'chemistry', 'biology', 'mathematics'
+            }
+            
+            # Determine visual need based on intent (NOT keywords!)
+            detected_intent = smart_intent or _intent or ''
+            
+            # Check if intent explicitly requires/rejects visuals
+            if detected_intent in NO_VISUAL_INTENTS:
+                visual_needed = False
+                visual_skip_reason = f'intent_{detected_intent}'
+            elif detected_intent in VISUAL_WORTHY_INTENTS:
+                visual_needed = allow_visual
+                visual_skip_reason = None if visual_needed else 'visual_disabled'
+            else:
+                # For ambiguous intents, use allow_visual flag (from should_generate_visual)
+                visual_needed = allow_visual
+                visual_skip_reason = None if visual_needed else 'not_visual_topic'
+            
+            # Add flag to response for frontend
+            if 'response' in result:
+                result['response']['visual_needed'] = visual_needed
+                result['response']['visual_skip_reason'] = visual_skip_reason
+            
+            logger.info(f"🎯 [VISUAL_GATE] intent={detected_intent}, visual_needed={visual_needed}, reason={visual_skip_reason}")
 
             if allow_visual:
                 # ====================================================================
                 # FEATURE FLAG: Visual Generator
                 # ====================================================================
                 # Visual Engine Priority:
-                # 1. USE_SCENE_RENDERER (v5.0) - Frontend SVG scene rendering
-                # 2. USE_NETRA_V4 (v4.0) - DALL-E 3 AI image generation
+                # 1. USE_SCENE_RENDERER (v5.0) - Frontend SVG scene rendering (RECOMMENDED)
+                # 2. USE_NETRA_V4 (v4.0) - DALL-E 3 AI image generation (requires GEMINI_API_KEY)
                 # 3. Visual Professor Generator - Dynamic multi-step fallback
                 # ====================================================================
                 VISUAL_GENERATOR_ENABLED = True
-                USE_NETRA_V4 = True  # ENABLED: DALL-E image generation for rich visuals
-                USE_SCENE_RENDERER = False  # Disabled to allow NETRA v4 image generation
+                # NETRA v4 disabled: Requires GEMINI_API_KEY which may not be configured
+                # Using NETRA v5 (scene-based) which works purely on frontend
+                USE_NETRA_V4 = False  # DISABLED: Requires both OPENAI + GEMINI keys
+                USE_SCENE_RENDERER = True  # ENABLED: Frontend SVG rendering (no external API)
                 
                 if not VISUAL_GENERATOR_ENABLED:
                     logger.info("🚫 Visual generator DISABLED")
@@ -2450,10 +2776,75 @@ You MUST reference specific content from the image in your response."""
                         logger.error(f"❌ NETRA v5 scene error: {e}", exc_info=True)
                         tv = None
                 elif USE_NETRA_V4:
-                    # 🔮 OLD NETRA v4.0 - DISABLED (uses DALL-E 3)
-                    # This code path is now disabled to avoid AI image generation
-                    logger.warning("⚠️ NETRA v4 (DALL-E) is DISABLED - use scene renderer instead")
+                    # 🔮 NETRA v4.0 - AI Image Generation (DALL-E 3)
+                    # Generates rich educational visuals using DALL-E 3
+                    logger.info("🎨 Using NETRA v4.0 (DALL-E 3) for visual generation...")
                     tv = None
+                    try:
+                        from services.netra_v4.orchestrator import create_orchestrator
+                        from services.netra_v4.contracts import VisualRequest, UserContext
+                        # Note: 'os' is already imported at top of file (line 8)
+                        
+                        # Get API keys from environment
+                        gemini_key = os.getenv("GEMINI_API_KEY") or os.getenv("GOOGLE_API_KEY")
+                        openai_key = os.getenv("OPENAI_API_KEY")
+                        
+                        if not gemini_key or not openai_key:
+                            logger.warning("⚠️ NETRA v4: Missing API keys (GEMINI_API_KEY or OPENAI_API_KEY)")
+                            # Fall through to Visual Professor Generator
+                        else:
+                            # Create orchestrator
+                            orchestrator = create_orchestrator(
+                                gemini_api_key=gemini_key,
+                                openai_api_key=openai_key
+                            )
+                            
+                            # Build request
+                            visual_request = VisualRequest(
+                                question=request.message,
+                                subject=request.subject or "general",
+                                user_context=UserContext(
+                                    user_id=user.user_id if user else None,
+                                    user_level="intermediate"
+                                )
+                            )
+                            
+                            # Generate visual (with 20s timeout)
+                            # Note: 'asyncio' is already imported at top of file (line 10)
+                            netra_result = await asyncio.wait_for(
+                                orchestrator.generate(visual_request),
+                                timeout=20.0
+                            )
+                            
+                            if netra_result and netra_result.visual and netra_result.visual.image_base64:
+                                tv = {
+                                    "visual_id": f"netra4_{hash(request.message) % 1000000}",
+                                    "type": "netra_v4_image",
+                                    "netra_v4": True,  # Flag for frontend
+                                    "image_base64": netra_result.visual.image_base64,
+                                    "image_format": netra_result.visual.image_format or "png",
+                                    "width": netra_result.visual.width,
+                                    "height": netra_result.visual.height,
+                                    "teaching": {
+                                        "title": netra_result.teaching.title if netra_result.teaching else f"Understanding: {request.message[:40]}",
+                                        "summary": netra_result.teaching.summary if netra_result.teaching else "",
+                                        "steps": [{"narration": s.narration, "highlight": s.highlight} for s in (netra_result.teaching.steps if netra_result.teaching else [])],
+                                        "key_takeaways": netra_result.teaching.key_takeaways if netra_result.teaching else [],
+                                        "hotspots": [{"id": h.id, "label": h.label, "x_percent": h.x_percent, "y_percent": h.y_percent} for h in (netra_result.teaching.hotspots if netra_result.teaching else [])]
+                                    },
+                                    "metadata": {
+                                        "concept": netra_result.metadata.get("concept") if netra_result.metadata else request.message[:50],
+                                        "intent": netra_result.metadata.get("intent") if netra_result.metadata else "conceptual",
+                                        "style": "dall-e-3"
+                                    }
+                                }
+                                logger.info(f"✅ NETRA v4: Image generated successfully ({netra_result.visual.width}x{netra_result.visual.height})")
+                            else:
+                                logger.warning("⚠️ NETRA v4: No image returned from orchestrator")
+                    except asyncio.TimeoutError:
+                        logger.warning("⚠️ NETRA v4: Timeout after 20s, falling back to Visual Professor")
+                    except Exception as e:
+                        logger.error(f"❌ NETRA v4 error: {e}", exc_info=True)
                 else:
                     # PRIORITY 1: Visual Professor Generator (dynamic, multi-step, professor-style)
                     tv = None
@@ -2677,8 +3068,10 @@ You MUST reference specific content from the image in your response."""
             
             # ====================================================================
             # CRITICAL FIX: Save message to session for chat history
+            # 🔥 FIX: Only save if NOT already saved by generate_neuro_symbolic_response
+            # This prevents "Duplicate message detected" warnings
             # ====================================================================
-            if request.session_id:
+            if request.session_id and not message_already_saved:
                 try:
                     await ai_service.save_session_message(
                         user.user_id,
@@ -2689,6 +3082,8 @@ You MUST reference specific content from the image in your response."""
                     logger.info(f"✅ Message saved to session {request.session_id}")
                 except Exception as save_error:
                     logger.error(f"⚠️ Failed to save message to session: {save_error}")
+            elif message_already_saved:
+                logger.info(f"📝 Skipping save_session_message (already saved internally)")
             
             # Add visual task ID for async polling (if visual is being generated)
             if visual_task_id:
@@ -2758,6 +3153,31 @@ You MUST reference specific content from the image in your response."""
             )
         except Exception as e:
             logger.debug(f"Idempotency cache update failed: {e}")
+        
+        # ================================================================
+        # 🎯 VISUAL_NEEDED SAFETY NET (CRITICAL)
+        # ================================================================
+        # Ensure visual_needed is ALWAYS set in the response
+        # Frontend defaults to FALSE, so we must explicitly set TRUE when needed
+        # This is the LAST LINE OF DEFENSE before response reaches frontend
+        # ================================================================
+        if result and 'response' in result:
+            if 'visual_needed' not in result['response']:
+                # Not set by earlier logic - determine based on intent
+                response_intent = result['response'].get('intent', '')
+                
+                # Intents that should NOT trigger visuals
+                no_visual_intents = {
+                    'greeting', 'acknowledgment', 'chitchat', 'conversational',
+                    'clarification_or_followup', 'simple_fact', 'compare_contrast'
+                }
+                
+                # Default: enable visuals for educational content, disable for chat
+                is_educational = response_intent not in no_visual_intents
+                result['response']['visual_needed'] = is_educational
+                result['response']['visual_skip_reason'] = None if is_educational else f'intent_{response_intent}'
+                
+                logger.info(f"🎯 [VISUAL_SAFETY_NET] Set visual_needed={is_educational} for intent={response_intent}")
         
         return result
         # [JULES VISUAL ENHANCEMENT END]

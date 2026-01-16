@@ -10,6 +10,7 @@ INFORMATION TOOLS (for answering questions):
 - CodeExecutor: Run Python code safely
 - FactChecker: Verify claims
 - FormulaLookup: Find relevant formulas
+- WebSearch: Search trusted educational websites (DuckDuckGo)
 
 ACTION TOOLS (for taking real actions - TRUE AGENTIC BEHAVIOR):
 - ReminderTool: Schedule one-time reminders
@@ -23,6 +24,7 @@ from .knowledge_search import KnowledgeSearchTool
 from .code_executor import CodeExecutorTool
 from .fact_checker import FactCheckerTool
 from .formula_lookup import FormulaLookupTool
+from .web_search import WebSearchTool
 
 # Specialist capability tools (replaces separate agents)
 from .exam_strategy import ExamStrategyTool
@@ -52,6 +54,7 @@ __all__ = [
     'CodeExecutorTool',
     'FactCheckerTool',
     'FormulaLookupTool',
+    'WebSearchTool',  # 🌐 Educational web search
     # Specialist capability tools
     'ExamStrategyTool',
     'StudyPlannerTool',

@@ -1120,13 +1120,20 @@ class MemoryIntegrationService:
             pack["_failed_components"].append("session_state")
             logger.warning(f"⚠️ MemoryContextPack: session_state failed: {e}")
         
-        # 2. Get student profile (persistent)
+        # 2. Get student profile (persistent) - BEST-EFFORT with strict timeout
         profile = {}
         try:
-            profile = await self.memory_service.get_student_profile(user_id)
+            profile = await asyncio.wait_for(
+                self.memory_service.get_student_profile(user_id),
+                timeout=1.0  # 1s max - don't block request
+            )
             pack["exam_target"] = profile.get("exam_target")
             pack["preferred_explanation"] = profile.get("preferred_explanation", "step_by_step")
             pack["pacing"] = profile.get("pacing", "normal")
+        except asyncio.TimeoutError:
+            logger.warning("⚡ MemoryContextPack: student_profile timeout (>1s) - using defaults")
+            pack["preferred_explanation"] = "step_by_step"
+            pack["pacing"] = "normal"
         except asyncio.CancelledError:
             logger.info("MemoryContextPack: student_profile cancelled (client disconnect)")
             return pack

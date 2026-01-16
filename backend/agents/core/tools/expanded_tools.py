@@ -268,7 +268,19 @@ class MemoryRecallTool(BaseTool):
                 )
             
             # Get REAL student profile from persistent storage
-            profile = await memory_service.get_student_profile(user_id)
+            # BEST-EFFORT: Don't block agent execution on memory timeout
+            import asyncio
+            try:
+                profile = await asyncio.wait_for(
+                    memory_service.get_student_profile(user_id),
+                    timeout=1.0  # 1s max - don't block agent
+                )
+            except asyncio.TimeoutError:
+                logger.warning(f"⚡ RecallMemoryTool: Profile timeout (>1s), using empty profile")
+                profile = {}
+            except Exception as e:
+                logger.warning(f"⚠️ RecallMemoryTool: Profile error, using empty profile: {e}")
+                profile = {}
             
             # Build memory response from REAL data
             memories = {}

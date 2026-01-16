@@ -13,11 +13,11 @@ from services.llm_compat import LlmChat, UserMessage
 logger = logging.getLogger(__name__)
 
 # Timeout constants
-# CRITICAL FIX: LLM timeout MUST be shorter than Agent timeout (25s)
-# This ensures agents can handle slow LLM gracefully, not timeout themselves
-DEFAULT_LLM_TIMEOUT = 15.0  # 15 seconds (was 60s - too long)
-STREAMING_LLM_TIMEOUT = 60.0  # 1 minute for streaming (was 180s)
-DEEPSEEK_TIMEOUT = 30.0  # DeepSeek for deep reasoning (was 90s)
+# Educational responses need more time for quality explanations
+# gpt-4o-mini typically responds in 3-8s, but network can add latency
+DEFAULT_LLM_TIMEOUT = 20.0  # 20 seconds - allows for network variance
+STREAMING_LLM_TIMEOUT = 30.0  # 30 seconds for streaming
+DEEPSEEK_TIMEOUT = 20.0  # DeepSeek for deep reasoning
 
 # Model configuration
 DEEPSEEK_BASE_URL = os.getenv("DEEPSEEK_BASE_URL", "https://api.deepseek.com")
