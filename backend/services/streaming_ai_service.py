@@ -49,7 +49,16 @@ class StreamingAIService:
         try:
             start_time = time.time()
             
-            # Step 1: Immediately send visual fallback (Tier 1: SVG template)
+            # 🎨 NETRA v5.0: Tell frontend to start composition IMMEDIATELY (parallel visual)
+            # Don't wait for slow LLM - frontend generates visuals from question directly
+            yield self._format_sse_event('composition_start', {
+                'use_composition': True,
+                'question': message,
+                'subject': subject,
+                'message': "Starting dynamic visual generation..."
+            })
+            
+            # Step 1: Immediately send visual fallback (Tier 1: SVG template) 
             visual_fallback = self._get_visual_fallback_tier_1(
                 student_profile.get('preferred_metaphor', 'cricket') if student_profile else 'cricket',
                 student_profile.get('region', 'Bangalore') if student_profile else 'Bangalore'
@@ -297,6 +306,26 @@ class StreamingAIService:
             logger = logging.getLogger(__name__)
             logger.info(f"📝 [_stream_llm_text] main_content length: {len(main_content)} chars")
             
+            # 🔥 FIX: If no main_content, try fallback sources
+            if not main_content:
+                logger.warning("⚠️ [_stream_llm_text] No main_content found, trying fallback sources")
+                
+                # Try greeting
+                greeting = full_response.get('default_view', {}).get('greeting', '')
+                if greeting:
+                    main_content = greeting
+                    logger.info(f"📝 [_stream_llm_text] Using greeting as fallback: {len(main_content)} chars")
+                
+                # Try raw response text if available
+                if not main_content and full_response.get('text'):
+                    main_content = str(full_response.get('text', ''))
+                    logger.info(f"📝 [_stream_llm_text] Using raw text as fallback: {len(main_content)} chars")
+                
+                # Last resort - generate minimal response
+                if not main_content:
+                    main_content = f"I'm processing your question about {message[:50]}... Let me explain this concept clearly."
+                    logger.warning(f"📝 [_stream_llm_text] Using generated fallback text")
+            
             # Stream the clean text content
             if main_content:
                 # Split into chunks for progressive display
@@ -309,17 +338,30 @@ class StreamingAIService:
                         'complete': i + chunk_size >= len(main_content)
                     }
                     await asyncio.sleep(0.05)  # Small delay between chunks
+            else:
+                # 🔥 CRITICAL: Always yield at least one chunk
+                logger.error("❌ [_stream_llm_text] CRITICAL: No content to stream!")
+                yield {
+                    'type': 'text_chunk',
+                    'content': "I'm working on your question. Please wait a moment...",
+                    'complete': True
+                }
             
             # Send complete event with full response data
             # 🎯 CRITICAL: Include visual_needed flag for SmartBoard gating
             visual_needed = full_response.get('visual_needed', True)  # Default true for educational content
             intent = full_response.get('intent', 'conceptual')
             
+            # 🎨 NETRA v5.0: Tell frontend to use composition mode for educational content
+            # This bypasses slow backend visual generation - frontend handles it dynamically
+            use_composition = visual_needed and intent not in ['greeting', 'acknowledgment', 'chitchat']
+            
             yield {
                 'type': 'complete',
                 'data': full_response,
                 'visual_needed': visual_needed,
                 'intent': intent,
+                'use_composition': use_composition,  # 🎨 NEW: Enable frontend composition mode
                 'complete': True
             }
             

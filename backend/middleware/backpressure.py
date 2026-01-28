@@ -59,7 +59,11 @@ class BackpressureMiddleware(BaseHTTPMiddleware):
         '/api/auth/me',
         '/docs',
         '/openapi.json',
-        '/favicon.ico'
+        '/favicon.ico',
+        # 🎨 NETRA v5.0: SSE streaming endpoints must bypass middleware
+        '/api/ai/neuro-symbolic/stream',  # SSE streaming - middleware breaks SSE
+        '/api/netra/parse-concept',       # Visual parsing - must be fast
+        '/api/netra/compose',             # Visual composition - must be fast
     }
     
     # AI endpoints that should be load-managed
@@ -148,14 +152,24 @@ class BackpressureMiddleware(BaseHTTPMiddleware):
             
             # Process request
             start_time = time.time()
-            response = await call_next(request)
+            try:
+                response = await call_next(request)
+            except RuntimeError as e:
+                # Handle client disconnection gracefully
+                if "No response returned" in str(e):
+                    logger.warning(f"⚠️ Client disconnected during request: {path}")
+                    from starlette.responses import Response
+                    return Response(status_code=499, content="Client disconnected")
+                raise
+            
             elapsed_ms = (time.time() - start_time) * 1000
             
-            # Add observability headers
-            response.headers["X-Load-Factor"] = f"{load_factor:.2f}"
-            response.headers["X-Response-Time-Ms"] = f"{elapsed_ms:.0f}"
-            if should_degrade:
-                response.headers["X-Degraded"] = "true"
+            # Add observability headers (safely - check if response exists)
+            if response:
+                response.headers["X-Load-Factor"] = f"{load_factor:.2f}"
+                response.headers["X-Response-Time-Ms"] = f"{elapsed_ms:.0f}"
+                if should_degrade:
+                    response.headers["X-Degraded"] = "true"
             
             return response
             

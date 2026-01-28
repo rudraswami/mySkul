@@ -1710,12 +1710,10 @@ You're making great progress! Keep up the excellent work and stay curious. Learn
                 response_dict = json.loads(raw_response)
                 logger.info("📊 JSON response parsed successfully")
                 
-                # Add visual loading timeout warning if response took >5s
+                # Log response time (informational only - NETRA handles visuals dynamically)
                 if generation_time > 5.0:
-                    logger.warning(f"⚠️ Response took {generation_time:.1f}s - adding visual fallback")
-                    if 'default_view' in response_dict and 'hero_visual' in response_dict['default_view']:
-                        response_dict['default_view']['hero_visual']['timeout_warning'] = True
-                        response_dict['default_view']['hero_visual']['generation_time'] = generation_time
+                    logger.info(f"📊 Response took {generation_time:.1f}s (visual handled by frontend NETRA)")
+                    # Note: No fallback injection needed - frontend NETRA generates visuals in parallel
                 
                 # Inject visual metadata from metaphor library if not present
                 if 'default_view' in response_dict:
@@ -1732,13 +1730,16 @@ You're making great progress! Keep up the excellent work and stay curious. Learn
                         logger.info(f"✅ Added mentor avatar: {avatar_url}")
                     
                     # CRITICAL: Add hero visual - NOW USING SVG (Phase 3)
+                    # 🎨 NETRA v5.0: Skip old visual injection - frontend NETRA handles visuals dynamically
+                    USE_LEGACY_VISUAL_INJECTION = False  # Set to True only for debugging legacy mode
+                    
                     hero_suppressed = intent_plan.intent in {'clarification_follow_up'} or (
                         intent_plan.intent == 'application_request' and not visual_directives.get('force_hero')
                     )
 
-                    if not hero_suppressed:
+                    if not hero_suppressed and USE_LEGACY_VISUAL_INJECTION:
                         if 'hero_visual' not in default_view or not default_view['hero_visual'].get('visual_url'):
-                            logger.warning("⚠️ Hero visual missing from LLM response - injecting SVG from Phase 3")
+                            logger.info("🎨 [LEGACY] Adding placeholder hero_visual (Phase 3 fallback)")
                             # Use SVG data URI (Phase 3 - generated above)
                             # Safely access svg_data with fallbacks
                             svg_data = metaphor_visual.get('svg_data', {})
@@ -1921,13 +1922,22 @@ You're making great progress! Keep up the excellent work and stay curious. Learn
             # [JULES VISUAL ENHANCEMENT END]
 
             # CRITICAL: NEVER return raw_response to frontend - it can leak internal traces
+            # 🎨 NETRA v5.0: Add visual_needed flag for frontend gating
+            # Educational questions should use NETRA composition mode
+            visual_intents = {'conceptual', 'procedural', 'application_request', 'problem_solving'}
+            should_show_visual = intent_plan.intent in visual_intents or question_type in {'conceptual', 'why', 'how', 'explain'}
+            
             return {
                 'success': True,
                 'message_id': message_id,
                 'response': response_dict,
                 # raw_response REMOVED - internal debugging only, never expose to UI
                 'generation_time': generation_time,
-                'question_type': question_type
+                'question_type': question_type,
+                # 🎨 NETRA v5.0: Tell frontend to use composition mode
+                'visual_needed': should_show_visual,
+                'use_composition': should_show_visual,  # Enable NETRA parallel rendering
+                'intent': intent_plan.intent,
             }
             
         except Exception as e:

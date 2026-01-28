@@ -170,6 +170,7 @@ def create_app() -> FastAPI:
             "/api/notifications/mark-read",
             "/api/notifications/mark-all-read",
             "/api/netra/parse-concept",
+            "/api/netra/compose",
             "/api/netra/health",
             "/api/netra/v4/generate",
             "/api/netra/v4/generate-simple",

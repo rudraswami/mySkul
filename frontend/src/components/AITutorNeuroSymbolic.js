@@ -464,19 +464,25 @@ export default function AITutorNeuroSymbolic() {
                            data.detected_subject ||
                            'General';
             
-            setVisualArtifact({
+            // 🎨 NETRA v5.0: CRITICAL - Merge with existing artifact, preserve composition mode
+            // Do NOT overwrite use_composition flag with legacy visual data
+            setVisualArtifact(prev => ({
+              ...prev,  // Keep existing composition flags
               ...visualSketch,
               concept,
               subject,
-              // Preserve all visual formats
+              // Preserve all visual formats (legacy)
               svg: visualSketch.svg,
               blueprint: visualSketch.blueprint || data.visual_sketch?.blueprint,
               template: visualSketch.template || data.visual_sketch?.template,
               mode: visualSketch.mode || data.visual_sketch?.mode,
               visual_sketch: visualSketch,
               // Store original question for context-aware theming
-              originalQuestion: message?.user_question || '',
-            });
+              originalQuestion: prev?.originalQuestion || message?.user_question || '',
+              // 🎨 CRITICAL: Preserve composition mode - never downgrade
+              use_composition: prev?.use_composition === true ? true : visualSketch.use_composition,
+              visual_needed: prev?.visual_needed === true ? true : visualSketch.visual_needed,
+            }));
             
             return prev.map(msg => {
               if (msg.message_id === messageId) {
@@ -1243,6 +1249,18 @@ export default function AITutorNeuroSymbolic() {
     // 🎨 NEW: Set visual loading state for SmartBoard (optimistic loading)
     setIsGeneratingVisual(true);
     setCurrentUserQuestion(messageToSend);
+    
+    // 🎨 NETRA v5.0: Set artifact IMMEDIATELY to enable PARALLEL visual generation
+    // SmartBoard will start NETRA rendering while backend processes text
+    setVisualArtifact(prev => ({
+      ...prev,
+      originalQuestion: messageToSend,
+      concept: 'Loading...',
+      subject: 'General',
+      use_composition: true,  // 🚀 This triggers immediate visual generation
+      visual_needed: true,
+      intent: 'conceptual',
+    }));
 
     try {
       const token = localStorage.getItem('dhruv_ai_token');
@@ -1309,6 +1327,7 @@ export default function AITutorNeuroSymbolic() {
       
       let data;
       let streamingHandledFlag = false; // Track if streaming handled the message
+      let useComposition = true;  // 🎨 NETRA v5.0: Default to composition mode for educational content
       
       if (USE_STREAMING) {
         // Create placeholder AI message for streaming
@@ -1356,6 +1375,7 @@ export default function AITutorNeuroSymbolic() {
           const decoder = new TextDecoder();
           let accumulatedText = '';
           let finalResponse = null;
+          // Note: useComposition is declared at outer scope, default true for educational content
           
           while (true) {
             // Check if aborted before reading
@@ -1390,8 +1410,25 @@ export default function AITutorNeuroSymbolic() {
                           }
                         : msg
                     ));
+                  } else if (eventData.type === 'composition_start') {
+                    // 🎨 NETRA v5.0: Backend tells us to start composition IMMEDIATELY (parallel visual)
+                    console.log('🎨 [Streaming] COMPOSITION_START - generating visual in parallel');
+                    useComposition = true;
+                    // Immediately set visual artifact so SmartBoard can start rendering
+                    setVisualArtifact({
+                      originalQuestion: eventData.question || messageToSend,
+                      concept: eventData.subject || 'Concept',
+                      subject: eventData.subject || 'General',
+                      visual_needed: true,
+                      use_composition: true,  // 🎨 Enable composition mode immediately
+                      intent: 'conceptual',
+                    });
+                    setIsGeneratingVisual(true);  // Show loading state in SmartBoard
                   } else if (eventData.type === 'complete' && eventData.data) {
                     finalResponse = eventData.data;
+                    // 🎨 NETRA v5.0: Capture composition mode flag from backend
+                    useComposition = eventData.use_composition === true;
+                    console.log('🎨 [Streaming] use_composition:', useComposition, 'visual_needed:', eventData.visual_needed);
                   } else if (eventData.type === 'visual_fallback' && eventData.svg) {
                     // Update with visual
                     setMessages(prev => prev.map(msg => 
@@ -1681,6 +1718,8 @@ export default function AITutorNeuroSymbolic() {
             visual_skip_reason: data.response?.visual_skip_reason || null,
             // Pass intent for SmartBoard gating
             intent: data.response?.intent || null,
+            // 🎨 NETRA v5.0: Enable dynamic composition mode
+            use_composition: useComposition,
           };
           
           // Debug logging
@@ -1693,10 +1732,21 @@ export default function AITutorNeuroSymbolic() {
             hasImageBase64: !!artifact.image_base64,
             concept,
             subject,
+            use_composition: artifact.use_composition,
+            visual_needed: artifact.visual_needed,
             structure: Object.keys(artifact)
           });
           
-          setVisualArtifact(artifact);
+          // 🎨 NETRA v5.0: CRITICAL - Merge with existing artifact, preserve composition mode
+          setVisualArtifact(prev => ({
+            ...prev,  // Keep existing flags (especially use_composition if already set)
+            ...artifact,
+            // 🎨 CRITICAL: Always enable composition mode for educational content
+            use_composition: true,
+            visual_needed: true,
+            // Preserve original question
+            originalQuestion: prev?.originalQuestion || artifact.originalQuestion || messageToSend,
+          }));
           setIsGeneratingVisual(false); // Visual arrived, stop loading
         } else {
           // Debug: Log when no visual data found
@@ -1712,15 +1762,18 @@ export default function AITutorNeuroSymbolic() {
           
           // 🎯 Even without visual data, pass visual_needed flag to SmartBoard
           // This tells SmartBoard whether to generate visuals from the question
-          // CRITICAL: Default to FALSE - only generate when backend explicitly says visual_needed=true
+          // CRITICAL: When use_composition is true, SmartBoard generates dynamic visuals
+          console.log('🎨 [No visual data] Setting composition mode:', useComposition);
           setVisualArtifact(prev => ({
             ...prev,
             originalQuestion: messageToSend,
             concept: data.detected_subject || 'Concept',
             subject: data.detected_subject || 'General',
-            visual_needed: data.response?.visual_needed === true,
+            visual_needed: data.response?.visual_needed === true || useComposition,  // 🎨 Enable if composition requested
             visual_skip_reason: data.response?.visual_skip_reason || null,
             intent: data.response?.intent || null,
+            // 🎨 NETRA v5.0: Enable dynamic composition mode
+            use_composition: useComposition,
           }));
           
           // No visual in response - let SmartBoard timeout handle fallback

@@ -59,6 +59,25 @@ const fontSketchStyle = {
 };
 
 // ============================================
+// 🎬 DEMO VISUAL SYSTEM (VC Demo)
+// ============================================
+// Hardcoded premium visuals for demo questions - 100% reliable
+let DemoVisualRenderer = null;
+let isDemoQuestion = null;
+let getDemoConfig = null;
+let DEMO_SYSTEM_AVAILABLE = false;
+try {
+  const demoModule = require('../../netra/demo');
+  DemoVisualRenderer = demoModule.DemoVisualRenderer;
+  isDemoQuestion = demoModule.isDemoQuestion;
+  getDemoConfig = demoModule.getDemoConfig;
+  DEMO_SYSTEM_AVAILABLE = !!(DemoVisualRenderer && isDemoQuestion);
+  console.log('🎬 DEMO Visual System loaded successfully');
+} catch (err) {
+  console.warn('⚠️ Demo Visual System not available:', err.message);
+}
+
+// ============================================
 // NETRA v4.0 - VISUAL INTELLIGENCE ENGINE
 // ============================================
 // Import NETRA v4 - AI-powered image generation
@@ -102,6 +121,21 @@ import UniversalSketchCanvas, {
 // Automatically falls back to V6 if NETRA fails to load
 const USE_NETRA_ENGINE = NETRA_AVAILABLE;
 const USE_MAGIC_NOTEBOOK_V6 = !USE_NETRA_ENGINE;
+
+// ============================================
+// NETRA v5.0 - DYNAMIC VISUAL RENDERER
+// ============================================
+// New composition-based renderer with atoms, behaviors, narration
+let DynamicVisualRenderer = null;
+let COMPOSITION_MODE_AVAILABLE = false;
+try {
+  const rendererModule = require('../../netra/renderer/DynamicVisualRenderer');
+  DynamicVisualRenderer = rendererModule.default || rendererModule.DynamicVisualRenderer;
+  COMPOSITION_MODE_AVAILABLE = !!DynamicVisualRenderer;
+  console.log('🎨 NETRA DynamicVisualRenderer loaded successfully');
+} catch (err) {
+  console.warn('⚠️ DynamicVisualRenderer not available:', err.message);
+}
 
 // Import Sketch Primitives for direct use
 import {
@@ -919,7 +953,8 @@ export default function SmartBoard({
   // ================================================================
   
   // PRIMARY GATE: Backend must explicitly say visual is needed
-  const backendSaysVisualNeeded = artifact?.visual_needed === true;
+  // 🎨 NETRA v5.0: Also allow visuals when use_composition is true (frontend composition mode)
+  const backendSaysVisualNeeded = artifact?.visual_needed === true || artifact?.use_composition === true;
   const visualSkipReason = artifact?.visual_skip_reason;
   
   // SECONDARY GATE: Intent-based fallback (defense in depth)
@@ -943,7 +978,10 @@ export default function SmartBoard({
   // Show NETRA if:
   // 1. We have an explicit visual artifact (svg, blueprint, etc.) OR
   // 2. NETRA can generate AND backend says visual IS needed AND conversation active
-  const shouldShowNetra = hasVisual || (
+  // 🎨 NETRA v5.0: Start visual IMMEDIATELY if use_composition is true (PARALLEL mode)
+  const canStartImmediately = artifact?.use_composition === true && canNetraGenerate && !intentBlocksVisual;
+  
+  const shouldShowNetra = hasVisual || canStartImmediately || (
     isConversationActive && 
     canNetraGenerate && 
     !isLoading && 
@@ -974,14 +1012,16 @@ export default function SmartBoard({
     console.log('🎨 artifact?.originalQuestion:', artifact?.originalQuestion);
     console.log('🎨 artifact?.concept:', artifact?.concept);
     console.log('🎯 GATING: visual_needed:', artifact?.visual_needed);
+    console.log('🎯 GATING: use_composition:', artifact?.use_composition);  // 🎨 NEW
     console.log('🎯 GATING: visual_skip_reason:', artifact?.visual_skip_reason);
     console.log('🎯 GATING: intent:', artifactIntent);
     console.log('🎯 GATING: backendSaysVisualNeeded:', backendSaysVisualNeeded);
     console.log('🎯 GATING: intentBlocksVisual:', intentBlocksVisual);
+    console.log('🎯 GATING: canStartImmediately:', canStartImmediately);  // 🎨 NEW: Parallel mode check
     console.log('🎯 DECISION: backendSaysNoVisual:', backendSaysNoVisual);
     console.log('🎨 → NETRA will render:', shouldShowNetra ? netraQuestion : 'BLOCKED');
     console.log('═══════════════════════════════════════════════════');
-  }, [hasVisual, shouldShowNetra, canNetraGenerate, isConversationActive, isLoading, userQuestion, currentTopic, artifact, backendSaysNoVisual, backendSaysVisualNeeded, intentBlocksVisual, artifactIntent]);
+  }, [hasVisual, shouldShowNetra, canNetraGenerate, isConversationActive, isLoading, userQuestion, currentTopic, artifact, backendSaysNoVisual, backendSaysVisualNeeded, intentBlocksVisual, artifactIntent, canStartImmediately]);
   
   // Handle loading timeout - show fallback after 5 seconds
   useEffect(() => {
@@ -1122,24 +1162,23 @@ export default function SmartBoard({
           shouldShowNetra ? (
             <motion.div
               key="visual"
-              initial={{ scale: 0.9, opacity: 0, y: 20 }}
-              animate={{ scale: 1, opacity: 1, y: 0 }}
-              exit={{ scale: 0.95, opacity: 0, y: -10 }}
+              initial={{ scale: 0.95, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.98, opacity: 0 }}
               transition={{ 
                 type: 'spring', 
-                stiffness: 300, 
-                damping: 25,
-                mass: 0.8
+                stiffness: 400, 
+                damping: 30,
               }}
-              className="w-full max-w-2xl"
+              className="w-full h-full flex items-center justify-center"
             >
-              {/* Visual Container - FULL BLEED - No Card (V6 draws directly on notebook) */}
+              {/* Visual Container - FULL BLEED - No Card - Immersive Simulation */}
               <div 
-                className="overflow-visible"
+                className="w-full h-full overflow-visible flex items-center justify-center"
                 style={{
-                  // TRANSPARENT - Let dotted grid show through!
+                  // TRANSPARENT - Visual renders directly on MagicBook dotted canvas
                   backgroundColor: 'transparent',
-                  // No border, no shadow - visual is the art itself
+                  // No border, no shadow, no card - visual IS the content
                 }}
               >
                 {/* 
@@ -1148,8 +1187,8 @@ export default function SmartBoard({
                   with hand-drawn aesthetic. No HTML title bar needed.
                 */}
                 
-                {/* Visual Content - NETRA Visual Engines */}
-                <div className="h-full min-h-[400px]" style={{ background: 'transparent' }}>
+                {/* Visual Content - NETRA Visual Engines - FULL BLEED */}
+                <div className="w-full h-full flex items-center justify-center" style={{ background: 'transparent' }}>
                   {(() => {
                     // Calculate question for debugging (matches NetraEngine priority)
                     const netraQuestion = 
@@ -1158,136 +1197,154 @@ export default function SmartBoard({
                       currentTopic ||
                       (artifact?.concept && artifact.concept.trim() && artifact.concept !== 'Concept' ? artifact.concept.trim() : null) ||
                       'explain the concept';
+                    console.log('🎯 [SmartBoard] === VISUAL ENGINE ROUTING ===');
                     console.log('🎯 [SmartBoard] NETRA Question:', netraQuestion);
-                    console.log('🎯 [SmartBoard] NETRA v4 Visual:', !!artifact?.netra_v4);
-                    console.log('🎯 [SmartBoard] Has image_base64:', !!artifact?.image_base64);
+                    console.log('🎯 [SmartBoard] Artifact keys:', Object.keys(artifact || {}));
+                    console.log('🎯 [SmartBoard] Has scene_data:', !!artifact?.scene_data);
+                    console.log('🎯 [SmartBoard] Has composition:', !!artifact?.composition);
+                    console.log('🎯 [SmartBoard] use_composition flag:', artifact?.use_composition);  // 🎨 NEW
+                    console.log('🎯 [SmartBoard] COMPOSITION_MODE_AVAILABLE:', COMPOSITION_MODE_AVAILABLE);
+                    console.log('🎯 [SmartBoard] USE_NETRA_ENGINE:', USE_NETRA_ENGINE);
+                    console.log('🎯 [SmartBoard] DynamicVisualRenderer loaded:', !!DynamicVisualRenderer);
                     return null;
                   })()}
-                  {/* 🎬 NETRA v5.0 - Scene-Based Rendering (Priority 0) */}
-                  {artifact?.use_scene_renderer && artifact?.scene_data ? (
+                  {/* ════════════════════════════════════════════════════════════
+                      🎬 DEMO VISUAL SYSTEM (VC Demo) - PRIORITY #1
+                      ════════════════════════════════════════════════════════════
+                      Hardcoded premium visuals for demo questions.
+                      100% reliable, no LLM calls, instant render.
+                      ════════════════════════════════════════════════════════════ */}
+                  {(() => {
+                    const currentQuestion = 
+                      (artifact?.originalQuestion && artifact.originalQuestion.trim()) ||
+                      (userQuestion && userQuestion.trim()) ||
+                      currentTopic ||
+                      '';
+                    
+                    // Check if this is a demo question
+                    if (DEMO_SYSTEM_AVAILABLE && isDemoQuestion && isDemoQuestion(currentQuestion)) {
+                      const demoConfig = getDemoConfig(currentQuestion);
+                      console.log('════════════════════════════════════════════════');
+                      console.log('🎬 [SmartBoard] DEMO VISUAL SYSTEM (VC Demo)');
+                      console.log('🎬 Question:', currentQuestion.substring(0, 50));
+                      console.log('🎬 Visual Type:', demoConfig?.visualType);
+                      console.log('🎬 100% Reliable - No LLM calls');
+                      console.log('════════════════════════════════════════════════');
+                      
+                      return (
+                        <DemoVisualRenderer
+                          demoConfig={demoConfig}
+                          width={620}
+                          height={420}
+                          onReady={() => {
+                            console.log('✅ [SmartBoard] DEMO visual ready');
+                          }}
+                          onPhaseChange={(phase) => {
+                            console.log('🎬 [SmartBoard] DEMO phase:', phase);
+                          }}
+                        />
+                      );
+                    }
+                    return null;
+                  })()}
+
+                  {/* ════════════════════════════════════════════════════════════
+                      🎨 NETRA v5.0 - COMPOSITION ENGINE (ONLY RENDERER)
+                      ════════════════════════════════════════════════════════════
+                      ALL legacy renderers removed:
+                      - ❌ Scene-based rendering (use_scene_renderer + scene_data)
+                      - ❌ NetraV4 image renderer (image_base64)
+                      - ❌ MagicNotebookEngine
+                      - ❌ UniversalSketchCanvas
+                      
+                      ONLY ONE RENDERER: NetraEngine with Composition Mode
+                      ════════════════════════════════════════════════════════════ */}
+                  {!DEMO_SYSTEM_AVAILABLE || !isDemoQuestion || !isDemoQuestion(
+                    (artifact?.originalQuestion && artifact.originalQuestion.trim()) ||
+                    (userQuestion && userQuestion.trim()) ||
+                    currentTopic ||
+                    ''
+                  ) ? (
+                    USE_NETRA_ENGINE && NetraEngine ? (
                     (() => {
-                      console.log('🎬 [SmartBoard] Using NETRA v5 Scene Renderer');
-                      console.log('🎬 Scene Data:', artifact.scene_data);
+                      // 🎨 NETRA v5.0: ALWAYS use composition mode
+                      // This is the ONLY visual engine - no fallbacks to legacy renderers
+                      console.log('════════════════════════════════════════════════');
+                      console.log('🎨 [SmartBoard] NETRA COMPOSITION ENGINE (ONLY RENDERER)');
+                      console.log('🎨 Question:', (artifact?.originalQuestion || userQuestion || currentTopic || '').substring(0, 50));
+                      console.log('🎨 Subject:', artifact?.subject || subject || 'physics');
+                      console.log('════════════════════════════════════════════════');
                       return (
                         <NetraEngine
-                          question={artifact.scene_data.question || userQuestion || 'explain the concept'}
+                          question={
+                            // Priority: originalQuestion > userQuestion > currentTopic > concept
+                            (artifact?.originalQuestion && artifact.originalQuestion.trim()) ||
+                            (userQuestion && userQuestion.trim()) ||
+                            currentTopic ||
+                            (artifact?.concept && artifact.concept.trim() && artifact.concept !== 'Concept' ? artifact.concept.trim() : null) ||
+                            'explain the concept'
+                          }
                           context={{
-                            subject: artifact.scene_data.domain || artifact?.subject || subject || 'physics',
+                            subject: artifact?.subject || subject || 'physics',
                             level: 'high_school',
-                            intent: artifact.scene_data.intent,
-                            topic: artifact.scene_data.topic,
-                            // 🎯 Pass visual gating flags for defense in depth
-                            visual_needed: artifact?.visual_needed,
-                            visual_skip_reason: artifact?.visual_skip_reason,
+                            visual_needed: true,  // Always needed - this is visual engine
+                            intent: artifact?.intent,
                           }}
-                          width={580}
-                          height={450}
+                          useCompositionMode={true}  // 🎨 ALWAYS ON - composition is THE ONLY engine
+                          width={720}   // 🎬 LARGER: 90% of MagicBook width
+                          height={520}  // 🎬 LARGER: Better proportions for simulation
                           showGrid={false}
                           showMetadata={process.env.NODE_ENV === 'development'}
-                          useLLM={false}  // Scene-based, no LLM needed
+                          useLLM={true}
+                          className="mx-auto"  // Center the visual
                           onGenerated={(result) => {
-                            console.log('🎬 NETRA v5 Scene rendered:', result.metadata);
-                            console.log('🎬 Scene Objects:', result.sceneObjects?.length || 0);
+                            console.log('✅ [SmartBoard] NETRA composition generated');
+                            console.log('✅ Atoms:', result.composition?.atoms?.length || 0);
+                            console.log('✅ Mode:', result.metadata?.renderMode);
                           }}
                           onError={(error) => {
-                            console.error('❌ NETRA v5 Scene error:', error);
+                            console.error('❌ [SmartBoard] NETRA error:', error);
+                          }}
+                          onRenderComplete={() => {
+                            console.log('✨ [SmartBoard] NETRA render complete');
                           }}
                         />
                       );
                     })()
-                  ) : artifact?.netra_v4 && artifact?.image_base64 ? (
-                    /* 🔮 NETRA v4.0 - AI-Generated Image (Legacy - DISABLED) */
-                    <NetraV4ImageRenderer
-                      visual={{
-                        image_base64: artifact.image_base64,
-                        image_format: artifact.image_format || 'png',
-                        width: artifact.width,
-                        height: artifact.height,
-                      }}
-                      teaching={artifact.teaching}
-                    />
-                  ) : USE_NETRA_ENGINE && NetraEngine ? (
-                    /* 🔮 NETRA ENGINE - Semantic Visual Reasoning (v7.0) - Fallback */
-                    <NetraEngine
-                      question={
-                        // Priority: originalQuestion > userQuestion > currentTopic > concept
-                        // userQuestion is the actual typed question - prioritize it!
-                        // artifact.concept is often just a keyword like "Concept" or subject name
-                        (artifact?.originalQuestion && artifact.originalQuestion.trim()) ||
-                        (userQuestion && userQuestion.trim()) ||
-                        currentTopic ||
-                        (artifact?.concept && artifact.concept.trim() && artifact.concept !== 'Concept' ? artifact.concept.trim() : null) ||
-                        'explain the concept'  // Fallback
-                      }
-                      context={{
-                        subject: artifact?.subject || subject || 'physics',
-                        level: 'high_school',
-                        // 🎯 Pass visual gating flags for defense in depth
-                        visual_needed: artifact?.visual_needed,
-                        intent: artifact?.intent,
-                        visual_skip_reason: artifact?.visual_skip_reason,
-                      }}
-                      width={580}
-                      height={450}
-                      showGrid={false}
-                      showMetadata={process.env.NODE_ENV === 'development'}
-                      useLLM={true} // 🧠 CRITICAL: Enable LLM for intelligent visual reasoning
-                      onGenerated={(result) => {
-                        console.log('🔮 NETRA visual generated:', result.metadata);
-                        console.log('🔮 NETRA nodes:', result.sceneGraph?.nodes?.size || 0);
-                      }}
-                      onError={(error) => {
-                        console.error('❌ NETRA error:', error);
-                      }}
-                      onRenderComplete={() => {
-                        console.log('✨ NETRA render complete!');
-                      }}
-                    />
-                  ) : USE_MAGIC_NOTEBOOK_V6 ? (
-                    /* ✨ MAGIC NOTEBOOK ENGINE V6 - Legacy Fallback */
-                    <MagicNotebookEngine
-                      question={artifact.originalQuestion || artifact.concept || userQuestion}
-                      context={{
-                        subject: artifact.subject || subject || 'general',
-                        level: 'high_school',
-                      }}
-                      preGeneratedBlueprint={artifact.blueprint}
-                      showControls={true}
-                      showNarrative={true}
-                      height={500}
-                      width={600}
-                      onBlueprintGenerated={(blueprint) => {
-                        console.log('✨ Magic Notebook blueprint generated:', blueprint);
-                      }}
-                      onNarrativeComplete={() => {
-                        console.log('🎬 Narrative teaching complete!');
-                      }}
-                      onError={(error) => {
-                        console.error('❌ Magic Notebook error:', error);
-                      }}
-                    />
                   ) : (
-                    /* 🔄 Legacy V5 Fallback - UniversalSketchCanvas */
-                    <UniversalSketchCanvas
-                      blueprint={artifact.blueprint || artifact}
-                      question={artifact.originalQuestion || artifact.concept || ''}
-                      concept={artifact.concept}
-                      subject={artifact.subject || 'physics'}
-                      difficultyLevel={artifact.difficultyLevel || 'apply'}
-                      mode={artifact.mode || 'learn'}
-                      enableValidation={true}
-                      enableFeedback={true}
-                      culturalContext={artifact.culturalContext}
-                      onValidationFeedback={(feedback) => {
-                        console.log('🛡️ Ghost Mentor:', feedback);
-                      }}
-                      onComplete={() => {
-                        console.log('✨ Visual sketch complete!');
-                      }}
-                      height={380}
-                      style={{ borderRadius: '8px' }}
-                    />
-                  )}
+                    /* 🚫 NO LEGACY FALLBACK - Show error if NetraEngine unavailable */
+                    <div style={{
+                      display: 'flex',
+                      flexDirection: 'column',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      height: '100%',
+                      padding: 40,
+                      background: 'linear-gradient(135deg, #fef3f2 0%, #fee2e2 100%)',
+                      borderRadius: 16,
+                    }}>
+                      <div style={{ fontSize: 48, marginBottom: 16 }}>⚠️</div>
+                      <div style={{
+                        fontFamily: "'Inter', sans-serif",
+                        fontSize: 16,
+                        fontWeight: 500,
+                        color: '#991b1b',
+                        textAlign: 'center',
+                      }}>
+                        Visual Engine Unavailable
+                      </div>
+                      <div style={{
+                        fontFamily: "'Inter', sans-serif",
+                        fontSize: 13,
+                        color: '#b91c1c',
+                        marginTop: 8,
+                        textAlign: 'center',
+                      }}>
+                        NetraEngine failed to load. Please refresh the page.
+                      </div>
+                    </div>
+                  )
+                  ) : null}
                 </div>
               </div>
 

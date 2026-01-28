@@ -41,6 +41,9 @@ import {
   SceneObjectResolver,  // NEW: Critical scene conversion layer
 } from '../reasoning';
 
+// NEW v5.0: Dynamic Visual Composer (LLM-driven composition)
+import { createVisualComposer } from '../composer/VisualComposer';
+
 // ============================================
 // ORCHESTRATOR CLASS
 // ============================================
@@ -116,6 +119,116 @@ export class Orchestrator {
 
     // Cache for repeated questions
     this.cache = new Map();
+
+    // ============================================
+    // NEW v5.0: VISUAL COMPOSER (LLM-driven dynamic compositions)
+    // ============================================
+    // CRITICAL: Do NOT override apiEndpoint - let VisualComposer use BACKEND_URL default
+    this.visualComposer = createVisualComposer({
+      // apiEndpoint is set automatically with BACKEND_URL in VisualComposer
+      fallbackEnabled: true,
+    });
+  }
+
+  /**
+   * NEW v5.0: Generate a CompositionSpec for dynamic rendering
+   * This bypasses the legacy scene graph pipeline entirely.
+   * 
+   * @param {string} question - Natural language question
+   * @param {Object} context - Additional context
+   * @returns {Promise<Object>} CompositionSpec for DynamicVisualRenderer
+   */
+  async generateComposition(question, context = {}) {
+    const startTime = Date.now();
+
+    try {
+      console.log('═══════════════════════════════════════════════════');
+      console.log('🎨 [Orchestrator v5.0] DYNAMIC COMPOSITION GENERATION');
+      console.log('🎨 Question:', question);
+      console.log('🎨 Context:', JSON.stringify(context, null, 2));
+      console.log('═══════════════════════════════════════════════════');
+
+      // Step 1: Classify intent (reuse existing)
+      const intentResult = this.intentClassifier.classify(question);
+      console.log('🧠 Intent:', intentResult.primary);
+
+      // Step 2: Generate composition via LLM
+      if (!this.visualComposer) {
+        console.error('❌ [Orchestrator] VisualComposer not initialized!');
+        throw new Error('VisualComposer not available');
+      }
+      
+      console.log('📡 [Orchestrator] Calling VisualComposer.compose()...');
+      const composition = await this.visualComposer.compose(question, {
+        ...context,
+        intent: intentResult.primary,
+        domain: context.subject || this.detectDomain(question),
+        difficulty: context.level || 'intermediate',
+      });
+
+      const elapsedTime = Date.now() - startTime;
+      const atomCount = composition.atoms?.length || 0;
+      const behaviorCount = composition.behaviors?.length || 0;
+      const narrationCount = composition.narration?.length || 0;
+      const isFallback = composition.metadata?.isFallback || composition.context?.isFallback;
+      
+      console.log('════════════════════════════════════════════════════════════');
+      console.log('✅ [Orchestrator v5.0] Composition generated in', elapsedTime, 'ms');
+      console.log(`📊 [RESULT] atoms: ${atomCount} ${atomCount >= 4 ? '✅' : '⚠️ LOW'}`);
+      console.log(`📊 [RESULT] behaviors: ${behaviorCount} ${behaviorCount >= 2 ? '✅' : '⚠️ LOW'}`);
+      console.log(`📊 [RESULT] narration: ${narrationCount} ${narrationCount >= 2 ? '✅' : '⚠️ LOW'}`);
+      console.log(`📊 [RESULT] isFallback: ${isFallback ? '⚠️ YES' : '✅ NO'}`);
+      console.log('════════════════════════════════════════════════════════════');
+
+      // Validate composition has minimum requirements
+      if (!composition.atoms || atomCount === 0) {
+        console.warn('⚠️ [Orchestrator] Composition has no atoms, marking as failed');
+        return {
+          success: false,
+          question,
+          context,
+          error: 'Composition has no atoms',
+          composition: null,
+        };
+      }
+
+      return {
+        success: true,
+        question,
+        context,
+        composition,  // The CompositionSpec for DynamicVisualRenderer
+        reasoning: {
+          intent: intentResult,
+        },
+        metadata: {
+          domain: composition.context?.domain || 'general',
+          topic: composition.context?.question || question,
+          generationTime: Date.now() - startTime,
+          renderMode: 'composition',  // Flag to use DynamicVisualRenderer
+        },
+      };
+    } catch (error) {
+      console.error('❌ [Orchestrator] Composition generation failed:', error);
+      return {
+        success: false,
+        question,
+        context,
+        error: error.message,
+        composition: null,
+      };
+    }
+  }
+
+  /**
+   * Simple domain detection from question text
+   */
+  detectDomain(question) {
+    const q = question.toLowerCase();
+    if (/force|motion|gravity|friction|velocity|acceleration|newton|energy|momentum|mass/.test(q)) return 'physics';
+    if (/atom|molecule|reaction|element|bond|chemical|electron|ion/.test(q)) return 'chemistry';
+    if (/cell|dna|protein|organism|biology|gene|photosynthesis|respiration|mitosis|meiosis|enzyme|chlorophyll/.test(q)) return 'biology';
+    if (/equation|algebra|calculus|geometry|function|graph|derivative|integral/.test(q)) return 'mathematics';
+    return 'general';
   }
 
   /**

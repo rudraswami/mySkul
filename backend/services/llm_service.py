@@ -18,6 +18,8 @@ logger = logging.getLogger(__name__)
 DEFAULT_LLM_TIMEOUT = 20.0  # 20 seconds - allows for network variance
 STREAMING_LLM_TIMEOUT = 30.0  # 30 seconds for streaming
 DEEPSEEK_TIMEOUT = 20.0  # DeepSeek for deep reasoning
+VISUAL_COMPOSITION_TIMEOUT = 120.0  # 120 seconds - visual specs are complex JSON
+# Note: Async tasks should never hard-fail - they keep retrying or return partial JSON
 
 # Model configuration
 DEEPSEEK_BASE_URL = os.getenv("DEEPSEEK_BASE_URL", "https://api.deepseek.com")
@@ -32,7 +34,8 @@ async def call_llm(
     max_tokens: int = 500,
     model: str = "gpt-4o-mini",
     session_id: Optional[str] = None,
-    system_message: Optional[str] = None
+    system_message: Optional[str] = None,
+    timeout: Optional[float] = None  # Custom timeout (uses DEFAULT_LLM_TIMEOUT if None)
 ) -> str:
     """
     Call LLM API with given prompt
@@ -45,6 +48,7 @@ async def call_llm(
         model: Model to use (e.g., "gpt-4o-mini")
         session_id: Session ID for LLM client (optional)
         system_message: System message for LLM context (optional)
+        timeout: Custom timeout in seconds (uses DEFAULT_LLM_TIMEOUT if None)
     
     Returns:
         LLM response text
@@ -75,14 +79,15 @@ async def call_llm(
         user_msg = UserMessage(text=prompt)
         
         # Get response with timeout protection
+        effective_timeout = timeout if timeout is not None else DEFAULT_LLM_TIMEOUT
         try:
             response = await asyncio.wait_for(
                 llm_client.send_message(user_msg),
-                timeout=DEFAULT_LLM_TIMEOUT
+                timeout=effective_timeout
             )
         except asyncio.TimeoutError:
-            logger.error(f"⏱️ LLM call exceeded {DEFAULT_LLM_TIMEOUT}s timeout")
-            raise Exception(f"LLM call timeout after {DEFAULT_LLM_TIMEOUT}s")
+            logger.error(f"⏱️ LLM call exceeded {effective_timeout}s timeout")
+            raise Exception(f"LLM call timeout after {effective_timeout}s")
         
         if not response:
             raise Exception("Empty response from LLM")
