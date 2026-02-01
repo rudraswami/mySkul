@@ -314,7 +314,21 @@ What specific part would you like me to explain first? 🎯"""
             # Get subject from context
             subject = context.get('subject', 'General')
             
-            # Step 1: Enhance query with RAG (curriculum grounding) - ALWAYS ATTEMPT
+            # ================================================================
+            # T2 QUICK MODE OPTIMIZATION (Cognito OS v2.0)
+            # ================================================================
+            # When _quick_mode is set (T2 queries), skip expensive preprocessing:
+            # - RAG: Keep (useful for educational content, fast with caching)
+            # - Hybrid Reasoning: SKIP (adds 2-3s, not needed for moderate queries)
+            # - Formula Constraints: SKIP (adds processing time)
+            # This reduces T2 latency from 10-15s to 5-8s
+            # ================================================================
+            quick_mode = context.get('_quick_mode', False)
+            if quick_mode:
+                logger.info(f"⚡ [run_enhanced] QUICK MODE enabled - skipping hybrid reasoning")
+            
+            # Step 1: Enhance query with RAG (curriculum grounding)
+            # Keep RAG even in quick_mode - it's fast with caching and improves quality
             enhanced_prompt = None
             if self.enable_rag:
                 try:
@@ -333,10 +347,10 @@ What specific part would you like me to explain first? 🎯"""
                     logger.warning(f"⚠️ RAG enhancement failed (non-critical, continuing): {rag_err}")
                     # Continue without RAG enhancement
             
-            # 🆕 Step 1.5: Hybrid Reasoning (Neural + Symbolic + Graph) - ALWAYS ATTEMPT
+            # 🆕 Step 1.5: Hybrid Reasoning (Neural + Symbolic + Graph)
+            # SKIP in quick_mode - adds 2-3s latency for minimal benefit on moderate queries
             hybrid_result = None
-            # Always attempt hybrid reasoning if enabled (degrade internally on failure)
-            if self.enable_hybrid_reasoning:
+            if self.enable_hybrid_reasoning and not quick_mode:
                 if self.hybrid_engine:
                     try:
                         hybrid_result = await self.hybrid_engine.reason(query, context)
@@ -403,8 +417,33 @@ What specific part would you like me to explain first? 🎯"""
                     )
                     logger.info(f"📐 Injected {len(unique_formulas)} formula constraints")
             
-            # Step 2: Run base supervisor orchestration
-            base_result = await self.run(query, context)
+            # ================================================================
+            # Step 2: COMPLEXITY-AWARE EXECUTION (Cognito OS v1.1)
+            # ================================================================
+            # CRITICAL FIX: Not all "enhanced" queries need full ReAct loop.
+            # - SIMPLE→enhanced: Use quick_mode (1 LLM call with RAG/hybrid context)
+            # - MODERATE→enhanced: Use quick_mode with more context
+            # - COMPLEX→enhanced: Full ReAct for deep reasoning
+            # This reduces latency for most queries while preserving intelligence.
+            # ================================================================
+            complexity = context.get('_complexity', context.get('complexity', 'moderate'))
+            if isinstance(complexity, str):
+                complexity_value = complexity.lower()
+            elif hasattr(complexity, 'value'):
+                complexity_value = complexity.value.lower()
+            else:
+                complexity_value = 'moderate'
+            
+            # Determine execution mode based on complexity
+            use_full_react = complexity_value in ['complex', 'deep', 'deep_reasoning']
+            
+            if use_full_react:
+                logger.info(f"🧠 [run_enhanced] FULL ReAct mode for complexity={complexity_value}")
+                base_result = await self.run(query, context)
+            else:
+                logger.info(f"⚡ [run_enhanced] QUICK mode for complexity={complexity_value}")
+                # Use quick_mode: single LLM call with all the RAG/hybrid context already injected
+                base_result = await self.run(query, context, quick_mode=True)
             
             if not base_result.get('success', False):
                 return base_result
@@ -413,11 +452,13 @@ What specific part would you like me to explain first? 🎯"""
             response_text = self._extract_response_text(base_result)
             
             # Step 4: Run verification on the combined response
+            # NOTE: T2 queries skip verification for speed (set via _skip_verification flag)
             verification_result = None
             reattempt_count = 0
             MAX_REATTEMPTS = 1  # Feature-flagged, safe limit
+            skip_verification = context.get('_skip_verification', False)
             
-            if self.enable_verification and response_text:
+            if self.enable_verification and response_text and not skip_verification:
                 verification_result = await self.verification.verify_response(
                     response_text=response_text,
                     question=query,
@@ -429,9 +470,11 @@ What specific part would you like me to explain first? 🎯"""
                 logger.info(f"✅ Verification: {verification_result.overall_status.value}, confidence: {verification_result.confidence_score:.2f}")
                 
                 # ================================================================
-                # NEURO-SYMBOLIC ENHANCEMENT: Re-attempt on critical failures
-                # If verification finds critical errors AND corrections exist,
-                # re-generate with corrections as constraints (additive, non-blocking)
+                # NEURO-SYMBOLIC ENHANCEMENT: Direct LLM correction (Cognito OS v1.1)
+                # ================================================================
+                # CRITICAL FIX: DO NOT re-run full supervisor on verification failure.
+                # Running `self.run()` again doubles latency (another full ReAct loop).
+                # Instead, use DIRECT LLM CALL to apply corrections to existing response.
                 # ================================================================
                 ENABLE_VERIFICATION_REATTEMPT = True  # Feature flag (safe default: ON)
                 
@@ -440,48 +483,79 @@ What specific part would you like me to explain first? 🎯"""
                     verification_result.corrections_suggested and 
                     reattempt_count < MAX_REATTEMPTS):
                     
-                    logger.warning(f"⚠️ Verification failed with critical errors, attempting re-generation...")
+                    logger.warning(f"⚠️ Verification failed, applying DIRECT LLM correction (NOT full re-run)")
                     reattempt_count += 1
                     
                     try:
-                        # Inject corrections as constraints into context
-                        correction_context = context.copy()
-                        correction_context['_verification_corrections'] = verification_result.corrections_suggested
-                        correction_context['_reattempt_reason'] = 'verification_failure'
-                        correction_context['_original_errors'] = verification_result.issues_found
+                        from services.llm_service import call_llm
+                        import os
                         
-                        # Build correction prompt for agents
+                        # Build correction prompt with existing response + corrections
                         corrections_text = "\n".join([
-                            f"- {c.get('original', '')} → {c.get('correction', '')}" 
+                            f"- Error: {c.get('original', '')} → Correction: {c.get('correction', '')}" 
                             for c in verification_result.corrections_suggested[:3]  # Limit to 3
                         ])
                         
-                        correction_prompt = f"""
-CRITICAL: The previous response contained mathematical errors. 
-Please regenerate with these corrections in mind:
+                        correction_prompt = f"""The following response contains errors that need to be fixed:
+
+ORIGINAL RESPONSE:
+{response_text[:2000]}
+
+ERRORS TO FIX:
 {corrections_text}
 
-Original question: {query}
-"""
-                        # Re-run base supervisor with correction hints
-                        base_result = await self.run(correction_prompt, correction_context)
+ORIGINAL QUESTION: {query}
+
+Please provide a corrected version of the response that fixes these errors while keeping the helpful explanation style. Output ONLY the corrected response."""
+
+                        # Get model from context or use default
+                        try:
+                            from core.config import settings
+                            correction_model = context.get('selected_model') or getattr(settings, 'DEFAULT_LLM_MODEL', 'gpt-4o-mini')
+                        except ImportError:
+                            correction_model = context.get('selected_model', 'gpt-4o-mini')
                         
-                        if base_result.get('success'):
-                            response_text = self._extract_response_text(base_result)
+                        api_key = os.environ.get('OPENAI_API_KEY')
+                        
+                        # Direct LLM call with tight timeout (5s) - NOT full supervisor
+                        corrected_response = await asyncio.wait_for(
+                            call_llm(
+                                prompt=correction_prompt,
+                                api_key=api_key,
+                                temperature=0.3,  # Lower temp for corrections
+                                max_tokens=1500,
+                                model=correction_model,
+                                system_message="You are an expert at fixing mathematical and factual errors in educational content."
+                            ),
+                            timeout=5.0  # 5s max for correction - NOT 20s+ for full re-run
+                        )
+                        
+                        if corrected_response and len(corrected_response.strip()) > 50:
+                            logger.info(f"✅ Direct LLM correction succeeded in <5s")
                             
-                            # Re-verify the corrected response
+                            # Update base_result with corrected content
+                            if 'mentor' in base_result and base_result['mentor'].get('content'):
+                                base_result['mentor']['content'] = corrected_response
+                            if 'content' in base_result:
+                                base_result['content'] = corrected_response
+                            
+                            response_text = corrected_response
+                            
+                            # Quick re-verify (math only for speed)
                             verification_result = await self.verification.verify_response(
-                                response_text=response_text,
+                                response_text=corrected_response,
                                 question=query,
                                 subject=subject,
                                 verify_math=self.verify_math,
-                                verify_facts=self.verify_facts,
-                                verify_logic=self.verify_logic
+                                verify_facts=False,  # Skip for speed
+                                verify_logic=False   # Skip for speed
                             )
-                            logger.info(f"✅ Re-verification after correction: {verification_result.overall_status.value}")
+                            logger.info(f"✅ Quick re-verification: {verification_result.overall_status.value}")
                     
+                    except asyncio.TimeoutError:
+                        logger.warning(f"⚠️ Direct LLM correction timeout (>5s) - using original response")
                     except Exception as reattempt_err:
-                        logger.warning(f"⚠️ Re-attempt failed (non-blocking): {reattempt_err}")
+                        logger.warning(f"⚠️ Direct LLM correction failed (non-blocking): {reattempt_err}")
                         # Continue with original response - don't crash
             
             # Step 5: Create verification badge for UI

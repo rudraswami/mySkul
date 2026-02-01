@@ -123,6 +123,15 @@ const USE_NETRA_ENGINE = NETRA_AVAILABLE;
 const USE_MAGIC_NOTEBOOK_V6 = !USE_NETRA_ENGINE;
 
 // ============================================
+// FEATURE FLAG: Visual Engine Enable/Disable
+// ============================================
+// Production flag to enable/disable visual generation
+// PRODUCTION DEFAULT: Visuals are DISABLED (hidden) by default
+// To enable visuals, set: REACT_APP_ENABLE_VISUALS=true
+// When not set or set to anything other than 'true', visuals are hidden
+const VISUALS_ENABLED = process.env.REACT_APP_ENABLE_VISUALS === 'true';
+
+// ============================================
 // NETRA v5.0 - DYNAMIC VISUAL RENDERER
 // ============================================
 // New composition-based renderer with atoms, behaviors, narration
@@ -1060,6 +1069,46 @@ export default function SmartBoard({
   
   // Status indicator - green when active OR has visual OR loading
   const isStatusActive = isActive || hasVisual || isLoading;
+
+  // ================================================================
+  // 🎯 FEATURE FLAG CHECK: Visual Engine Disabled
+  // ================================================================
+  // PRODUCTION FLAG: If visuals are disabled globally, show empty state
+  // This allows hiding visuals in production by setting REACT_APP_ENABLE_VISUALS=false
+  // Check happens AFTER all hooks to comply with Rules of Hooks
+  // ================================================================
+  if (!VISUALS_ENABLED) {
+    console.log('🚫 [SmartBoard] Visual engine disabled via feature flag (REACT_APP_ENABLE_VISUALS=false)');
+    // Show empty state when visuals are disabled
+    return (
+      <div 
+        className={`flex flex-col h-full relative overflow-hidden ${className}`}
+        style={{
+          backgroundColor: SKETCH_THEME.notebookBg,
+          backgroundImage: `radial-gradient(${SKETCH_THEME.gridColor} 1px, transparent 1px)`,
+          backgroundSize: `${SKETCH_THEME.gridSize} ${SKETCH_THEME.gridSize}`,
+        }}
+      >
+        <div className="relative z-10 flex-shrink-0 px-4 py-3 border-b-2 flex items-center justify-between"
+          style={{
+            backgroundColor: 'rgba(255, 255, 255, 0.85)',
+            backdropFilter: 'blur(8px)',
+            borderColor: SKETCH_THEME.gridColor,
+          }}
+        >
+          <span 
+            className="text-base font-semibold text-gray-700"
+            style={fontSketchStyle}
+          >
+            📓 Magic Notebook
+          </span>
+        </div>
+        <div className="flex-1 flex items-center justify-center p-4">
+          <EmptyBoardState />
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div 

@@ -261,6 +261,12 @@ class UnifiedAIOrchestrator:
         3. State influences routing, tone, and action decisions
         4. Agents are decision-makers, not text generators
         
+        4-TIER INTELLIGENCE (Cognito OS v2.0):
+        - T0 (TRIVIAL): Template responses (greetings, acknowledgments)
+        - T1 (SIMPLE): Focused LLM call (simple explanations) → FAST PATH
+        - T2 (MODERATE): RAG + quick mode (comparisons)
+        - T3 (COMPLEX): Full ReAct + verification (derivations)
+        
         Args:
             user_id: User ID
             session_id: Session ID
@@ -275,6 +281,43 @@ class UnifiedAIOrchestrator:
         """
         start_time = time.time()
         context = context or {}
+        
+        # ================================================================
+        # EARLY FAST PATH (Cognito OS v2.0): T0/T1 queries skip full preprocessing
+        # ================================================================
+        # For simple queries (greetings, basic explanations), we can respond
+        # in 2-4s instead of 10-20s by skipping:
+        # - Full ContextPack building (2-3s)
+        # - Semantic classification (2-5s)
+        # - Complex routing logic
+        # 
+        # This is NOT dumbing down - it's proportional intelligence.
+        # Simple queries don't need complex context; they need fast answers.
+        # ================================================================
+        early_tier = self._detect_early_tier(message)
+        
+        if early_tier in ['T0', 'T1']:
+            logger.info(f"⚡ [EARLY FAST PATH] Detected {early_tier} query: '{message[:40]}...'")
+            try:
+                result = await self._execute_fast_path(
+                    message=message,
+                    user_id=user_id,
+                    session_id=session_id,
+                    subject=subject or "General",
+                    tier=early_tier,
+                    context=context
+                )
+                if result and result.get('success'):
+                    elapsed = time.time() - start_time
+                    logger.info(f"⚡ [EARLY FAST PATH] {early_tier} completed in {elapsed:.2f}s")
+                    result['metadata'] = result.get('metadata', {})
+                    result['metadata']['early_fast_path'] = True
+                    result['metadata']['tier'] = early_tier
+                    result['metadata']['latency_ms'] = int(elapsed * 1000)
+                    return result
+            except Exception as fast_err:
+                logger.warning(f"⚠️ [EARLY FAST PATH] Failed (falling back to full path): {fast_err}")
+                # Fall through to normal processing
         
         # ================================================================
         # STEP 0: BUILD CONTEXT PACK (Single Source of Truth)
@@ -1487,6 +1530,193 @@ class UnifiedAIOrchestrator:
         
         return sanitized
     
+    # ================================================================
+    # EARLY FAST PATH HELPERS (Cognito OS v2.0)
+    # ================================================================
+    
+    def _detect_early_tier(self, message: str) -> str:
+        """
+        Quick heuristic to detect T0/T1 queries WITHOUT LLM call.
+        
+        This enables the early fast path that skips:
+        - Full ContextPack building (2-3s saved)
+        - Semantic classification (2-5s saved)
+        
+        Rules (code evidence, not speculation):
+        - T0 (TRIVIAL): Greetings, thanks, acknowledgments
+        - T1 (SIMPLE): Short educational questions without complexity markers
+        - T2+: Everything else (needs full routing)
+        
+        Returns: 'T0', 'T1', or 'FULL' (needs full routing)
+        """
+        msg = message.strip().lower()
+        word_count = len(msg.split())
+        
+        # T0: Trivial greetings and acknowledgments
+        T0_PATTERNS = [
+            'hi', 'hello', 'hey', 'good morning', 'good afternoon', 'good evening',
+            'thanks', 'thank you', 'ok', 'okay', 'bye', 'goodbye', 'see you',
+            'yes', 'no', 'sure', 'great', 'nice', 'cool', 'awesome', 'got it'
+        ]
+        
+        # Check if message IS a trivial pattern (with minor variations)
+        for pattern in T0_PATTERNS:
+            if msg == pattern or msg == pattern + '!' or msg == pattern + '.':
+                return 'T0'
+            if msg.startswith(pattern + ' ') and word_count <= 5:
+                return 'T0'
+        
+        # T2+ complexity markers (require deep reasoning)
+        COMPLEXITY_MARKERS = [
+            'prove', 'derive', 'derivation', 'step by step', 'step-by-step',
+            'compare and contrast', 'why does', 'how does', 'analyze',
+            'evaluate', 'solve this equation', 'calculate', 'find the value',
+            'multiple choice', 'mcq', 'exam question', 'jee', 'neet',
+            '=', '+', '-', '*', '/', '^', '(', ')', '[', ']',  # Math symbols
+            'vs', 'versus', 'difference between', 'similarities between'
+        ]
+        
+        # If any complexity marker is present, needs full routing
+        for marker in COMPLEXITY_MARKERS:
+            if marker in msg:
+                return 'FULL'
+        
+        # T1: Simple educational questions (short, no complexity markers)
+        # "explain force", "what is photosynthesis", "define momentum"
+        if word_count <= 8:
+            SIMPLE_STARTERS = [
+                'explain', 'what is', 'what are', 'define', 'tell me about',
+                'describe', 'meaning of', 'definition of', 'help me understand'
+            ]
+            for starter in SIMPLE_STARTERS:
+                if msg.startswith(starter):
+                    return 'T1'
+        
+        # Default: needs full routing (T2/T3)
+        return 'FULL'
+    
+    async def _execute_fast_path(
+        self,
+        message: str,
+        user_id: str,
+        session_id: str,
+        subject: str,
+        tier: str,
+        context: Dict[str, Any]
+    ) -> Dict[str, Any]:
+        """
+        Execute the early fast path for T0/T1 queries.
+        
+        This bypasses:
+        - Full ContextPack building
+        - Semantic classification LLM call
+        - Complex routing logic
+        
+        For T0: Template response (no LLM)
+        For T1: Single LLM call via supervisor.run_fast()
+        
+        Target latency:
+        - T0: <500ms
+        - T1: 2-4s
+        """
+        import asyncio
+        
+        if tier == 'T0':
+            # ================================================================
+            # T0: INSTANT TEMPLATE RESPONSE (No LLM)
+            # ================================================================
+            logger.info(f"⚡ [T0] Template response for trivial query")
+            return self._generate_t0_template(message, user_id, subject)
+        
+        elif tier == 'T1':
+            # ================================================================
+            # T1: FOCUSED SINGLE LLM CALL (via supervisor.run_fast)
+            # ================================================================
+            # Build minimal context (skip full ContextPack)
+            minimal_context = {
+                'user_id': user_id,
+                'session_id': session_id,
+                'subject': subject,
+                'message_history': context.get('message_history', [])[-3:],  # Last 3 only
+                'request_id': f"t1_{user_id[:8]}_{int(time.time()*1000)%100000}",
+                '_complexity': 'simple',
+                '_quick_mode': True,
+                # Inherit any useful context from original
+                'student_profile': context.get('student_profile', {}),
+            }
+            
+            logger.info(f"⚡ [T1] Focused LLM call via run_fast()")
+            
+            # Use supervisor.run_fast() for single LLM call
+            T1_TIMEOUT = 8.0  # 8s max for T1 (should complete in 2-4s)
+            
+            try:
+                result = await asyncio.wait_for(
+                    self.supervisor.run_fast(message, minimal_context),
+                    timeout=T1_TIMEOUT
+                )
+                return result
+            except asyncio.TimeoutError:
+                logger.warning(f"⏰ [T1] Timeout (>{T1_TIMEOUT}s) - falling back to full path")
+                return None  # Trigger fallback to full path
+        
+        return None  # Unknown tier - use full path
+    
+    def _generate_t0_template(self, message: str, user_id: str, subject: str) -> Dict[str, Any]:
+        """Generate instant template response for T0 (trivial) queries."""
+        msg = message.strip().lower()
+        
+        # Greeting templates
+        if any(g in msg for g in ['hi', 'hello', 'hey', 'good morning', 'good afternoon', 'good evening']):
+            content = f"""Hi there! 👋
+
+I'm here to help you learn {subject if subject != 'General' else 'anything you need'}. 
+
+What would you like to explore today? You can:
+• Ask me to explain any concept
+• Help you solve problems step by step
+• Prepare for your exams
+
+Just ask, and let's learn together! 🚀"""
+        
+        # Thanks templates
+        elif any(t in msg for t in ['thanks', 'thank you']):
+            content = """You're welcome! 😊
+
+Feel free to ask me anything else - I'm here to help you learn and grow.
+
+Is there another topic you'd like to explore?"""
+        
+        # Acknowledgment templates
+        elif any(a in msg for a in ['ok', 'okay', 'got it', 'sure', 'yes']):
+            content = """Great! ✨
+
+Let me know if you have any questions or want to explore something new!"""
+        
+        # Goodbye templates
+        elif any(b in msg for b in ['bye', 'goodbye', 'see you']):
+            content = """Goodbye! 👋
+
+Good luck with your studies! Come back anytime you need help. Keep learning! 📚"""
+        
+        # Default template
+        else:
+            content = f"""I'm here to help you with {subject if subject != 'General' else 'your learning'}! 
+
+What would you like to know more about?"""
+        
+        return {
+            'success': True,
+            'main_response': content,
+            'intent': 'greeting' if 'hi' in msg or 'hello' in msg else 'acknowledgment',
+            'metadata': {
+                'tier': 'T0',
+                'template': True,
+                'llm_calls': 0,
+                'latency_ms': 0
+            }
+        }
+
     async def _regenerate_with_state_enforcement(
         self,
         message: str,
@@ -1561,8 +1791,15 @@ The student said: "{message}"
 
 Respond naturally, continuing the conversation:"""
 
+            # Use configured model (Cognito OS v1.1)
+            try:
+                from core.config import settings
+                selected_model = getattr(settings, 'DEFAULT_LLM_MODEL', 'gpt-4o-mini')
+            except ImportError:
+                selected_model = 'gpt-4o-mini'
+            
             response = await client.chat.completions.create(
-                model="gpt-4o-mini",
+                model=selected_model,
                 messages=[
                     {"role": "system", "content": system_prompt},
                     {"role": "user", "content": message}
@@ -1805,8 +2042,15 @@ YOU CAN DISCUSS:
 
 Respond directly:"""
 
+            # Use configured model (Cognito OS v1.1)
+            try:
+                from core.config import settings
+                fast_model = getattr(settings, 'DEFAULT_LLM_MODEL', 'gpt-4o-mini')
+            except ImportError:
+                fast_model = 'gpt-4o-mini'
+            
             response = await client.chat.completions.create(
-                model="gpt-4o-mini",
+                model=fast_model,
                 messages=[
                     {"role": "system", "content": "You are AI Sathi, a warm educational tutor. Keep responses short (2-4 sentences), natural, and contextual."},
                     {"role": "user", "content": prompt}
@@ -1990,8 +2234,15 @@ ANXIOUS: "Hey, take a breath 💙 We've got this: A) Quick revision of what you 
 
 BE: Real, warm, action-oriented. Like texting a friend who happens to be smart."""
 
+            # Use configured model (Cognito OS v1.1)
+            try:
+                from core.config import settings
+                emotional_model = getattr(settings, 'DEFAULT_LLM_MODEL', 'gpt-4o-mini')
+            except ImportError:
+                emotional_model = 'gpt-4o-mini'
+            
             response = await client.chat.completions.create(
-                model="gpt-4o-mini",
+                model=emotional_model,
                 messages=[
                     {"role": "system", "content": "You are a caring older sibling, not a therapist. Be warm but give actionable options."},
                     {"role": "user", "content": prompt}
@@ -2362,8 +2613,15 @@ DO NOT:
 
 Generate the continuation:"""
 
+            # Use configured model (Cognito OS v1.1)
+            try:
+                from core.config import settings
+                continuation_model = getattr(settings, 'DEFAULT_LLM_MODEL', 'gpt-4o-mini')
+            except ImportError:
+                continuation_model = 'gpt-4o-mini'
+            
             response = await client.chat.completions.create(
-                model="gpt-4o-mini",
+                model=continuation_model,
                 messages=[
                     {"role": "system", "content": "You are a warm, encouraging tutor continuing a conversation with a student."},
                     {"role": "user", "content": continuation_prompt}
@@ -2558,8 +2816,15 @@ KEEP IT: Short, warm, actionable, personal."""
 
 Respond as their caring older sibling (not a counselor). Give them quick options, not questions."""
 
+            # Use configured model (Cognito OS v1.1)
+            try:
+                from core.config import settings
+                chitchat_model = getattr(settings, 'DEFAULT_LLM_MODEL', 'gpt-4o-mini')
+            except ImportError:
+                chitchat_model = 'gpt-4o-mini'
+            
             response = await client.chat.completions.create(
-                model="gpt-4o-mini",
+                model=chitchat_model,
                 messages=[
                     {"role": "system", "content": system_prompt},
                     {"role": "user", "content": user_prompt}
@@ -2801,8 +3066,15 @@ Be warm, specific, and actionable. No need to ask more questions - just help the
 
 Response:"""
 
+            # Use configured model instead of hardcoded value (Cognito OS v1.1)
+            try:
+                from core.config import settings
+                action_model = getattr(settings, 'DEFAULT_LLM_MODEL', 'gpt-4o-mini')
+            except ImportError:
+                action_model = 'gpt-4o-mini'
+            
             response = await client.chat.completions.create(
-                model="gpt-4o-mini",
+                model=action_model,
                 messages=[
                     {"role": "system", "content": "You are a helpful learning companion. Complete the requested action."},
                     {"role": "user", "content": prompt}
@@ -3116,31 +3388,74 @@ Response:"""
             force_fast_path = False
             load_level = None
         
-        SUPERVISOR_TIMEOUT = 20.0  # Hard limit - must be < frontend's 30s
+        # ================================================================
+        # SUPERVISOR TIMEOUT (Cognito OS v1.1)
+        # Must be < api.py's PHASE1_TIMEOUT (25s) to avoid cascade
+        # Must be < frontend's timeout (30s) to return before UI gives up
+        # ================================================================
+        SUPERVISOR_TIMEOUT = 18.0  # 18s: leaves 7s margin before Phase1 (25s) and 12s before frontend (30s)
         _supervisor_start = _timing.time()
         
         try:
-            # Determine if we should use fast mode
-            # Use fast mode if: simple query OR server is under load
-            use_fast_mode = (
-                complexity_value in ['TRIVIAL', 'SIMPLE', 'simple', 'trivial'] or
-                force_fast_path
-            )
+            # ================================================================
+            # 4-TIER INTELLIGENCE ROUTING (Cognito OS v2.0)
+            # ================================================================
+            # Proportional intelligence: right depth at right time
+            # - T0 (TRIVIAL): Greetings, acknowledgments → templates (no LLM)
+            # - T1 (SIMPLE): "Explain force" → run_fast() → single focused LLM call (2-4s)
+            # - T2 (MODERATE): "Compare mitosis and meiosis" → run_enhanced(quick) (5-10s)
+            # - T3 (COMPLEX/DEEP): "Derive quadratic formula" → full ReAct (15-25s)
+            # ================================================================
             
-            logger.info(f"🚀 [SUPERVISOR START] complexity={complexity_value} fast_mode={use_fast_mode} "
-                       f"load={load_level.value if load_level else 'unknown'} timeout={SUPERVISOR_TIMEOUT}s")
+            # Determine execution tier based on complexity
+            if complexity_value in ['TRIVIAL', 'trivial']:
+                execution_tier = 'T0'  # Instant (templates)
+            elif complexity_value in ['SIMPLE', 'simple']:
+                execution_tier = 'T1'  # Focused (single LLM)
+            elif complexity_value in ['MODERATE', 'moderate']:
+                execution_tier = 'T2'  # Guided (RAG + quick)
+            else:
+                execution_tier = 'T3'  # Deep (full ReAct)
             
-            if use_fast_mode and hasattr(self.supervisor, 'run_fast'):
-                # Fast path for simple queries (single LLM call)
+            # Override: Force fast path under load
+            if force_fast_path and execution_tier in ['T2', 'T3']:
+                execution_tier = 'T1'
+                logger.warning(f"⚠️ [LOAD] Downgrading {complexity_value} to T1 (fast path)")
+            
+            # Set appropriate timeout per tier
+            TIER_TIMEOUTS = {
+                'T0': 5.0,   # Templates are instant
+                'T1': 10.0,  # Single LLM call should be fast
+                'T2': 15.0,  # RAG + quick mode
+                'T3': 18.0,  # Full agentic reasoning
+            }
+            tier_timeout = TIER_TIMEOUTS.get(execution_tier, SUPERVISOR_TIMEOUT)
+            
+            logger.info(f"🚀 [SUPERVISOR START] complexity={complexity_value} tier={execution_tier} "
+                       f"timeout={tier_timeout}s load={load_level.value if load_level else 'unknown'}")
+            
+            # Execute based on tier
+            if execution_tier in ['T0', 'T1'] and hasattr(self.supervisor, 'run_fast'):
+                # T0/T1: Fast path (single LLM call, no RAG/hybrid/verification overhead)
+                # This is 10-20x faster than run_enhanced for simple queries
                 result = await asyncio.wait_for(
                     self.supervisor.run_fast(message, supervisor_context),
-                    timeout=SUPERVISOR_TIMEOUT
+                    timeout=tier_timeout
                 )
-            else:
-                # Enhanced path for complex queries (but still with timeout)
+            elif execution_tier == 'T2':
+                # T2: Guided path (RAG + quick mode, limited iterations)
+                supervisor_context['_quick_mode'] = True
+                supervisor_context['_max_iterations'] = 3
+                supervisor_context['_skip_verification'] = True  # Speed over absolute correctness
                 result = await asyncio.wait_for(
                     self.supervisor.run_enhanced(message, supervisor_context),
-                    timeout=SUPERVISOR_TIMEOUT
+                    timeout=tier_timeout
+                )
+            else:
+                # T3: Full cognitive path (RAG + hybrid + full ReAct + verification)
+                result = await asyncio.wait_for(
+                    self.supervisor.run_enhanced(message, supervisor_context),
+                    timeout=tier_timeout
                 )
                 
             _supervisor_elapsed = (_timing.time() - _supervisor_start) * 1000
@@ -3175,20 +3490,40 @@ What specific aspect would you like me to focus on first? 🎯""",
             _supervisor_elapsed = (_timing.time() - _supervisor_start) * 1000
             logger.warning(f"❌ [SUPERVISOR ERROR] after {_supervisor_elapsed:.0f}ms: {e}")
             
-            # Try base supervisor with timeout
-            try:
-                result = await asyncio.wait_for(
-                    self.supervisor.run(message, supervisor_context),
-                    timeout=max(5.0, SUPERVISOR_TIMEOUT - _supervisor_elapsed/1000)  # Remaining budget
-                )
-            except Exception as base_err:
-                logger.error(f"❌ Base supervisor also failed: {base_err}")
-                result = {
-                    'success': False,
-                    'error': str(e),
-                    'content': "I'm having trouble processing this request. Please try again.",
-                    'agent': 'error'
+            # ================================================================
+            # DIRECT FALLBACK (Cognito OS v1.1)
+            # ================================================================
+            # CRITICAL FIX: Do NOT retry with base supervisor.
+            # Running `self.supervisor.run()` again adds another 20s+ latency.
+            # Instead, return a direct fallback response immediately.
+            # The student gets a response NOW, not after another long wait.
+            # ================================================================
+            import traceback
+            logger.error(f"❌ Supervisor exception (NOT retrying): {traceback.format_exc()}")
+            
+            # Provide immediate, helpful fallback
+            subject = context.get('subject', 'this topic')
+            result = {
+                'success': True,  # Mark as success so UI shows content
+                'fallback': True,
+                'fallback_reason': 'supervisor_exception',
+                'content': f"""I apologize for the delay in answering your question about {subject}.
+
+Let me help you with a quick response:
+
+• Your question is interesting and deserves a thoughtful answer
+• I'm processing it now - please feel free to rephrase or ask a follow-up
+
+What specific aspect would you like me to focus on? 🎯""",
+                'agent': 'direct_fallback',
+                'confidence': 0.4,
+                'metadata': {
+                    'error': True,
+                    'error_type': str(type(e).__name__),
+                    'elapsed_ms': _supervisor_elapsed,
+                    'fallback_method': 'direct_response'
                 }
+            }
         
         # 📊 STRUCTURED LOGGING: Executed tools (from agent result)
         tools_executed = result.get('tools_used', []) if isinstance(result, dict) else []

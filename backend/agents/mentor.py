@@ -735,10 +735,13 @@ Respond as a caring friend who GENUINELY listens:
 
 Keep it short (3-4 sentences), warm, and authentic. One emoji max."""
 
+            # Use configured model (Cognito OS v1.1)
+            selected_model = self._resolve_model(context.get('selected_model'))
+            
             response = await call_llm(
                 prompt=prompt,
                 api_key=os.environ.get('OPENAI_API_KEY', ''),
-                model="gpt-4o-mini",
+                model=selected_model,
                 temperature=0.8,
                 max_tokens=200
             )
@@ -790,10 +793,13 @@ Respond like a friend would:
 
 Keep it short and genuine. One emoji max."""
 
+            # Use configured model (Cognito OS v1.1)
+            selected_model = self._resolve_model(context.get('selected_model'))
+            
             response = await call_llm(
                 prompt=prompt,
                 api_key=os.environ.get('OPENAI_API_KEY', ''),
-                model="gpt-4o-mini",
+                model=selected_model,
                 temperature=0.9,
                 max_tokens=200
             )
@@ -952,8 +958,11 @@ Generate your brief, friendly recommendation:"""
                 import os
                 client = get_openai_client(os.getenv("OPENAI_API_KEY", ""))
                 
+                # Use configured model (Cognito OS v1.1)
+                selected_model = self._resolve_model(context.get('selected_model') if context else None)
+                
                 completion = await client.chat.completions.create(
-                    model="gpt-4o-mini",
+                    model=selected_model,
                     messages=[
                         {"role": "system", "content": "You are a friendly mentor giving quick, helpful advice. Be brief and conversational."},
                         {"role": "user", "content": recommendation_prompt}
@@ -1113,8 +1122,11 @@ Generate your urgent assistance response:"""
                 import os
                 client = get_openai_client(os.getenv("OPENAI_API_KEY", ""))
                 
+                # Use configured model (Cognito OS v1.1)
+                selected_model = self._resolve_model(context.get('selected_model') if context else None)
+                
                 completion = await client.chat.completions.create(
-                    model="gpt-4o-mini",
+                    model=selected_model,
                     messages=[
                         {"role": "system", "content": "You are a supportive mentor helping a student under time pressure. Be structured, actionable, and confidence-building."},
                         {"role": "user", "content": urgent_prompt}
@@ -1261,8 +1273,11 @@ Generate your continuation response:"""
                 import os
                 client = get_openai_client(os.getenv("OPENAI_API_KEY", ""))
                 
+                # Use configured model (Cognito OS v1.1)
+                selected_model = self._resolve_model(context.get('selected_model') if context else None)
+                
                 completion = await client.chat.completions.create(
-                    model="gpt-4o-mini",
+                    model=selected_model,
                     messages=[
                         {"role": "system", "content": "You are continuing an existing conversation. Reference the previous context."},
                         {"role": "user", "content": continuation_prompt}
@@ -1431,15 +1446,18 @@ Every response MUST use proper markdown for readability:
                 )
                 return response.strip() if response else ""
             
-            # === PRIORITY 3: GPT-4o-mini (final fallback) ===
+            # === PRIORITY 3: OpenAI (final fallback) ===
             from services.llm_service import call_llm
+            
+            # Use configured model (Cognito OS v1.1)
+            selected_model = self._resolve_model(context.get('selected_model') if context else None)
             
             response = await call_llm(
                 prompt=prompt,
                 api_key=self.llm_key or os.environ.get('OPENAI_API_KEY', ''),
                 temperature=0.8,
                 max_tokens=1000,
-                model="gpt-4o-mini",
+                model=selected_model,
                 system_message=mentor_system
             )
             

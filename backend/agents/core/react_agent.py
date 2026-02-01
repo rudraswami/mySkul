@@ -181,6 +181,30 @@ class ReActAgent(ABC):
         
         logger.info(f"🤖 {self.get_agent_name()} initialized (ReAct mode, timeout={self.global_timeout}s)")
     
+    def _resolve_model(self, model_from_context: Optional[str] = None) -> str:
+        """
+        Resolve the LLM model to use, respecting cognitive routing decisions.
+        
+        Priority:
+        1. Model passed from context (upstream routing decision)
+        2. settings.DEFAULT_LLM_MODEL (global configuration)
+        3. 'gpt-4o-mini' (hardcoded fallback if settings unavailable)
+        
+        Args:
+            model_from_context: Model selected by upstream routing (e.g., orchestrator)
+        
+        Returns:
+            Model identifier string to use for LLM calls
+        """
+        if model_from_context:
+            return model_from_context
+        
+        try:
+            from core.config import settings
+            return getattr(settings, 'DEFAULT_LLM_MODEL', 'gpt-4o-mini')
+        except ImportError:
+            return 'gpt-4o-mini'
+    
     def evaluate_confidence(self, query: str, context: Dict[str, Any]) -> float:
         """
         SELF-ASSESSMENT: Agent evaluates its own confidence for handling this query.
@@ -788,9 +812,14 @@ That's your answer! 🎯"""
             logger.debug(f"🧮 Math fast-path skipped: {math_err}")
             # Continue to normal path
         
-        # INCREASED: 12s allows for network variance + API latency + cold starts
-        # 6s was causing frequent timeouts leading to fallback responses
-        FAST_TIMEOUT = 12.0  # Up from 6s to handle real-world latency
+        # ================================================================
+        # TIMEOUT BUDGET: Must fit within supervisor's 15s budget with retry margin
+        # Primary: 8s (sufficient for most LLM calls)
+        # Retry: 5s (shorter, we've already waited)
+        # Total: 13s worst case, leaves 2s margin in supervisor's 15s
+        # ================================================================
+        FAST_TIMEOUT = 8.0  # Primary call timeout
+        RETRY_TIMEOUT = 5.0  # Retry call timeout (shorter)
         
         try:
             from services.llm_service import call_llm
@@ -807,20 +836,23 @@ That's your answer! 🎯"""
             continuity = memory_ctx.get('continuity', {})
             
             # ================================================================
-            # 🌐 WEB SEARCH: Auto-detect if current events/real-time info needed
+            # 🌐 WEB SEARCH: Use routing engine's semantic decision
+            # ================================================================
+            # CRITICAL: Use the routing engine's decision (based on semantic analysis)
+            # instead of fragile keyword matching. The routing engine analyzes:
+            # - temporal_scope (immediate, today, recent)
+            # - urgency_level (high, medium, low)
+            # - intent classification
+            # - topic category (current affairs, static content)
+            # This ensures consistent, intent-driven web search triggering.
             # ================================================================
             web_search_context = ""
-            query_lower = query.lower()
             
-            # Detect queries that need real-time/current information
-            needs_web_search = any(signal in query_lower for signal in [
-                'latest', 'recent', 'current', 'today', 'this year', '2024', '2025', '2026',
-                'nobel prize', 'winner', 'news', 'happening', 'update', 'announced',
-                'who won', 'who is', 'what happened', 'breaking', 'just',
-                'this month', 'last week', 'yesterday', 'now'
-            ])
+            # Primary: Use routing engine's semantic decision (passed in context)
+            needs_web_search = context.get('requires_web_search', False)
+            web_search_reason = context.get('web_search_reason', 'routing_decision')
             
-            logger.info(f"🌐 [_run_fast] Web search needed: {needs_web_search} | Query: {query[:40]}...")
+            logger.info(f"🌐 [_run_fast] Web search needed: {needs_web_search} | Reason: {web_search_reason} | Query: {query[:40]}...")
             
             if needs_web_search:
                 logger.info(f"🌐 [QUICK MODE] Detected real-time query, fetching web search...")
@@ -896,13 +928,17 @@ Use examples and analogies to make concepts clear.
             import time
             llm_start = time.time()
             
+            # Use model from cognitive routing (upstream decision)
+            selected_model = self._resolve_model(context.get('selected_model'))
+            logger.info(f"⚡ [_run_fast] Using model: {selected_model}")
+            
             response = await asyncio.wait_for(
                 call_llm(
                     prompt=prompt,
                     api_key=self.llm_key,
                     temperature=0.7,
                     max_tokens=500,  # Reduced from 1000 for faster quick mode
-                    model="gpt-4o-mini",
+                    model=selected_model,
                     system_message=self.get_agent_persona()
                 ),
                 timeout=FAST_TIMEOUT
@@ -926,40 +962,126 @@ Use examples and analogies to make concepts clear.
                         'refinement_available': True  # Flag for Phase 2
                     }
                 }
+            
+            # ================================================================
+            # 🔄 SINGLE RETRY: LLM returned empty/short - retry once
+            # Transient failures (network, rate limit) often succeed on retry
+            # ================================================================
+            if not response or len(response.strip()) <= 30:
+                logger.warning(f"⚠️ [_run_fast] LLM returned empty/short response, retrying once...")
+                try:
+                    response = await asyncio.wait_for(
+                        call_llm(
+                            prompt=prompt,
+                            api_key=self.llm_key,
+                            temperature=0.7,
+                            max_tokens=500,
+                            model=selected_model,
+                            system_message=self.get_agent_persona()
+                        ),
+                        timeout=FAST_TIMEOUT
+                    )
+                    if response and len(response.strip()) > 30:
+                        logger.info(f"⚡ {self.get_agent_name()} QUICK MODE retry SUCCESS")
+                        return {
+                            'success': True,
+                            'content': response,
+                            'agent': self.get_agent_name(),
+                            'confidence': 0.8,  # Slightly lower confidence for retry
+                            'metadata': {
+                                'mode': 'quick_retry',
+                                'phase': 1,
+                                'llm_calls': 2,
+                                'web_search_used': bool(web_search_context),
+                                'refinement_available': True
+                            }
+                        }
+                except Exception as retry_err:
+                    logger.warning(f"⚠️ [_run_fast] Retry also failed: {retry_err}")
                 
         except asyncio.TimeoutError:
-            logger.warning(f"⏰ {self.get_agent_name()} QUICK MODE timeout (>{FAST_TIMEOUT}s)")
+            # ================================================================
+            # 🔄 SINGLE RETRY: Timeout - retry with shorter timeout
+            # LLM providers sometimes have transient slowdowns
+            # ================================================================
+            logger.warning(f"⏰ {self.get_agent_name()} QUICK MODE timeout (>{FAST_TIMEOUT}s), retrying with shorter timeout...")
+            try:
+                response = await asyncio.wait_for(
+                    call_llm(
+                        prompt=prompt,
+                        api_key=self.llm_key,
+                        temperature=0.7,
+                        max_tokens=400,  # Reduced tokens for faster response
+                        model=selected_model,
+                        system_message=self.get_agent_persona()
+                    ),
+                    timeout=RETRY_TIMEOUT
+                )
+                if response and len(response.strip()) > 30:
+                    logger.info(f"⚡ {self.get_agent_name()} QUICK MODE timeout retry SUCCESS")
+                    return {
+                        'success': True,
+                        'content': response,
+                        'agent': self.get_agent_name(),
+                        'confidence': 0.75,  # Lower confidence for timeout retry
+                        'metadata': {
+                            'mode': 'quick_timeout_retry',
+                            'phase': 1,
+                            'llm_calls': 2,
+                            'web_search_used': bool(web_search_context),
+                            'refinement_available': True
+                        }
+                    }
+            except Exception as retry_err:
+                logger.warning(f"⚠️ [_run_fast] Timeout retry also failed: {retry_err}")
+                
         except Exception as e:
             logger.warning(f"⚠️ {self.get_agent_name()} QUICK MODE error: {e}")
         
-        # Fallback - deterministic response (no more LLM calls)
-        # 🔥 FIX: Generate a unique request_id for Phase 2 refinement
+        # ================================================================
+        # 🛡️ FALLBACK: Use partial intelligence if available
+        # If we have web search results, include them in fallback
+        # ================================================================
         import uuid as uuid_module
         refinement_request_id = f"refine_{uuid_module.uuid4().hex[:8]}"
         
         logger.warning(f"⏰ {self.get_agent_name()} QUICK MODE fallback triggered - starting background refinement: {refinement_request_id}")
         subject = context.get('subject', 'your question')
         
-        # 🔥 FIX: Mark as fallback with LOW success so UI knows to show loading indicator
-        # and trigger Phase 2 refinement polling
-        return {
-            'success': True,
-            'is_fallback': True,  # 🔥 NEW: Flag to indicate this is a timeout fallback
-            'content': f"""I'm analyzing your question about {subject}...
+        # 🛡️ PRESERVE PARTIAL INTELLIGENCE: If we gathered web search results, include them
+        # This gives the student SOMETHING useful even when LLM fails
+        if web_search_context:
+            logger.info(f"🛡️ [_run_fast] Including web search results in fallback response")
+            fallback_content = f"""I'm working on your question about {subject}. Here's what I found so far:
+
+{web_search_context}
+
+I'm preparing a more complete explanation for you! 🧠"""
+            fallback_confidence = 0.5  # Higher confidence since we have partial data
+        else:
+            fallback_content = f"""I'm analyzing your question about {subject}...
 
 Just a moment while I prepare a detailed explanation! 🧠
 
-(Loading complete answer...)""",
+(Loading complete answer...)"""
+            fallback_confidence = 0.3  # Low confidence = UI should expect refinement
+        
+        return {
+            'success': True,
+            'is_fallback': True,
+            'content': fallback_content,
             'agent': self.get_agent_name(),
-            'confidence': 0.3,  # Low confidence = UI should expect refinement
+            'confidence': fallback_confidence,
             'metadata': {
                 'mode': 'quick_fallback',
                 'phase': 1,
                 'llm_calls': 0,
+                'web_search_used': bool(web_search_context),
+                'partial_intelligence': bool(web_search_context),  # Flag that we have partial data
                 'refinement_available': True,
-                'refinement_pending': True,  # 🔥 NEW: Tell frontend to poll
-                'refinement_request_id': refinement_request_id,  # 🔥 NEW: ID to poll
-                'timeout_occurred': True  # 🔥 NEW: Clear signal that we timed out
+                'refinement_pending': True,
+                'refinement_request_id': refinement_request_id,
+                'timeout_occurred': True
             }
         }
     
@@ -1214,10 +1336,10 @@ This is on my end, not yours. Please try asking again - I want to help you under
         """
         Generate the next thought and action using LLM.
         
-        SINGLE-FLIGHT (NO RETRIES):
-        - One LLM call attempt only
-        - On failure, immediately return FINISH with fallback
-        - Retries are handled at orchestrator level, not here
+        RESILIENT SINGLE-FLIGHT:
+        - Primary LLM call attempt
+        - Single retry for empty/transient failures
+        - On persistent failure, return FINISH with direct answer
         """
         try:
             system_prompt = self.get_system_prompt(state)
@@ -1231,16 +1353,26 @@ This is on my end, not yours. Please try asking again - I want to help you under
 
 What should you do next?"""
             
-            # Single LLM call - NO RETRIES
-            response = await self._call_llm(system_prompt, user_message)
+            # Primary LLM call with single retry for transient failures
+            # Pass model from context (cognitive routing decision)
+            selected_model = state.context.get('selected_model') if state.context else None
+            response = await self._call_llm(system_prompt, user_message, model=selected_model)
             
             if not response:
-                # LLM returned nothing - immediate fallback (no retry)
-                logger.warning("[ReAct] LLM empty response, generating fallback (no retry)")
-                ta = state.add_thought("I'll provide a direct answer based on my knowledge.")
-                ta.action = "FINISH"
-                ta.action_input = {"answer": await self._generate_direct_answer(state)}
-                return ta
+                # ================================================================
+                # 🔄 SINGLE RETRY: Empty response - likely transient failure
+                # Network issues, rate limits, or cold starts often resolve on retry
+                # ================================================================
+                logger.warning("[ReAct] LLM empty response, retrying once...")
+                response = await self._call_llm(system_prompt, user_message, model=selected_model)
+                
+                if not response:
+                    # Retry also failed - fall back to direct answer
+                    logger.warning("[ReAct] LLM retry also empty, generating direct answer")
+                    ta = state.add_thought("I'll provide a direct answer based on my knowledge.")
+                    ta.action = "FINISH"
+                    ta.action_input = {"answer": await self._generate_direct_answer(state)}
+                    return ta
             
             # Parse response
             parsed = self._parse_llm_response(response)
@@ -1253,8 +1385,25 @@ What should you do next?"""
             return ta
             
         except Exception as e:
-            # Exception - immediate fallback (no retry)
-            logger.error(f"[ReAct] Think error (no retry): {e}")
+            # ================================================================
+            # 🔄 SINGLE RETRY: Exception - may be transient network issue
+            # ================================================================
+            logger.warning(f"[ReAct] Think error, retrying once: {e}")
+            try:
+                selected_model = state.context.get('selected_model') if state.context else None
+                response = await self._call_llm(system_prompt, user_message, model=selected_model)
+                if response:
+                    parsed = self._parse_llm_response(response)
+                    ta = state.add_thought(parsed.get("thought", "Thinking..."))
+                    ta.action = parsed.get("action", "FINISH")
+                    ta.action_input = parsed.get("action_input", {})
+                    logger.info("[ReAct] Think retry succeeded")
+                    return ta
+            except Exception as retry_err:
+                logger.warning(f"[ReAct] Think retry also failed: {retry_err}")
+            
+            # Both attempts failed - fall back to direct answer
+            logger.error(f"[ReAct] Think failed after retry: {e}")
             ta = state.add_thought("Let me provide you with a helpful response.")
             ta.action = "FINISH"
             ta.action_input = {"answer": await self._generate_direct_answer(state)}
@@ -1264,8 +1413,10 @@ What should you do next?"""
         """
         Generate a direct answer when ReAct reasoning fails.
         
-        SINGLE-FLIGHT: One LLM call only, then deterministic fallback.
-        No cascading LLM retries.
+        RESILIENT DIRECT ANSWER:
+        - Primary LLM call with single retry for transient failures
+        - Falls back to deterministic response only after retry fails
+        - Preserves gathered observations in fallback
         """
         # Build context from any observations we've gathered
         observations = [ta.observation for ta in state.reasoning_chain if ta.observation]
@@ -1281,31 +1432,90 @@ Context from analysis: {context_str}
 
 Provide a clear, helpful, well-structured answer. Be accurate and educational."""
         
-        # Single LLM call - NO RETRIES
+        from services.llm_service import call_llm
+        
+        # Use model from cognitive routing (upstream decision)
+        selected_model = self._resolve_model(state.context.get('selected_model'))
+        
+        # Primary LLM call
         try:
-            from services.llm_service import call_llm
-            
             response = await asyncio.wait_for(
                 call_llm(
                     prompt=prompt,
                     api_key=self.llm_key,
                     temperature=0.7,
-                    max_tokens=800,
-                    model="gpt-4o-mini",
+                    max_tokens=1500,  # Cognitive path: full educational explanation capacity
+                    model=selected_model,
                     system_message=self.get_agent_persona()
                 ),
-                timeout=15.0  # Single 15s timeout
+                timeout=15.0
             )
             if response and len(response.strip()) > 30:
-                logger.info("[ReAct] Direct answer generated successfully")
+                logger.info(f"[ReAct] Direct answer generated successfully (model: {selected_model})")
                 return response
+                
+            # ================================================================
+            # 🔄 SINGLE RETRY: Empty response - retry once
+            # ================================================================
+            if not response or len(response.strip()) <= 30:
+                logger.warning("[ReAct] Direct answer empty, retrying once...")
+                response = await asyncio.wait_for(
+                    call_llm(
+                        prompt=prompt,
+                        api_key=self.llm_key,
+                        temperature=0.7,
+                        max_tokens=1500,
+                        model=selected_model,
+                        system_message=self.get_agent_persona()
+                    ),
+                    timeout=12.0  # Shorter timeout for retry
+                )
+                if response and len(response.strip()) > 30:
+                    logger.info(f"[ReAct] Direct answer retry succeeded (model: {selected_model})")
+                    return response
+                    
         except Exception as e:
-            logger.warning(f"[ReAct] Direct answer LLM failed (no retry): {e}")
+            # ================================================================
+            # 🔄 SINGLE RETRY: Exception - may be transient
+            # ================================================================
+            logger.warning(f"[ReAct] Direct answer LLM failed, retrying: {e}")
+            try:
+                response = await asyncio.wait_for(
+                    call_llm(
+                        prompt=prompt,
+                        api_key=self.llm_key,
+                        temperature=0.7,
+                        max_tokens=1200,  # Reduced tokens for faster retry
+                        model=selected_model,
+                        system_message=self.get_agent_persona()
+                    ),
+                    timeout=10.0  # Shorter timeout for retry
+                )
+                if response and len(response.strip()) > 30:
+                    logger.info(f"[ReAct] Direct answer exception retry succeeded")
+                    return response
+            except Exception as retry_err:
+                logger.warning(f"[ReAct] Direct answer retry also failed: {retry_err}")
         
-        # Deterministic fallback - NO more LLM calls
+        # ================================================================
+        # 🛡️ DETERMINISTIC FALLBACK: Preserve any observations we gathered
+        # ================================================================
         logger.warning("[ReAct] Using deterministic fallback response")
         short_q = state.query[:60] + "..." if len(state.query) > 60 else state.query
         
+        # If we have observations, include them in fallback (partial intelligence)
+        if observations:
+            obs_text = "\n".join([f"• {obs[:200]}" for obs in observations[:3]])
+            return f"""I'm working on your question about {subject}.
+
+**Your question:** "{short_q}"
+
+**Here's what I found so far:**
+{obs_text}
+
+I'm preparing a more complete explanation. Please wait a moment! 🧠"""
+        
+        # No observations - generic fallback
         return f"""I'm working on your question about {subject}.
 
 **Your question:** "{short_q}"
@@ -1372,14 +1582,23 @@ I'm experiencing a brief delay. Please try asking again, and I'll give you a pro
             logger.error(f"[ReAct] ACT_ERROR: {e}", exc_info=True)
             return f"Action execution encountered an issue. Continuing with available information."
     
-    async def _call_llm(self, system_prompt: str, user_message: str) -> Optional[str]:
-        """Call the LLM with the given prompts using services.llm_service"""
+    async def _call_llm(self, system_prompt: str, user_message: str, model: Optional[str] = None) -> Optional[str]:
+        """Call the LLM with the given prompts using services.llm_service
+        
+        Args:
+            system_prompt: System prompt for the LLM
+            user_message: User message/prompt
+            model: Model to use (from cognitive routing). Falls back to settings.DEFAULT_LLM_MODEL
+        """
         try:
             if not self.llm_key:
                 logger.warning("No LLM key available")
                 return None
             
             from services.llm_service import call_llm
+            
+            # Use model from cognitive routing (upstream decision)
+            selected_model = self._resolve_model(model)
             
             # Build JSON-formatted prompt for ReAct reasoning
             json_instruction = """
@@ -1396,8 +1615,8 @@ Respond in valid JSON format with these fields:
                 prompt=full_prompt,
                 api_key=self.llm_key,
                 temperature=0.3,  # Lower for more consistent reasoning
-                max_tokens=800,
-                model="gpt-4o-mini",
+                max_tokens=1200,  # Cognitive path: room for JSON structure + reasoning + answer
+                model=selected_model,
                 system_message=system_prompt
             )
             

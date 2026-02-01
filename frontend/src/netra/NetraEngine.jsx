@@ -34,6 +34,15 @@ import SceneRenderer from './rendering/SceneRenderer';  // NEW: Scene-based rend
 import DynamicVisualRenderer from './renderer/DynamicVisualRenderer';
 
 // ============================================
+// FEATURE FLAG: Visual Engine Enable/Disable
+// ============================================
+// Production flag to enable/disable visual generation
+// PRODUCTION DEFAULT: Visuals are DISABLED (hidden) by default
+// To enable visuals, set: REACT_APP_ENABLE_VISUALS=true
+// When not set or set to anything other than 'true', visuals are hidden
+const VISUALS_ENABLED = process.env.REACT_APP_ENABLE_VISUALS === 'true';
+
+// ============================================
 // LOADING STATES - Beautiful Animated Loader
 // ============================================
 
@@ -487,6 +496,17 @@ const NetraEngine = ({
     if (!question) return;
     
     // ================================================================
+    // 🎯 FEATURE FLAG CHECK: Visual Engine Disabled
+    // ================================================================
+    // PRODUCTION FLAG: If visuals are disabled globally, skip generation
+    // This allows hiding visuals in production by setting REACT_APP_ENABLE_VISUALS=false
+    // ================================================================
+    if (!VISUALS_ENABLED) {
+      console.log('🚫 [NetraEngine] BLOCKED: Visual engine disabled via feature flag (REACT_APP_ENABLE_VISUALS=false)');
+      return;
+    }
+    
+    // ================================================================
     // 🎯 ENTERPRISE-GRADE VISUAL GATING (Cognito OS v1.0)
     // ================================================================
     // CRITICAL: Check if visual generation is actually needed
@@ -683,6 +703,11 @@ const NetraEngine = ({
 
   // Determine what to render
   const renderContent = () => {
+    // Feature flag check: If visuals disabled, show empty state
+    if (!VISUALS_ENABLED) {
+      return <EmptyState />;
+    }
+    
     if (loading) {
       return <LoadingState message="Understanding concept..." />;
     }

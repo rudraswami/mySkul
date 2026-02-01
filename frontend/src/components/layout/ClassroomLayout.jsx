@@ -47,7 +47,12 @@ const ACTIVE_TAB = {
 // SmartBoard enabled for visual learning experience.
 // The Magic Notebook panel displays AI-generated visuals alongside chat.
 // All visual engines (NETRA v4, MagicNotebook V6) render here.
-const SMARTBOARD_ENABLED = true;
+// 
+// PRODUCTION DEFAULT: Visuals are DISABLED (hidden) by default
+// To enable visuals, set: REACT_APP_ENABLE_VISUALS=true
+// When not set or set to anything other than 'true', visuals are hidden
+const VISUALS_ENABLED = process.env.REACT_APP_ENABLE_VISUALS === 'true';
+const SMARTBOARD_ENABLED = VISUALS_ENABLED; // SmartBoard visibility tied to visual feature flag
 
 // ============================================
 // ClassroomHeader Component
@@ -216,6 +221,14 @@ export default function ClassroomLayout({
   // Collapsible SmartBoard state - Default to closed (Zen Mode)
   // When SMARTBOARD_ENABLED is false, board is always closed
   const [isBoardOpen, setIsBoardOpen] = useState(false);
+  
+  // CRITICAL: Force board closed when SmartBoard is disabled
+  // This ensures the board never opens when visuals are disabled
+  useEffect(() => {
+    if (!SMARTBOARD_ENABLED && isBoardOpen) {
+      setIsBoardOpen(false);
+    }
+  }, [SMARTBOARD_ENABLED, isBoardOpen]);
   
   // Track previous visual artifact for auto-open logic
   const prevVisualRef = useRef(visualArtifact);

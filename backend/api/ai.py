@@ -2001,428 +2001,135 @@ You MUST reference specific content from the image in your response."""
                 result = None
         
         # ====================================================================
-        # AGENTIC SYSTEM (Backup - runs if v2 orchestrator fails/returns None)
+        # DIRECT FALLBACK (Cognito OS v1.1)
         # ====================================================================
-        USE_AGENTIC_SYSTEM = os.getenv("USE_AGENTIC_SYSTEM", "true").lower() == "true"
+        # CRITICAL FIX: When v2 orchestrator fails, do NOT run a full backup system.
+        # Running another full agentic system adds 60-90s latency.
+        # Instead, use a DIRECT LLM call for immediate fallback response.
+        # ====================================================================
         
-        # FIXED: Agentic system runs as backup when v2 orchestrator fails
-        # Previous bug: `not USE_V2_ORCHESTRATOR` prevented fallback when v2 was enabled but failed
-        if USE_AGENTIC_SYSTEM and result is None:
-            # Use new agentic system with MEMORY
-            logger.info("🤖 Using Agentic System with Memory for neuro-symbolic response")
+        if result is None:
+            logger.warning("⚠️ v2 orchestrator returned None, using DIRECT FALLBACK (not backup agentic system)")
             try:
-                # Initialize Supervisor with INTELLIGENT ROUTING (Cognito-OS v4.0)
+                from services.llm_service import call_llm
                 emergent_llm_key = os.environ.get('OPENAI_API_KEY')
-                config = {"emergent_llm_key": emergent_llm_key}
                 
-                # Try to get semantic analysis for better routing (fallback-friendly)
-                fallback_semantic_analysis = None
+                # Direct LLM call with 10s timeout - MUCH faster than full agentic system
+                DIRECT_FALLBACK_TIMEOUT = 10.0
+                
+                fallback_prompt = f"""You are a helpful educational assistant. Answer this question clearly and helpfully:
+
+Question: {contextual_message}
+Subject: {detected_subject}
+
+Provide a clear, accurate, and educational response. Be concise but thorough."""
+                
                 try:
-                    from services.semantic_intent_classifier import get_semantic_classifier
-                    classifier = get_semantic_classifier()
-                    semantic_result = await classifier.classify(contextual_message)
-                    fallback_semantic_analysis = semantic_result.to_dict()
-                    logger.info(f"🧠 Agentic fallback: Got semantic analysis (intent={semantic_result.intent.value})")
-                except Exception as sem_err:
-                    logger.debug(f"Semantic classifier unavailable in fallback path: {sem_err}")
+                    from core.config import settings
+                    fallback_model = getattr(settings, 'DEFAULT_LLM_MODEL', 'gpt-4o-mini')
+                except ImportError:
+                    fallback_model = 'gpt-4o-mini'
                 
-                # Use intelligent routing based on query complexity (with semantic if available)
-                supervisor = get_appropriate_supervisor(contextual_message, config, fallback_semantic_analysis)
-                
-                # ================================================================
-                # MEMORY SYSTEM INTEGRATION - BEST-EFFORT ENRICHMENT
-                # SINGLE-FLIGHT: Memory NEVER blocks the main AI response
-                # All memory ops run in parallel with strict timeout
-                # ================================================================
-                from services.memory_service import MemoryService
-                from services.semantic_memory import SemanticMemoryService
-                from services.mastery_tracker import MasteryTracker
-                from services.continuity_engine import ContinuityEngine
-                
-                # Initialize memory services
-                openai_api_key = os.environ.get('OPENAI_API_KEY') or emergent_llm_key
-                memory_service = MemoryService(db)
-                semantic_memory = SemanticMemoryService(db, openai_api_key)
-                mastery_tracker = MasteryTracker(db)
-                continuity_engine = ContinuityEngine(db)
-                
-                # Extract topic for mastery lookup
-                from services.memory_extraction import MemoryExtractor
-                temp_extractor = MemoryExtractor(db)
-                current_concepts = temp_extractor._extract_concepts(contextual_message, {})
-                current_topic = current_concepts[0] if current_concepts else "general"
-                
-                # Default values (used if memory times out)
-                recent_context = []
-                relevant_memories = []
-                continuity = {"is_continuation": False}
-                mastery_level = 50  # Default mid-level
-                user_name = ""
-                student_profile_data = {}
-                
-                # ================================================================
-                # PARALLEL MEMORY FETCH with 3s TOTAL TIMEOUT
-                # Best-effort: If timeout, continue with defaults
-                # ================================================================
-                MEMORY_TIMEOUT = 3.0  # 3 seconds max for ALL memory ops
-                
-                # 📊 TIMING: Track memory enrichment latency
-                import time as _timing
-                _memory_start = _timing.time()
-                
-                async def fetch_memory_context():
-                    """Fetch all memory context in parallel - best effort"""
-                    nonlocal recent_context, relevant_memories, continuity, mastery_level, user_name, student_profile_data
-                    
-                    try:
-                        # Run all memory ops in parallel
-                        results = await asyncio.gather(
-                            memory_service.get_conversation_context(
-                                session_id=request.session_id or f"temp_{user.user_id}",
-                                user_id=user.user_id,
-                                window_size=10
-                            ),
-                            semantic_memory.search_relevant_memories(
-                                user_id=user.user_id,
-                                query=contextual_message,
-                                top_k=5,
-                                min_similarity=0.5
-                            ),
-                            continuity_engine.detect_topic_continuation(
-                                user_id=user.user_id,
-                                current_query=contextual_message
-                            ),
-                            mastery_tracker.get_mastery_level(user.user_id, current_topic),
-                            db.users.find_one({"user_id": user.user_id}),
-                            return_exceptions=True  # Don't fail on individual errors
-                        )
-                        
-                        # Unpack results with safe defaults
-                        if not isinstance(results[0], Exception):
-                            recent_context = results[0] or []
-                        if not isinstance(results[1], Exception):
-                            relevant_memories = results[1] or []
-                        if not isinstance(results[2], Exception):
-                            continuity = results[2] or {"is_continuation": False}
-                        if not isinstance(results[3], Exception):
-                            mastery_level = results[3] or 50
-                        
-                        # Handle user profile
-                        user_doc = results[4] if not isinstance(results[4], Exception) else None
-                        if user_doc:
-                            full_name = user_doc.get("full_name", "")
-                            user_name = full_name.split()[0] if full_name else ""
-                            
-                            # Try to get learning profile (separate query, also best-effort)
-                            try:
-                                learning_profile = await asyncio.wait_for(
-                                    db.user_learning_profile.find_one({"user_id": user.user_id}),
-                                    timeout=0.5  # Very short timeout for profile
-                                )
-                                if learning_profile:
-                                    student_profile_data = {
-                                        "preferences": learning_profile.get("preferences", {}),
-                                        "patterns": learning_profile.get("patterns", {}),
-                                        "mastery_levels": learning_profile.get("mastery_levels", {}),
-                                        "response_style": learning_profile.get("preferences", {}).get("response_style")
-                                    }
-                            except asyncio.TimeoutError:
-                                logger.warning(f"[{request_id}] ⚡ Learning profile query timeout (>0.5s) - continuing without")
-                            except Exception:
-                                pass  # Continue without profile
-                                
-                    except Exception as e:
-                        logger.warning(f"[{request_id}] ⚠️ Memory fetch error (best-effort, continuing): {e}")
-                
-                # Execute with strict timeout - NEVER blocks main flow
-                try:
-                    await asyncio.wait_for(fetch_memory_context(), timeout=MEMORY_TIMEOUT)
-                    _memory_elapsed = (_timing.time() - _memory_start) * 1000
-                    logger.info(f"[{request_id}] 📊 TIMING memory_enrichment={_memory_elapsed:.0f}ms | {len(recent_context)} recent, {len(relevant_memories)} relevant")
-                except asyncio.TimeoutError:
-                    _memory_elapsed = (_timing.time() - _memory_start) * 1000
-                    logger.warning(f"[{request_id}] 📊 TIMING memory_enrichment={_memory_elapsed:.0f}ms (TIMEOUT) - continuing with defaults")
-                except Exception as e:
-                    _memory_elapsed = (_timing.time() - _memory_start) * 1000
-                    logger.warning(f"[{request_id}] 📊 TIMING memory_enrichment={_memory_elapsed:.0f}ms (ERROR: {e})")
-                
-                # Determine query complexity for advanced features (using semantic if available)
-                query_complexity = analyze_query_complexity(contextual_message, fallback_semantic_analysis)
-                
-                # Prepare enhanced context for agentic system
-                agentic_context = {
-                    "request_id": request_id,  # Tracing ID for all logs
-                    "subject": detected_subject,
-                    "session_id": request.session_id,
-                    "user_id": user.user_id,
-                    "exam_mode": getattr(request, 'exam_mode', 'JEE'),
-                    "request_visual": True,  # Always request visual for neuro-symbolic
-                    # SINGLE-FLIGHT: Disable parallel agent competition
-                    # Agent selection happens, not competition
-                    "use_agent_negotiation": False,  # Disabled - use single-flight selection
-                    "enable_agent_negotiation": False,
-                    "query_complexity": query_complexity,
-                    "student_profile": {
-                        "name": user_name,  # Personalized!
-                        "level": "class_12",
-                        "interests": ["cricket", "gaming"],
-                        "board": "CBSE",
-                        "exam": getattr(request, 'exam_mode', 'JEE'),
-                        "mastery_level": mastery_level,  # Adaptive depth!
-                        **student_profile_data  # Merge learning profile data
-                    },
-                    # Memory context for agents
-                    "memory_context": {
-                        "recent_context": recent_context[-5:],  # Last 5 messages
-                        "relevant_memories": relevant_memories,
-                        "continuity": continuity,
-                        "mastery_level": mastery_level,
-                        "current_topic": current_topic
-                    }
-                }
-                
-                logger.info(f"🧠 Memory context prepared: {len(recent_context)} recent, {len(relevant_memories)} relevant, continuity={continuity.get('is_continuation')}")
-                
-                # ================================================================
-                # 🚀 FAST-FIRST ARCHITECTURE: Never-Hang + Early Response
-                # ================================================================
-                # Phase 1: Instant response (5s SLA, 1 LLM call)
-                # Phase 2: Deep refinement (async, only for complex queries)
-                #
-                # User ALWAYS gets a useful response in <5 seconds.
-                # Deeper reasoning happens async and updates are pushed.
-                # ================================================================
-                
-                PHASE1_TIMEOUT = 15.0  # Increased SLA: 15 seconds for LLM response (allows for load variance)
-                
-                # Determine query complexity for Phase 2 decision
-                query_len = len(contextual_message)
-                is_complex = (
-                    query_complexity.get('complexity', 'simple') in ['complex', 'multi_step'] or
-                    query_len > 150 or
-                    any(word in contextual_message.lower() for word in ['derive', 'prove', 'explain why', 'step by step', 'in detail'])
+                fallback_response = await asyncio.wait_for(
+                    call_llm(
+                        prompt=fallback_prompt,
+                        api_key=emergent_llm_key,
+                        temperature=0.7,
+                        max_tokens=1000,
+                        model=fallback_model,
+                        system_message="You are a knowledgeable and friendly educational mentor."
+                    ),
+                    timeout=DIRECT_FALLBACK_TIMEOUT
                 )
                 
-                try:
-                    # ========== PHASE 1: FAST-FIRST (Instant Response) ==========
-                    _phase1_start = _timing.time()
-                    if isinstance(supervisor, EnhancedSupervisor):
-                        logger.info(f"[{request_id}] ⚡ FAST-FIRST Phase 1 (SLA={PHASE1_TIMEOUT}s)")
-                        agentic_response = await asyncio.wait_for(
-                            supervisor.run_fast(contextual_message, agentic_context),
-                            timeout=PHASE1_TIMEOUT
-                        )
-                        _phase1_elapsed = (_timing.time() - _phase1_start) * 1000
-                        logger.info(f"[{request_id}] 📊 TIMING phase1={_phase1_elapsed:.0f}ms | agent={agentic_response.get('agent', 'unknown')}")
-                    else:
-                        # Fallback to standard run with tight timeout
-                        logger.warning(f"[{request_id}] ⚠️ Using standard run (no run_fast)")
-                        agentic_response = await asyncio.wait_for(
-                            supervisor.run(contextual_message, agentic_context),
-                            timeout=PHASE1_TIMEOUT
-                        )
-                    
-                    # ========== PHASE 2: DEEP REFINEMENT (Async, Complex Only) ==========
-                    # Only spawn Phase 2 for complex queries that could benefit
-                    # 🔥 FIX: Also spawn Phase 2 if agent timed out (to get real answer)
-                    agent_timeout_occurred = agentic_response.get('metadata', {}).get('timeout_occurred', False)
-                    needs_refinement = (
-                        (is_complex and agentic_response.get('metadata', {}).get('refinement_available')) or
-                        agent_timeout_occurred  # 🔥 NEW: Always refine if agent timed out
-                    )
-                    
-                    if needs_refinement:
-                        logger.info(f"[{request_id}] 🧠 Spawning Phase 2 deep refinement (async) - timeout_occurred={agent_timeout_occurred}")
-                        
-                        # Create background task for deep refinement
-                        # This runs AFTER we return the Phase 1 response
-                        async def run_phase2_refinement():
-                            try:
-                                PHASE2_TIMEOUT = 20.0  # Budget for deep reasoning
-                                deep_response = await asyncio.wait_for(
-                                    supervisor.run_enhanced(contextual_message, agentic_context),
-                                    timeout=PHASE2_TIMEOUT
-                                )
-                                
-                                # Store refinement for frontend polling
-                                # Using message_id as key (will be set after response is saved)
-                                refinement_data = {
-                                    'request_id': request_id,
-                                    'user_id': user.user_id,
-                                    'session_id': request.session_id,
-                                    'original_query': contextual_message[:200],
-                                    'refined_content': deep_response.get('content', ''),
-                                    'phase': 2,
-                                    'created_at': datetime.now(timezone.utc),
-                                    'expires_at': datetime.now(timezone.utc) + timedelta(minutes=5)
-                                }
-                                
-                                # Store in MongoDB for polling
-                                await db.ai_refinements.insert_one(refinement_data)
-                                logger.info(f"[{request_id}] ✅ Phase 2 refinement stored")
-                                
-                            except asyncio.TimeoutError:
-                                logger.warning(f"[{request_id}] ⏰ Phase 2 timeout (>{PHASE2_TIMEOUT}s)")
-                            except Exception as e:
-                                logger.error(f"[{request_id}] ❌ Phase 2 error: {e}")
-                        
-                        # Spawn as background task (non-blocking)
-                        asyncio.create_task(run_phase2_refinement())
-                        
-                        # Mark response as having refinement pending
-                        agentic_response['metadata'] = agentic_response.get('metadata', {})
-                        agentic_response['metadata']['refinement_pending'] = True
-                        agentic_response['metadata']['refinement_request_id'] = request_id
-                    
-                except asyncio.TimeoutError:
-                    logger.error(f"[{request_id}] ❌ PHASE 1 TIMEOUT (>{PHASE1_TIMEOUT}s) - returning fallback")
-                    # Even Phase 1 timed out - return safe fallback
-                    agentic_response = {
+                if fallback_response and len(fallback_response.strip()) > 30:
+                    logger.info(f"✅ Direct fallback succeeded in <{DIRECT_FALLBACK_TIMEOUT}s")
+                    result = {
                         'success': True,
-                        'fallback': True,
-                        'fallback_reason': 'phase1_timeout',
-                        'content': f"""I'm working on your question about {detected_subject}.
-
-Here's what I can help with right now:
-• This is an interesting topic that needs careful explanation
-• Let me focus on the core concept for you
-
-What specific aspect would you like me to clarify first? 🎯""",
-                        'agent': 'fallback',
+                        'content': fallback_response,
+                        'main_response': fallback_response,
+                        'agent': 'direct_fallback',
+                        'confidence': 0.7,
+                        'response': {
+                            'default_view': {
+                                'main_content': {
+                                    'content': fallback_response,
+                                    'type': 'markdown'
+                                }
+                            },
+                            'progressive_sections': {},
+                            'intent': 'general',
+                            'visual_metaphor': {}
+                        },
                         'metadata': {
-                            'phase': 1,
-                            'timeout': True,
-                            'timeout_seconds': PHASE1_TIMEOUT
+                            'fallback': True,
+                            'fallback_reason': 'v2_orchestrator_failed',
+                            'fallback_method': 'direct_llm'
                         }
                     }
-                
-                # Build visual scene if present
-                if agentic_response.get("visual"):
-                    visual_spec = agentic_response["visual"]
+                else:
+                    raise ValueError("Direct fallback returned empty response")
                     
-                    # Only process if visual_spec is a dict with proper structure
-                    if isinstance(visual_spec, dict) and visual_spec.get("metadata"):
-                        scene_builder = SceneBuilder()
-                        template_id = visual_spec.get("metadata", {}).get("template_id")
-
-                        if template_id:
-                            scene = scene_builder.build_scene(
-                                template_id=template_id,
-                                variables=visual_spec.get("variables", {}),
-                                context=agentic_context
-                            )
-                            agentic_response["visual"] = scene
-                    # If visual_spec is a string or other type, keep it as is (description)
-                
-                # Convert agentic response to neuro-symbolic format
-                # Pass user_id and student_profile for dynamic template selection
-                result = ResponseAdapter.adapt_agentic_to_neuro_symbolic(
-                    agentic_response=agentic_response,
-                    query=contextual_message,
-                    subject=request.subject,
-                    intent=agentic_response.get('intent'),  # Pass intent for greeting detection
-                    user_id=user.user_id,  # For template variety tracking
-                    student_profile=agentic_context.get('student_profile')  # For personalization
-                )
-                
-                # ================================================================
-                # FIX: Track internal degradation for visibility
-                # ================================================================
-                if agentic_context.get('_agents_degraded'):
-                    # Use production-safe key naming (not stripped by sanitizer)
-                    result['partial_failure'] = True
-                    result['degraded_components'] = [f['agent'] for f in agentic_context.get('_agent_failures', [])]
-                    logger.warning(f"⚠️ Response generated with degraded agents: {len(result['degraded_components'])} failures")
-                
-                logger.info("✅ Agentic system response generated successfully")
-                
-                # ================================================================
-                # MEMORY UPDATE PIPELINE - Store learnings after response
-                # ================================================================
-                try:
-                    from services.spaced_repetition import SpacedRepetitionEngine
-                    
-                    # Extract learning facts from this interaction
-                    facts = await temp_extractor.extract_learning_facts(
-                        user_id=user.user_id,
-                        question=contextual_message,
-                        response=result,
-                        session_id=request.session_id or f"temp_{user.user_id}",
-                        message_id=None  # Will be set when message is saved
-                    )
-                    
-                    logger.info(f"🧠 Extracted {len(facts)} memory facts")
-                    
-                    # Store facts with embeddings
-                    sp_engine = SpacedRepetitionEngine()
-                    
-                    for fact in facts:
-                        if fact.get("fact_type") == "concept_learned":
-                            # Store with embedding
-                            fact_id = await semantic_memory.store_memory_with_embedding(
-                                user_id=user.user_id,
-                                content=fact["content"],
-                                metadata=fact
-                            )
-                            
-                            # Schedule first review (1 day for new concepts)
-                            review_schedule = sp_engine.calculate_next_review(
-                                current_interval_days=0,
-                                quality=3,  # Default: understood
-                                current_easiness=2.5
-                            )
-                            
-                            # Update review schedule in memory
-                            await db.user_memory_facts.update_one(
-                                {"fact_id": fact_id},
-                                {"$set": review_schedule}
-                            )
-                            
-                        elif fact.get("fact_type") == "mastery_update":
-                            # Update mastery level
-                            await mastery_tracker.update_mastery(
-                                user_id=user.user_id,
-                                topic=fact["topic"],
-                                delta=fact["mastery_delta"],
-                                reason=fact.get("reason", "question_answered")
-                            )
-                    
-                    # Update concept thread for continuity
-                    if current_concepts:
-                        await continuity_engine.update_concept_thread(
-                            user_id=user.user_id,
-                            topic=current_topic,
-                            concepts=current_concepts
-                        )
-                    
-                    logger.info("💾 Memory update pipeline complete")
-                    
-                except Exception as e:
-                    logger.error(f"⚠️ Memory update failed (non-critical): {e}")
-                    # Don't fail the request if memory update fails
-            except Exception as e:
-                logger.error(f"❌ Agentic system failed, falling back to legacy: {e}")
-                import traceback
-                logger.error(traceback.format_exc())
-                # Fallback to legacy system
-                result = await ai_service.generate_neuro_symbolic_response(
-                    user_id=user.user_id,
-                    session_id=request.session_id or f"temp_{user.user_id}",
-                    message=contextual_message,
-                    subject=request.subject,
-                    exam_mode=await resolve_exam_mode(
-                        request_exam_mode=getattr(request, 'exam_mode', None),
-                        user_id=user.user_id,
-                        db_client=db
-                    ),
-                    message_history=message_history
-                )
-                # 🔥 FIX: Mark message as saved (generate_neuro_symbolic_response saves internally)
-                message_already_saved = True
-                logger.info(f"📝 Message saved internally by agentic fallback path")
+            except asyncio.TimeoutError:
+                logger.error(f"❌ Direct fallback timeout (>{DIRECT_FALLBACK_TIMEOUT}s)")
+                result = None  # Will be caught by final fallback below
+            except Exception as fallback_err:
+                logger.error(f"❌ Direct fallback error: {fallback_err}")
+                result = None  # Will be caught by final fallback below
+        
+        # ====================================================================
+        # LEGACY AGENTIC SYSTEM (DISABLED - Cognito OS v1.1)
+        # ====================================================================
+        # This backup system was adding 60-90s latency by running a full parallel
+        # agentic pipeline. Now DISABLED in favor of direct fallback above.
+        # The direct fallback (10s timeout) replaces this entire 90s+ pipeline.
+        # ====================================================================
+        # NOTE: Legacy code removed for cleaner execution. If you need to re-enable,
+        # set USE_V2_ORCHESTRATOR=false in environment to bypass v2 entirely.
+        # ====================================================================
         
         # ================================================================
-        # LEGACY FALLBACK (only if both unified and agentic fail)
+        # FINAL FALLBACK (only if v2 and direct fallback both fail)
+        # ================================================================
+        if result is None:
+            logger.warning("⚠️ All primary paths failed, using ai_service fallback")
+            result = await ai_service.generate_neuro_symbolic_response(
+                user_id=user.user_id,
+                session_id=request.session_id or f"temp_{user.user_id}",
+                message=contextual_message,
+                subject=request.subject,
+                exam_mode=await resolve_exam_mode(
+                    request_exam_mode=getattr(request, 'exam_mode', None),
+                    user_id=user.user_id,
+                    db_client=db
+                ),
+                message_history=message_history
+            )
+            message_already_saved = True
+        
+        # ================================================================
+        # POST-PROCESSING (Response formatting, memory updates, etc.)
+        # ================================================================
+        # NOTE: The legacy agentic pipeline code was removed in Cognito OS v1.1
+        # All AI processing now flows through v2 orchestrator or direct fallback
+        # ================================================================
+        
+        # ================================================================
+        # END OF PRIMARY AI PIPELINE (Cognito OS v1.1)
+        # ================================================================
+        # All AI processing is now complete via either:
+        # 1. v2 orchestrator (primary path)
+        # 2. Direct fallback (if v2 fails)
+        # 3. Final fallback (if all else fails)
+        # 
+        # The legacy USE_AGENTIC_SYSTEM backup (~370 lines) was removed because:
+        # - It added 60-90s latency by running a second full pipeline
+        # - It caused cascading execution issues
+        # - All its functionality is now in v2 orchestrator
+        # ================================================================
+        
+        # ================================================================
+        # ADDITIONAL FALLBACK (edge case protection)
         # ================================================================
         
         if result is None:
